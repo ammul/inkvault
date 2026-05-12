@@ -1,33 +1,36 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 
+const { t } = useI18n()
 const router = useRouter()
 
-const cards = [
+const cards = computed(() => [
   {
     icon: '📓',
-    title: 'Diary',
-    description: 'Write your daily entries and track how each day unfolds.',
+    title: t('home.cards.diary.title'),
+    description: t('home.cards.diary.description'),
     to: '/diary',
   },
   {
     icon: '📊',
-    title: 'Statistics',
-    description: 'Visualize your tracked data over time — spot trends and patterns.',
+    title: t('home.cards.statistics.title'),
+    description: t('home.cards.statistics.description'),
     to: '/stats',
   },
   {
     icon: '⚙️',
-    title: 'Data Points',
-    description: 'Configure what you track: mood, medication, habits, and more.',
+    title: t('home.cards.dataPoints.title'),
+    description: t('home.cards.dataPoints.description'),
     to: '/data',
   },
-]
+])
 </script>
 
 <template>
   <div class="max-w-md mx-auto mt-4 space-y-3">
-    <h1 class="text-xl font-semibold text-ink mb-6">Welcome back</h1>
+    <h1 class="text-xl font-semibold text-ink mb-6">{{ t('home.welcomeBack') }}</h1>
     <button
       v-for="card in cards"
       :key="card.to"

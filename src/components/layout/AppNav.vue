@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '@/stores/auth'
 import { useDiaryStore } from '@/stores/diary'
 import { useDataPointsStore } from '@/stores/datapoints'
 
+const { t } = useI18n()
 const router = useRouter()
 const auth = useAuthStore()
 const diary = useDiaryStore()
@@ -25,11 +27,11 @@ function closeMenu() {
 }
 
 const navLinks = [
-  { to: '/diary', label: 'Diary' },
-  { to: '/stats', label: 'Stats' },
-  { to: '/data', label: 'Data Points' },
-  { to: '/theme', label: 'Theme' },
-  { to: '/settings', label: 'Backup' },
+  { to: '/diary', key: 'nav.diary' },
+  { to: '/stats', key: 'nav.stats' },
+  { to: '/data', key: 'nav.dataPoints' },
+  { to: '/theme', key: 'nav.theme' },
+  { to: '/settings', key: 'nav.backup' },
 ]
 </script>
 
@@ -53,13 +55,13 @@ const navLinks = [
           class="text-sm text-ink-muted hover:text-ink px-3 py-1.5 rounded-input transition-colors"
           active-class="text-accent bg-accent-tint font-medium"
         >
-          {{ link.label }}
+          {{ t(link.key) }}
         </router-link>
         <button
           @click="lock"
           class="text-sm text-danger hover:text-danger-dim px-3 py-1.5 rounded-input transition-colors ml-1"
         >
-          Lock
+          {{ t('nav.lock') }}
         </button>
       </div>
 
@@ -67,7 +69,7 @@ const navLinks = [
       <button
         class="md:hidden p-1.5 text-ink-muted hover:text-ink transition-colors"
         :aria-expanded="menuOpen"
-        aria-label="Toggle menu"
+        :aria-label="t('nav.toggleMenu')"
         @click="menuOpen = !menuOpen"
       >
         <svg v-if="!menuOpen" width="20" height="20" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
@@ -92,13 +94,13 @@ const navLinks = [
         active-class="text-accent bg-accent-tint font-medium"
         @click="closeMenu"
       >
-        {{ link.label }}
+        {{ t(link.key) }}
       </router-link>
       <button
         @click="lock"
         class="text-sm text-danger hover:text-danger-dim px-3 py-2.5 rounded-input transition-colors text-left"
       >
-        Lock
+        {{ t('nav.lock') }}
       </button>
     </div>
   </nav>

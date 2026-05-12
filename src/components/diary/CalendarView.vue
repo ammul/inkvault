@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { useDiaryStore } from '@/stores/diary'
 
+const { t, locale } = useI18n()
 const router = useRouter()
 const diary = useDiaryStore()
 
@@ -11,7 +13,7 @@ const currentYear = ref(today.getFullYear())
 const currentMonth = ref(today.getMonth())
 
 const monthLabel = computed(() =>
-  new Date(currentYear.value, currentMonth.value).toLocaleDateString('en-US', {
+  new Date(currentYear.value, currentMonth.value).toLocaleDateString(locale.value, {
     month: 'long',
     year: 'numeric',
   }),
@@ -97,7 +99,7 @@ function openDay(date: string | null) {
 
     <!-- Day-of-week headers -->
     <div class="grid grid-cols-7 gap-1 text-center text-xs font-medium text-ink-faint mb-2">
-      <div v-for="d in ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa']" :key="d">{{ d }}</div>
+      <div v-for="(d, i) in t('diary.weekdays')" :key="i">{{ d }}</div>
     </div>
 
     <!-- Day grid -->

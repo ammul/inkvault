@@ -1,5 +1,8 @@
 <script setup lang="ts">
+import { useI18n } from 'vue-i18n'
 import type { DataPointConfig } from '@/types'
+
+const { t } = useI18n()
 
 defineProps<{ configs: DataPointConfig[] }>()
 
@@ -29,18 +32,18 @@ const emit = defineEmits<{
         @click="emit('edit', config)"
         class="text-xs text-accent hover:text-accent-dim transition-colors px-2 py-1 rounded-input hover:bg-accent-tint"
       >
-        Edit
+        {{ t('dataPoints.edit') }}
       </button>
       <button
         @click="emit('delete', config.id)"
         class="text-xs text-danger hover:text-danger-dim transition-colors px-2 py-1 rounded-input hover:bg-danger-tint"
       >
-        Delete
+        {{ t('dataPoints.delete') }}
       </button>
     </div>
 
     <p v-if="!configs.length" class="text-center text-ink-faint text-sm py-10">
-      No data points yet. Add one to start tracking.
+      {{ t('dataPoints.empty') }}
     </p>
   </div>
 </template>

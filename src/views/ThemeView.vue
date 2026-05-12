@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import { onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useThemeStore } from '@/stores/theme'
 import type { ColorTheme, ThemeFont, ThemeMood } from '@/types'
 
+const { t } = useI18n()
 const theme = useThemeStore()
 
 onMounted(async () => {
@@ -27,37 +29,37 @@ async function setFont(font: ThemeFont) {
   await theme.save()
 }
 
-const moods: { value: ThemeMood; label: string; description: string }[] = [
-  { value: 'minimal', label: 'Minimal', description: 'Clean, airy, focused' },
-  { value: 'cozy', label: 'Cozy', description: 'Warm, rounded, soft' },
-  { value: 'dark', label: 'Dark', description: 'Dark, intimate, private' },
+const moods: { value: ThemeMood }[] = [
+  { value: 'minimal' },
+  { value: 'cozy' },
+  { value: 'dark' },
 ]
 
-const colors: { value: ColorTheme; label: string; hex: string }[] = [
-  { value: 'indigo', label: 'Indigo', hex: '#4f46e5' },
-  { value: 'violet', label: 'Violet', hex: '#7c3aed' },
-  { value: 'teal', label: 'Teal', hex: '#0d9488' },
-  { value: 'rose', label: 'Rose', hex: '#e11d48' },
-  { value: 'amber', label: 'Amber', hex: '#d97706' },
-  { value: 'slate', label: 'Slate', hex: '#475569' },
+const colors: { value: ColorTheme; hex: string }[] = [
+  { value: 'indigo', hex: '#4f46e5' },
+  { value: 'violet', hex: '#7c3aed' },
+  { value: 'teal', hex: '#0d9488' },
+  { value: 'rose', hex: '#e11d48' },
+  { value: 'amber', hex: '#d97706' },
+  { value: 'slate', hex: '#475569' },
 ]
 
-const fonts: { value: ThemeFont; label: string; sample: string }[] = [
-  { value: 'sans', label: 'Sans-serif', sample: 'system-ui, -apple-system, sans-serif' },
-  { value: 'serif', label: 'Serif', sample: 'Georgia, serif' },
-  { value: 'mono', label: 'Monospace', sample: 'ui-monospace, monospace' },
+const fonts: { value: ThemeFont; sample: string }[] = [
+  { value: 'sans', sample: 'system-ui, -apple-system, sans-serif' },
+  { value: 'serif', sample: 'Georgia, serif' },
+  { value: 'mono', sample: 'ui-monospace, monospace' },
 ]
 </script>
 
 <template>
   <div class="max-w-lg mx-auto space-y-8 pb-12">
-    <h1 class="text-xl font-semibold text-ink">Theme</h1>
+    <h1 class="text-xl font-semibold text-ink">{{ t('theme.title') }}</h1>
 
     <!-- Mood -->
     <section class="bg-raised border border-edge rounded-card shadow-card p-6 space-y-4">
       <div>
-        <h2 class="font-semibold text-ink">Mood</h2>
-        <p class="text-sm text-ink-muted mt-1">Controls the overall atmosphere of the app.</p>
+        <h2 class="font-semibold text-ink">{{ t('theme.mood.title') }}</h2>
+        <p class="text-sm text-ink-muted mt-1">{{ t('theme.mood.subtitle') }}</p>
       </div>
       <div class="grid grid-cols-3 gap-3">
         <button
@@ -75,9 +77,9 @@ const fonts: { value: ThemeFont; label: string; sample: string }[] = [
             class="text-sm font-medium"
             :class="theme.settings.mood === mood.value ? 'text-accent' : 'text-ink'"
           >
-            {{ mood.label }}
+            {{ t(`theme.mood.${mood.value}.label`) }}
           </span>
-          <span class="text-xs text-ink-muted">{{ mood.description }}</span>
+          <span class="text-xs text-ink-muted">{{ t(`theme.mood.${mood.value}.description`) }}</span>
         </button>
       </div>
     </section>
@@ -85,8 +87,8 @@ const fonts: { value: ThemeFont; label: string; sample: string }[] = [
     <!-- Color theme -->
     <section class="bg-raised border border-edge rounded-card shadow-card p-6 space-y-4">
       <div>
-        <h2 class="font-semibold text-ink">Color</h2>
-        <p class="text-sm text-ink-muted mt-1">Sets the accent color used for interactive elements.</p>
+        <h2 class="font-semibold text-ink">{{ t('theme.color.title') }}</h2>
+        <p class="text-sm text-ink-muted mt-1">{{ t('theme.color.subtitle') }}</p>
       </div>
       <div class="grid grid-cols-3 gap-2">
         <button
@@ -108,7 +110,7 @@ const fonts: { value: ThemeFont; label: string; sample: string }[] = [
             class="text-sm font-medium"
             :class="theme.settings.colorTheme === color.value ? 'text-accent' : 'text-ink'"
           >
-            {{ color.label }}
+            {{ t(`theme.color.${color.value}`) }}
           </span>
         </button>
       </div>
@@ -117,8 +119,8 @@ const fonts: { value: ThemeFont; label: string; sample: string }[] = [
     <!-- Font -->
     <section class="bg-raised border border-edge rounded-card shadow-card p-6 space-y-4">
       <div>
-        <h2 class="font-semibold text-ink">Font</h2>
-        <p class="text-sm text-ink-muted mt-1">Changes the typeface used throughout the app.</p>
+        <h2 class="font-semibold text-ink">{{ t('theme.font.title') }}</h2>
+        <p class="text-sm text-ink-muted mt-1">{{ t('theme.font.subtitle') }}</p>
       </div>
       <div class="space-y-2">
         <button
@@ -137,7 +139,7 @@ const fonts: { value: ThemeFont; label: string; sample: string }[] = [
             :class="theme.settings.font === font.value ? 'text-accent' : 'text-ink'"
             :style="{ fontFamily: font.sample }"
           >
-            {{ font.label }}
+            {{ t(`theme.font.${font.value}`) }}
           </span>
           <span
             class="text-xs text-ink-faint"

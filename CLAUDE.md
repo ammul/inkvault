@@ -71,11 +71,21 @@ npm run preview       # Serve dist/ at localhost:4173 (used by E2E tests)
 | Unlock screen | `src/components/auth/UnlockScreen.vue` |
 | Settings / backup UI | `src/views/SettingsView.vue` |
 | Field dispatch | `src/components/datapoints/DataPointField.vue` |
+| i18n instance | `src/i18n/index.ts` |
+| English locale strings | `src/i18n/locales/en.ts` |
 | Vite config (incl. CSP injection) | `vite.config.ts` |
 | CI/CD pipeline | `.github/workflows/deploy.yml` |
+
+## i18n
+
+All UI strings live in `src/i18n/locales/en.ts`. Components use `const { t } = useI18n()` (vue-i18n v11, Composition API, `legacy: false`).
+
+- `passphrase.ts` returns `labelKey` / `labelParams` — components call `t(strength.labelKey, strength.labelParams ?? {})`.
+- To add a language: add a `src/i18n/locales/<code>.ts` matching the shape of `en.ts` and register it in `src/i18n/index.ts`.
 
 ## Deferred Features (do not implement unless asked)
 
 - Chart library for statistics view
 - Visual design system
 - IndexedDB migration
+- Language selector UI (i18n infrastructure is in place)

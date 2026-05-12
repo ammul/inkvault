@@ -1,7 +1,10 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import type { DataPointConfig, TimeRange, DataPointValue } from '@/types'
 import { useDiaryStore } from '@/stores/diary'
+
+const { t } = useI18n()
 
 const props = defineProps<{
   config: DataPointConfig
@@ -39,7 +42,7 @@ function formatValue(v: DataPointValue): string {
       <span class="text-lg">{{ config.icon }}</span>
       <h3 class="font-semibold text-ink">{{ config.label }}</h3>
       <span v-if="average !== null" class="ml-auto text-sm text-ink-muted">
-        avg <span class="font-medium text-ink">{{ average }}</span>
+        {{ t('statistics.avg') }} <span class="font-medium text-ink">{{ average }}</span>
       </span>
     </div>
 
@@ -53,6 +56,6 @@ function formatValue(v: DataPointValue): string {
         <span class="text-ink">{{ formatValue(item.value) }}</span>
       </div>
     </div>
-    <p v-else class="text-sm text-ink-faint text-center py-3">No data in this range.</p>
+    <p v-else class="text-sm text-ink-faint text-center py-3">{{ t('statistics.noData') }}</p>
   </div>
 </template>

@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import type { TimeRange } from '@/types'
 import { useDiaryStore } from '@/stores/diary'
 import { useDataPointsStore } from '@/stores/datapoints'
 import StatsPanel from '@/components/stats/StatsPanel.vue'
 
+const { t } = useI18n()
 const diary = useDiaryStore()
 const datapoints = useDataPointsStore()
 
@@ -45,15 +47,15 @@ const trackableConfigs = computed(() => datapoints.configs)
 <template>
   <div>
     <div class="flex items-center justify-between mb-6">
-      <h1 class="text-xl font-semibold text-ink">Statistics</h1>
+      <h1 class="text-xl font-semibold text-ink">{{ t('statistics.title') }}</h1>
       <select
         v-model="rangeLabel"
         class="border border-edge rounded-input px-3 py-2 text-sm text-ink bg-raised focus:outline-none focus:ring-2 focus:ring-accent/25 focus:border-accent transition-colors"
       >
-        <option value="week">Last 7 days</option>
-        <option value="month">Last 30 days</option>
-        <option value="year">Last year</option>
-        <option value="all">All time</option>
+        <option value="week">{{ t('statistics.range.week') }}</option>
+        <option value="month">{{ t('statistics.range.month') }}</option>
+        <option value="year">{{ t('statistics.range.year') }}</option>
+        <option value="all">{{ t('statistics.range.all') }}</option>
       </select>
     </div>
 
@@ -66,8 +68,8 @@ const trackableConfigs = computed(() => datapoints.configs)
       />
     </div>
     <p v-else class="text-center text-ink-faint text-sm py-16">
-      No data points yet. Add some in
-      <router-link to="/data" class="text-accent hover:text-accent-dim transition-colors">Data Points</router-link>.
+      {{ t('statistics.noDataPointsPrefix') }}
+      <router-link to="/data" class="text-accent hover:text-accent-dim transition-colors">{{ t('statistics.noDataPointsLink') }}</router-link>.
     </p>
   </div>
 </template>

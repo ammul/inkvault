@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useDiaryStore } from '@/stores/diary'
 import { useDataPointsStore } from '@/stores/datapoints'
 import { useThemeStore } from '@/stores/theme'
@@ -8,6 +9,7 @@ import type { BackupFile } from '@/utils/backup'
 import type { DataPointConfig, DiaryEntry, ThemeSettings } from '@/types'
 import { scorePassphrase, MIN_PASSPHRASE_LENGTH } from '@/utils/passphrase'
 
+const { t } = useI18n()
 const diary = useDiaryStore()
 const datapoints = useDataPointsStore()
 const theme = useThemeStore()
@@ -29,15 +31,15 @@ async function handleExport() {
   exportError.value = ''
   exportDone.value = false
   if (!exportPassphrase.value) {
-    exportError.value = 'Enter a passphrase for the backup.'
+    exportError.value = t('backup.export.errNoPassphrase')
     return
   }
   if (exportPassphrase.value !== exportConfirm.value) {
-    exportError.value = 'Passphrases do not match.'
+    exportError.value = t('backup.export.errMismatch')
     return
   }
   if (!exportStrength.value.acceptable) {
-    exportError.value = `Passphrase must be at least ${MIN_PASSPHRASE_LENGTH} characters.`
+    exportError.value = t('backup.export.errTooShort', { min: MIN_PASSPHRASE_LENGTH })
     return
   }
   exportLoading.value = true
@@ -55,7 +57,7 @@ async function handleExport() {
     exportConfirm.value = ''
     exportDone.value = true
   } catch {
-    exportError.value = 'Export failed.'
+    exportError.value = t('backup.export.errFailed')
   } finally {
     exportLoading.value = false
   }
@@ -81,11 +83,11 @@ async function handleDecrypt() {
   importError.value = ''
   importPreview.value = null
   if (!importFile.value) {
-    importError.value = 'Select a backup file.'
+    importError.value = t('backup.import.errSelectFile')
     return
   }
   if (!importPassphrase.value) {
-    importError.value = 'Enter the backup passphrase.'
+    importError.value = t('backup.import.errEnterPassphrase')
     return
   }
   importLoading.value = true
@@ -96,11 +98,11 @@ async function handleDecrypt() {
   } catch (e) {
     const msg = e instanceof Error ? e.message : ''
     if (msg.includes('passphrase')) {
-      importError.value = 'Wrong backup passphrase.'
+      importError.value = t('backup.import.errWrongPassphrase')
     } else if (msg.includes('version')) {
-      importError.value = 'Unsupported backup format.'
+      importError.value = t('backup.import.errUnsupportedFormat')
     } else {
-      importError.value = 'Could not read backup file — it may be corrupted.'
+      importError.value = t('backup.import.errCorrupted')
     }
   } finally {
     importLoading.value = false
@@ -126,7 +128,7 @@ async function handleImport() {
     importFile.value = null
     importPassphrase.value = ''
   } catch {
-    importError.value = 'Import failed.'
+    importError.value = t('backup.import.errFailed')
   } finally {
     importLoading.value = false
   }
@@ -135,29 +137,26 @@ async function handleImport() {
 
 <template>
   <div class="max-w-lg mx-auto space-y-6 pb-12">
-    <h1 class="text-xl font-semibold text-ink">Backup</h1>
+    <h1 class="text-xl font-semibold text-ink">{{ t('backup.title') }}</h1>
 
     <!-- Export -->
     <section class="bg-raised border border-edge rounded-card shadow-card p-6 space-y-4">
       <div>
-        <h2 class="font-semibold text-ink">Export</h2>
-        <p class="text-sm text-ink-muted mt-1">
-          Download an encrypted backup of all diary entries and data point configs. The file is
-          protected with a separate backup passphrase.
-        </p>
+        <h2 class="font-semibold text-ink">{{ t('backup.export.title') }}</h2>
+        <p class="text-sm text-ink-muted mt-1">{{ t('backup.export.description') }}</p>
       </div>
       <div class="space-y-3">
         <input
           v-model="exportPassphrase"
           type="password"
-          placeholder="Backup passphrase"
+          :placeholder="t('backup.export.passphrase')"
           autocomplete="new-password"
           class="w-full border border-edge rounded-input px-3 py-2 text-sm text-ink bg-surface placeholder:text-ink-faint focus:outline-none focus:ring-2 focus:ring-accent/25 focus:border-accent transition-colors"
         />
         <input
           v-model="exportConfirm"
           type="password"
-          placeholder="Confirm passphrase"
+          :placeholder="t('backup.export.confirmPassphrase')"
           autocomplete="new-password"
           class="w-full border border-edge rounded-input px-3 py-2 text-sm text-ink bg-surface placeholder:text-ink-faint focus:outline-none focus:ring-2 focus:ring-accent/25 focus:border-accent transition-colors"
         />
@@ -175,17 +174,17 @@ async function handleImport() {
             />
           </div>
           <p class="text-xs" :class="exportStrength.acceptable ? 'text-ink-muted' : 'text-danger'">
-            {{ exportStrength.label }}
+            {{ t(exportStrength.labelKey, exportStrength.labelParams ?? {}) }}
           </p>
         </div>
         <p v-if="exportError" class="text-sm text-danger">{{ exportError }}</p>
-        <p v-if="exportDone" class="text-sm text-ok">Backup file downloaded.</p>
+        <p v-if="exportDone" class="text-sm text-ok">{{ t('backup.export.done') }}</p>
         <button
           @click="handleExport"
           :disabled="exportLoading"
           class="w-full bg-accent text-on-accent rounded-input px-4 py-2.5 text-sm font-medium hover:bg-accent-dim disabled:opacity-50 transition-colors"
         >
-          {{ exportLoading ? 'Encrypting…' : 'Download Backup' }}
+          {{ exportLoading ? t('backup.export.encrypting') : t('backup.export.download') }}
         </button>
       </div>
     </section>
@@ -193,11 +192,8 @@ async function handleImport() {
     <!-- Import -->
     <section class="bg-raised border border-edge rounded-card shadow-card p-6 space-y-4">
       <div>
-        <h2 class="font-semibold text-ink">Import</h2>
-        <p class="text-sm text-ink-muted mt-1">
-          Restore from a backup file. Diary entries will be merged; existing entries are overwritten
-          if dates match. Data point configs will be fully replaced.
-        </p>
+        <h2 class="font-semibold text-ink">{{ t('backup.import.title') }}</h2>
+        <p class="text-sm text-ink-muted mt-1">{{ t('backup.import.description') }}</p>
       </div>
       <div class="space-y-3">
         <input
@@ -209,7 +205,7 @@ async function handleImport() {
         <input
           v-model="importPassphrase"
           type="password"
-          placeholder="Backup passphrase"
+          :placeholder="t('backup.import.passphrase')"
           autocomplete="current-password"
           class="w-full border border-edge rounded-input px-3 py-2 text-sm text-ink bg-surface placeholder:text-ink-faint focus:outline-none focus:ring-2 focus:ring-accent/25 focus:border-accent transition-colors"
         />
@@ -218,18 +214,18 @@ async function handleImport() {
           v-if="importPreview"
           class="rounded-input bg-warn-tint border border-warn/30 px-4 py-3 text-sm text-warn space-y-1"
         >
-          <p class="font-medium">Ready to import:</p>
-          <p>{{ importPreview.entries.length }} diary entr{{ importPreview.entries.length === 1 ? 'y' : 'ies' }}</p>
-          <p>{{ importPreview.datapoints.length }} data point config{{ importPreview.datapoints.length === 1 ? '' : 's' }}</p>
+          <p class="font-medium">{{ t('backup.import.previewTitle') }}</p>
+          <p>{{ t('backup.import.previewEntries', importPreview.entries.length) }}</p>
+          <p>{{ t('backup.import.previewDatapoints', importPreview.datapoints.length) }}</p>
         </div>
-        <p v-if="importDone" class="text-sm text-ok">Import complete.</p>
+        <p v-if="importDone" class="text-sm text-ok">{{ t('backup.import.done') }}</p>
         <button
           v-if="!importPreview"
           @click="handleDecrypt"
           :disabled="importLoading"
           class="w-full border border-edge text-ink rounded-input px-4 py-2.5 text-sm font-medium hover:bg-subtle disabled:opacity-50 transition-colors"
         >
-          {{ importLoading ? 'Decrypting…' : 'Decrypt & Preview' }}
+          {{ importLoading ? t('backup.import.decrypting') : t('backup.import.decrypt') }}
         </button>
         <template v-else>
           <button
@@ -237,14 +233,14 @@ async function handleImport() {
             :disabled="importLoading"
             class="w-full bg-warn text-on-accent rounded-input px-4 py-2.5 text-sm font-medium hover:opacity-90 disabled:opacity-50 transition-opacity"
           >
-            {{ importLoading ? 'Importing…' : 'Confirm Import' }}
+            {{ importLoading ? t('backup.import.importing') : t('backup.import.confirm') }}
           </button>
           <button
             @click="importPreview = null"
             :disabled="importLoading"
             class="w-full border border-edge text-ink-muted rounded-input px-4 py-2.5 text-sm font-medium hover:bg-subtle disabled:opacity-50 transition-colors"
           >
-            Cancel
+            {{ t('backup.import.cancel') }}
           </button>
         </template>
       </div>

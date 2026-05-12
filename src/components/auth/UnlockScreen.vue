@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '@/stores/auth'
 import { useDiaryStore } from '@/stores/diary'
 import { useDataPointsStore } from '@/stores/datapoints'
@@ -9,6 +10,7 @@ import { restoreBackup } from '@/utils/backup'
 import type { BackupFile } from '@/utils/backup'
 import { scorePassphrase, MIN_PASSPHRASE_LENGTH } from '@/utils/passphrase'
 
+const { t } = useI18n()
 const router = useRouter()
 const auth = useAuthStore()
 const diary = useDiaryStore()
@@ -51,11 +53,11 @@ function handleFileSelect(e: Event) {
 async function submitImport() {
   importError.value = ''
   if (!importFile.value) {
-    importError.value = 'Select a backup file.'
+    importError.value = t('auth.import.errSelectFile')
     return
   }
   if (!importPassphrase.value) {
-    importError.value = 'Enter the backup passphrase.'
+    importError.value = t('auth.import.errEnterPassphrase')
     return
   }
   importLoading.value = true
@@ -86,11 +88,11 @@ async function submitImport() {
     if (vaultCreated) auth.resetVault()
     const msg = e instanceof Error ? e.message : ''
     if (msg.includes('passphrase')) {
-      importError.value = 'Wrong backup passphrase.'
+      importError.value = t('auth.import.errWrongPassphrase')
     } else if (msg.includes('version')) {
-      importError.value = 'Unsupported backup format.'
+      importError.value = t('auth.import.errUnsupportedFormat')
     } else {
-      importError.value = 'Could not restore backup — file may be corrupted.'
+      importError.value = t('auth.import.errCorrupted')
     }
   } finally {
     importLoading.value = false
@@ -100,15 +102,15 @@ async function submitImport() {
 async function submit() {
   error.value = ''
   if (!passphrase.value) {
-    error.value = 'Please enter a passphrase.'
+    error.value = t('auth.errEnterPassphrase')
     return
   }
   if (!auth.initialized && passphrase.value !== confirmPassphrase.value) {
-    error.value = 'Passphrases do not match.'
+    error.value = t('auth.errMismatch')
     return
   }
   if (!auth.initialized && !strength.value.acceptable) {
-    error.value = `Passphrase must be at least ${MIN_PASSPHRASE_LENGTH} characters.`
+    error.value = t('backup.export.errTooShort', { min: MIN_PASSPHRASE_LENGTH })
     return
   }
   loading.value = true
@@ -120,7 +122,7 @@ async function submit() {
     }
     router.push('/home')
   } catch {
-    error.value = auth.initialized ? 'Wrong passphrase. Try again.' : 'Failed to create vault.'
+    error.value = auth.initialized ? t('auth.errWrongPassphrase') : t('auth.errFailedCreate')
   } finally {
     loading.value = false
     passphrase.value = ''
@@ -134,8 +136,8 @@ async function submit() {
     <div class="w-full max-w-sm">
       <!-- Logo -->
       <div class="text-center mb-8">
-        <p class="text-3xl font-bold text-ink tracking-tight">InkVault</p>
-        <p class="text-sm text-ink-muted mt-1">Your private, encrypted diary</p>
+        <p class="text-3xl font-bold text-ink tracking-tight">{{ t('auth.title') }}</p>
+        <p class="text-sm text-ink-muted mt-1">{{ t('auth.subtitle') }}</p>
       </div>
 
       <div class="bg-raised rounded-card border border-edge shadow-elevated p-8 space-y-5">
@@ -143,12 +145,12 @@ async function submit() {
         <!-- Import from backup -->
         <template v-if="importMode">
           <div>
-            <h2 class="font-semibold text-ink">Restore from backup</h2>
-            <p class="text-sm text-ink-muted mt-1">Select a backup file and enter its passphrase.</p>
+            <h2 class="font-semibold text-ink">{{ t('auth.import.title') }}</h2>
+            <p class="text-sm text-ink-muted mt-1">{{ t('auth.import.subtitle') }}</p>
           </div>
           <div class="space-y-3">
             <div>
-              <label class="block text-xs font-medium text-ink-muted mb-1.5">Backup file</label>
+              <label class="block text-xs font-medium text-ink-muted mb-1.5">{{ t('auth.import.backupFile') }}</label>
               <input
                 type="file"
                 accept=".json"
@@ -157,12 +159,12 @@ async function submit() {
               />
             </div>
             <div>
-              <label class="block text-xs font-medium text-ink-muted mb-1.5">Backup passphrase</label>
+              <label class="block text-xs font-medium text-ink-muted mb-1.5">{{ t('auth.import.backupPassphrase') }}</label>
               <input
                 v-model="importPassphrase"
                 type="password"
                 autocomplete="current-password"
-                placeholder="Enter backup passphrase"
+                :placeholder="t('auth.import.passphrasePlaceholder')"
                 class="w-full border border-edge rounded-input px-3 py-2 text-sm text-ink bg-surface placeholder:text-ink-faint focus:outline-none focus:ring-2 focus:ring-accent/25 focus:border-accent transition-colors"
                 autofocus
               />
@@ -173,14 +175,14 @@ async function submit() {
               :disabled="importLoading"
               class="w-full bg-accent text-on-accent rounded-input py-2.5 text-sm font-semibold hover:bg-accent-dim disabled:opacity-50 transition-colors"
             >
-              {{ importLoading ? 'Restoring…' : 'Restore Vault' }}
+              {{ importLoading ? t('auth.import.restoring') : t('auth.import.restoreBtn') }}
             </button>
             <button
               @click="exitImportMode"
               :disabled="importLoading"
               class="w-full text-sm text-ink-muted hover:text-ink transition-colors py-1"
             >
-              ← Back
+              {{ t('auth.import.backBtn') }}
             </button>
           </div>
         </template>
@@ -189,21 +191,21 @@ async function submit() {
         <template v-else>
           <div>
             <h2 class="font-semibold text-ink">
-              {{ auth.initialized ? 'Welcome back' : 'Create your vault' }}
+              {{ auth.initialized ? t('auth.unlock.heading') : t('auth.createVault.heading') }}
             </h2>
             <p class="text-sm text-ink-muted mt-1">
-              {{ auth.initialized ? 'Enter your passphrase to unlock.' : 'Choose a strong passphrase to get started.' }}
+              {{ auth.initialized ? t('auth.unlock.hint') : t('auth.createVault.hint') }}
             </p>
           </div>
           <form @submit.prevent="submit" class="space-y-3">
             <div>
-              <label class="block text-xs font-medium text-ink-muted mb-1.5">Passphrase</label>
+              <label class="block text-xs font-medium text-ink-muted mb-1.5">{{ t('auth.passphrase') }}</label>
               <input
                 v-model="passphrase"
                 type="password"
                 :autocomplete="auth.initialized ? 'current-password' : 'new-password'"
                 class="w-full border border-edge rounded-input px-3 py-2 text-sm text-ink bg-surface placeholder:text-ink-faint focus:outline-none focus:ring-2 focus:ring-accent/25 focus:border-accent transition-colors"
-                :placeholder="auth.initialized ? 'Enter passphrase' : 'Choose a strong passphrase'"
+                :placeholder="auth.initialized ? t('auth.unlock.passphrasePlaceholder') : t('auth.createVault.passphrasePlaceholder')"
                 autofocus
               />
             </div>
@@ -225,17 +227,17 @@ async function submit() {
               <p
                 class="text-xs"
                 :class="strength.acceptable ? 'text-ink-muted' : 'text-danger'"
-              >{{ strength.label }}</p>
+              >{{ t(strength.labelKey, strength.labelParams ?? {}) }}</p>
             </div>
 
             <div v-if="!auth.initialized">
-              <label class="block text-xs font-medium text-ink-muted mb-1.5">Confirm passphrase</label>
+              <label class="block text-xs font-medium text-ink-muted mb-1.5">{{ t('auth.confirmPassphrase') }}</label>
               <input
                 v-model="confirmPassphrase"
                 type="password"
                 autocomplete="new-password"
                 class="w-full border border-edge rounded-input px-3 py-2 text-sm text-ink bg-surface placeholder:text-ink-faint focus:outline-none focus:ring-2 focus:ring-accent/25 focus:border-accent transition-colors"
-                placeholder="Repeat passphrase"
+                :placeholder="t('auth.createVault.repeatPlaceholder')"
               />
             </div>
 
@@ -246,11 +248,11 @@ async function submit() {
               :disabled="loading"
               class="w-full bg-accent text-on-accent rounded-input py-2.5 text-sm font-semibold hover:bg-accent-dim disabled:opacity-50 transition-colors"
             >
-              {{ loading ? 'Unlocking…' : auth.initialized ? 'Unlock' : 'Create Vault' }}
+              {{ loading ? t('auth.unlocking') : auth.initialized ? t('auth.unlockBtn') : t('auth.createVaultBtn') }}
             </button>
 
             <p v-if="!auth.initialized" class="text-xs text-ink-faint text-center leading-relaxed">
-              Losing your passphrase means losing all your data. There is no recovery.
+              {{ t('auth.noRecovery') }}
             </p>
             <p v-if="!auth.initialized" class="text-center">
               <button
@@ -258,7 +260,7 @@ async function submit() {
                 @click="enterImportMode"
                 class="text-sm text-accent hover:text-accent-dim transition-colors"
               >
-                Restore from a backup file →
+                {{ t('auth.restoreLink') }}
               </button>
             </p>
           </form>

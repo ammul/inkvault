@@ -5,7 +5,8 @@
       "Bash(npm info:*)",
       "Bash(npm run *)",
       "Bash(npx playwright *)",
-      "Bash(npm list *)"
+      "Bash(npm list *)",
+      "Bash(npm install *)"
     ]
   }
 }
