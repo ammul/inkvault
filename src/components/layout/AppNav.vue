@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useDiaryStore } from '@/stores/diary'
@@ -9,11 +10,18 @@ const auth = useAuthStore()
 const diary = useDiaryStore()
 const datapoints = useDataPointsStore()
 
+const menuOpen = ref(false)
+
 function lock() {
+  menuOpen.value = false
   auth.lock()
   diary.reset()
   datapoints.reset()
   router.push('/')
+}
+
+function closeMenu() {
+  menuOpen.value = false
 }
 
 const navLinks = [
@@ -26,26 +34,69 @@ const navLinks = [
 </script>
 
 <template>
-  <nav class="bg-raised border-b border-edge px-4 py-3 flex items-center justify-between sticky top-0 z-40">
-    <router-link
-      to="/home"
-      class="font-bold text-accent text-base tracking-tight"
-    >
-      InkVault
-    </router-link>
-    <div class="flex gap-1 items-center">
+  <nav class="bg-raised border-b border-edge sticky top-0 z-40">
+    <div class="px-4 py-3 flex items-center justify-between">
+      <router-link
+        to="/home"
+        class="font-bold text-accent text-base tracking-tight"
+        @click="closeMenu"
+      >
+        InkVault
+      </router-link>
+
+      <!-- Desktop nav -->
+      <div class="hidden md:flex gap-1 items-center">
+        <router-link
+          v-for="link in navLinks"
+          :key="link.to"
+          :to="link.to"
+          class="text-sm text-ink-muted hover:text-ink px-3 py-1.5 rounded-input transition-colors"
+          active-class="text-accent bg-accent-tint font-medium"
+        >
+          {{ link.label }}
+        </router-link>
+        <button
+          @click="lock"
+          class="text-sm text-danger hover:text-danger-dim px-3 py-1.5 rounded-input transition-colors ml-1"
+        >
+          Lock
+        </button>
+      </div>
+
+      <!-- Mobile burger -->
+      <button
+        class="md:hidden p-1.5 text-ink-muted hover:text-ink transition-colors"
+        :aria-expanded="menuOpen"
+        aria-label="Toggle menu"
+        @click="menuOpen = !menuOpen"
+      >
+        <svg v-if="!menuOpen" width="20" height="20" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+          <rect y="3" width="20" height="2" rx="1"/>
+          <rect y="9" width="20" height="2" rx="1"/>
+          <rect y="15" width="20" height="2" rx="1"/>
+        </svg>
+        <svg v-else width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+          <line x1="4" y1="4" x2="16" y2="16"/>
+          <line x1="16" y1="4" x2="4" y2="16"/>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Mobile dropdown -->
+    <div v-if="menuOpen" class="md:hidden border-t border-edge px-4 py-2 flex flex-col">
       <router-link
         v-for="link in navLinks"
         :key="link.to"
         :to="link.to"
-        class="text-sm text-ink-muted hover:text-ink px-3 py-1.5 rounded-input transition-colors"
+        class="text-sm text-ink-muted hover:text-ink px-3 py-2.5 rounded-input transition-colors"
         active-class="text-accent bg-accent-tint font-medium"
+        @click="closeMenu"
       >
         {{ link.label }}
       </router-link>
       <button
         @click="lock"
-        class="text-sm text-danger hover:text-danger-dim px-3 py-1.5 rounded-input transition-colors ml-1"
+        class="text-sm text-danger hover:text-danger-dim px-3 py-2.5 rounded-input transition-colors text-left"
       >
         Lock
       </button>

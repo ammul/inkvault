@@ -4,7 +4,7 @@ const toast = useToastStore()
 </script>
 
 <template>
-  <div class="fixed bottom-4 right-4 flex flex-col gap-2 z-50 pointer-events-none">
+  <div class="fixed bottom-4 left-4 right-4 sm:left-auto flex flex-col gap-2 z-50 pointer-events-none">
     <div
       v-for="t in toast.toasts"
       :key="t.id"
