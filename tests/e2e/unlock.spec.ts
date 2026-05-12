@@ -7,7 +7,7 @@ test.beforeEach(async ({ page }) => {
 })
 
 test('first visit shows the vault setup form', async ({ page }) => {
-  await expect(page.getByText('Create a passphrase to get started.')).toBeVisible()
+  await expect(page.getByText('Choose a strong passphrase to get started.')).toBeVisible()
   await expect(page.getByPlaceholder('Choose a strong passphrase')).toBeVisible()
   await expect(page.getByPlaceholder('Repeat passphrase')).toBeVisible()
 })
@@ -16,7 +16,7 @@ test('creating a vault unlocks the app and shows the home screen', async ({ page
   await page.getByPlaceholder('Choose a strong passphrase').fill('my-test-passphrase-123')
   await page.getByPlaceholder('Repeat passphrase').fill('my-test-passphrase-123')
   await page.getByRole('button', { name: 'Create Vault' }).click()
-  await expect(page.getByText('Welcome to InkVault')).toBeVisible()
+  await expect(page.getByText('Welcome back')).toBeVisible()
 })
 
 test('mismatched passphrases show an error', async ({ page }) => {
@@ -30,7 +30,7 @@ test('reload requires passphrase again', async ({ page }) => {
   await page.getByPlaceholder('Choose a strong passphrase').fill('my-test-passphrase-123')
   await page.getByPlaceholder('Repeat passphrase').fill('my-test-passphrase-123')
   await page.getByRole('button', { name: 'Create Vault' }).click()
-  await expect(page.getByText('Welcome to InkVault')).toBeVisible()
+  await expect(page.getByText('Welcome back')).toBeVisible()
 
   await page.reload()
   await expect(page.getByText('Enter your passphrase to unlock.')).toBeVisible()
@@ -42,6 +42,7 @@ test('wrong passphrase shows an error', async ({ page }) => {
   await page.getByPlaceholder('Choose a strong passphrase').fill('correct-passphrase')
   await page.getByPlaceholder('Repeat passphrase').fill('correct-passphrase')
   await page.getByRole('button', { name: 'Create Vault' }).click()
+  await expect(page.getByText('Welcome back')).toBeVisible()
   await page.reload()
 
   await page.getByPlaceholder('Enter passphrase').fill('wrong-passphrase')
@@ -53,11 +54,12 @@ test('correct passphrase after setup unlocks the app', async ({ page }) => {
   await page.getByPlaceholder('Choose a strong passphrase').fill('correct-passphrase')
   await page.getByPlaceholder('Repeat passphrase').fill('correct-passphrase')
   await page.getByRole('button', { name: 'Create Vault' }).click()
+  await expect(page.getByText('Welcome back')).toBeVisible()
   await page.reload()
 
   await page.getByPlaceholder('Enter passphrase').fill('correct-passphrase')
   await page.getByRole('button', { name: 'Unlock' }).click()
-  await expect(page.getByText('Welcome to InkVault')).toBeVisible()
+  await expect(page.getByText('Welcome back')).toBeVisible()
 })
 
 test('passphrase is never stored in localStorage', async ({ page }) => {

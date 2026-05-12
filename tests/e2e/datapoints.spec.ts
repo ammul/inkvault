@@ -4,15 +4,15 @@ async function setupVault(page: import('@playwright/test').Page) {
   await page.goto('/')
   await page.evaluate(() => localStorage.clear())
   await page.reload()
-  await page.getByPlaceholder('Choose a strong passphrase').fill('e2e-dp-pass')
-  await page.getByPlaceholder('Repeat passphrase').fill('e2e-dp-pass')
+  await page.getByPlaceholder('Choose a strong passphrase').fill('e2e-dp-passphrase')
+  await page.getByPlaceholder('Repeat passphrase').fill('e2e-dp-passphrase')
   await page.getByRole('button', { name: 'Create Vault' }).click()
-  await expect(page.getByText('Welcome to InkVault')).toBeVisible()
+  await expect(page.getByText('Welcome back')).toBeVisible()
 }
 
 test('creating a data point appears in the list', async ({ page }) => {
   await setupVault(page)
-  await page.goto('/#/data')
+  await page.goto('/inkvault/#/data')
   await page.getByRole('button', { name: '+ Add' }).click()
   await page.getByPlaceholder('e.g. Mood').fill('Energy')
   await page.getByRole('button', { name: 'Add Data Point' }).click()
@@ -21,7 +21,7 @@ test('creating a data point appears in the list', async ({ page }) => {
 
 test('editing a data point updates its label', async ({ page }) => {
   await setupVault(page)
-  await page.goto('/#/data')
+  await page.goto('/inkvault/#/data')
   await page.getByRole('button', { name: '+ Add' }).click()
   await page.getByPlaceholder('e.g. Mood').fill('Mood')
   await page.getByRole('button', { name: 'Add Data Point' }).click()
@@ -36,7 +36,7 @@ test('editing a data point updates its label', async ({ page }) => {
 
 test('deleting a data point removes it from the list', async ({ page }) => {
   await setupVault(page)
-  await page.goto('/#/data')
+  await page.goto('/inkvault/#/data')
   await page.getByRole('button', { name: '+ Add' }).click()
   await page.getByPlaceholder('e.g. Mood').fill('Sleep')
   await page.getByRole('button', { name: 'Add Data Point' }).click()
@@ -51,14 +51,15 @@ test('data point appears as a field in the diary day entry', async ({ page }) =>
   await setupVault(page)
 
   // Create a data point
-  await page.goto('/#/data')
+  await page.goto('/inkvault/#/data')
   await page.getByRole('button', { name: '+ Add' }).click()
   await page.getByPlaceholder('e.g. Mood').fill('Mood')
   await page.getByRole('button', { name: 'Add Data Point' }).click()
 
   // Open today's diary entry
   const today = new Date().toISOString().slice(0, 10)
-  await page.goto(`/#/diary/${today}`)
-  await expect(page.getByText('Data Points')).toBeVisible()
+  await page.goto(`/inkvault/#/diary/${today}`)
+  await expect(page.getByPlaceholder('What happened today?')).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Data Points' })).toBeVisible()
   await expect(page.getByText('Mood')).toBeVisible()
 })

@@ -27,6 +27,7 @@ function load() {
 
 onMounted(load)
 watch(date, load)
+watch(() => diary.loaded, (loaded) => { if (loaded) load() })
 
 async function save() {
   saving.value = true
