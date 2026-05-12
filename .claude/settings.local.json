@@ -4,7 +4,8 @@
       "Bash(npm --version)",
       "Bash(npm info:*)",
       "Bash(npm run *)",
-      "Bash(npx playwright *)"
+      "Bash(npx playwright *)",
+      "Bash(npm list *)"
     ]
   }
 }
