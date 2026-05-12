@@ -15,10 +15,10 @@ const emit = defineEmits<{ 'update:modelValue': [value: boolean] }>()
       type="button"
       @click="emit('update:modelValue', true)"
       :class="[
-        'text-xs px-3 py-1 rounded-full border transition',
+        'text-xs px-4 py-1.5 rounded-pill border transition-colors',
         modelValue === true
-          ? 'bg-indigo-600 text-white border-indigo-600'
-          : 'border-gray-300 text-gray-600 hover:border-indigo-400',
+          ? 'bg-accent text-on-accent border-accent'
+          : 'border-edge text-ink-muted hover:border-accent hover:text-accent',
       ]"
     >
       {{ config.trueLabel }}
@@ -27,10 +27,10 @@ const emit = defineEmits<{ 'update:modelValue': [value: boolean] }>()
       type="button"
       @click="emit('update:modelValue', false)"
       :class="[
-        'text-xs px-3 py-1 rounded-full border transition',
+        'text-xs px-4 py-1.5 rounded-pill border transition-colors',
         modelValue === false
-          ? 'bg-indigo-600 text-white border-indigo-600'
-          : 'border-gray-300 text-gray-600 hover:border-indigo-400',
+          ? 'bg-accent text-on-accent border-accent'
+          : 'border-edge text-ink-muted hover:border-accent hover:text-accent',
       ]"
     >
       {{ config.falseLabel }}

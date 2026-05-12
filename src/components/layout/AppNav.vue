@@ -17,28 +17,37 @@ function lock() {
 }
 
 const navLinks = [
-  { to: '/diary', label: '📓 Diary' },
-  { to: '/stats', label: '📊 Stats' },
-  { to: '/data', label: '⚙️ Data Points' },
-  { to: '/settings', label: '💾 Backup' },
+  { to: '/diary', label: 'Diary' },
+  { to: '/stats', label: 'Stats' },
+  { to: '/data', label: 'Data Points' },
+  { to: '/theme', label: 'Theme' },
+  { to: '/settings', label: 'Backup' },
 ]
 </script>
 
 <template>
-  <nav class="bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between">
-    <router-link to="/home" class="font-bold text-indigo-600 text-lg">🔏 InkVault</router-link>
-    <div class="flex gap-4 items-center">
+  <nav class="bg-raised border-b border-edge px-4 py-3 flex items-center justify-between sticky top-0 z-40">
+    <router-link
+      to="/home"
+      class="font-bold text-accent text-base tracking-tight"
+    >
+      InkVault
+    </router-link>
+    <div class="flex gap-1 items-center">
       <router-link
         v-for="link in navLinks"
         :key="link.to"
         :to="link.to"
-        class="text-sm text-gray-600 hover:text-indigo-600 transition"
-        active-class="text-indigo-600 font-semibold"
+        class="text-sm text-ink-muted hover:text-ink px-3 py-1.5 rounded-input transition-colors"
+        active-class="text-accent bg-accent-tint font-medium"
       >
         {{ link.label }}
       </router-link>
-      <button @click="lock" class="text-sm text-red-500 hover:text-red-700 transition ml-2">
-        🔒 Lock
+      <button
+        @click="lock"
+        class="text-sm text-danger hover:text-danger-dim px-3 py-1.5 rounded-input transition-colors ml-1"
+      >
+        Lock
       </button>
     </div>
   </nav>

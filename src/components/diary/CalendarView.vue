@@ -77,36 +77,49 @@ function openDay(date: string | null) {
 </script>
 
 <template>
-  <div>
-    <div class="flex items-center justify-between mb-4">
-      <button @click="prevMonth" class="px-3 py-1 rounded hover:bg-gray-100 transition text-lg">
+  <div class="bg-raised rounded-card border border-edge shadow-card p-5">
+    <!-- Month navigation -->
+    <div class="flex items-center justify-between mb-5">
+      <button
+        @click="prevMonth"
+        class="w-8 h-8 flex items-center justify-center rounded-input text-ink-muted hover:bg-subtle hover:text-ink transition-colors text-lg leading-none"
+      >
         ‹
       </button>
-      <span class="font-semibold text-gray-800">{{ monthLabel }}</span>
-      <button @click="nextMonth" class="px-3 py-1 rounded hover:bg-gray-100 transition text-lg">
+      <span class="font-semibold text-ink">{{ monthLabel }}</span>
+      <button
+        @click="nextMonth"
+        class="w-8 h-8 flex items-center justify-center rounded-input text-ink-muted hover:bg-subtle hover:text-ink transition-colors text-lg leading-none"
+      >
         ›
       </button>
     </div>
 
-    <div class="grid grid-cols-7 gap-1 text-center text-xs text-gray-400 mb-1">
+    <!-- Day-of-week headers -->
+    <div class="grid grid-cols-7 gap-1 text-center text-xs font-medium text-ink-faint mb-2">
       <div v-for="d in ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa']" :key="d">{{ d }}</div>
     </div>
 
+    <!-- Day grid -->
     <div class="grid grid-cols-7 gap-1">
       <div
         v-for="(cell, i) in days"
         :key="i"
         @click="openDay(cell.date)"
         :class="[
-          'aspect-square flex flex-col items-center justify-center rounded-lg text-sm transition select-none',
-          cell.date ? 'cursor-pointer hover:bg-indigo-50' : '',
-          cell.isToday ? 'bg-indigo-100 font-bold text-indigo-700' : '',
-          cell.hasEntry && !cell.isToday ? 'bg-emerald-50 text-emerald-700 font-medium' : '',
-          !cell.hasEntry && !cell.isToday && cell.date ? 'text-gray-700' : '',
+          'aspect-square flex flex-col items-center justify-center rounded-input text-sm transition-colors select-none',
+          cell.date ? 'cursor-pointer' : '',
+          cell.isToday
+            ? 'bg-accent text-on-accent font-semibold'
+            : cell.hasEntry
+              ? 'bg-accent-tint text-accent font-medium hover:bg-accent/20'
+              : cell.date
+                ? 'text-ink hover:bg-subtle'
+                : 'text-ink-faint',
         ]"
       >
         <span v-if="cell.day">{{ cell.day }}</span>
-        <span v-if="cell.hasEntry" class="block w-1 h-1 rounded-full bg-current mt-0.5" />
+        <span v-if="cell.hasEntry && !cell.isToday" class="block w-1 h-1 rounded-pill bg-accent mt-0.5" />
       </div>
     </div>
   </div>

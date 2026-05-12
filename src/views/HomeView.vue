@@ -26,18 +26,18 @@ const cards = [
 </script>
 
 <template>
-  <div class="max-w-md mx-auto mt-8 space-y-4">
-    <h1 class="text-2xl font-bold text-gray-800 text-center mb-6">Welcome to InkVault</h1>
+  <div class="max-w-md mx-auto mt-4 space-y-3">
+    <h1 class="text-xl font-semibold text-ink mb-6">Welcome back</h1>
     <button
       v-for="card in cards"
       :key="card.to"
       @click="router.push(card.to)"
-      class="w-full flex items-start gap-4 p-5 bg-white rounded-xl border border-gray-200 hover:border-indigo-300 hover:shadow-sm transition text-left"
+      class="w-full flex items-start gap-4 p-5 bg-raised rounded-card border border-edge shadow-card hover:border-accent/40 hover:shadow-elevated transition-all text-left"
     >
-      <span class="text-3xl leading-none">{{ card.icon }}</span>
+      <span class="text-2xl leading-none mt-0.5">{{ card.icon }}</span>
       <div>
-        <p class="font-semibold text-gray-800">{{ card.title }}</p>
-        <p class="text-sm text-gray-500 mt-0.5">{{ card.description }}</p>
+        <p class="font-medium text-ink">{{ card.title }}</p>
+        <p class="text-sm text-ink-muted mt-0.5">{{ card.description }}</p>
       </div>
     </button>
   </div>

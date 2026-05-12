@@ -1,11 +1,13 @@
 <script setup lang="ts">
 import { onMounted, onUnmounted, watch } from 'vue'
 import { useAuthStore } from '@/stores/auth'
+import { useThemeStore } from '@/stores/theme'
 import UnlockScreen from '@/components/auth/UnlockScreen.vue'
 import AppShell from '@/components/layout/AppShell.vue'
 import Toast from '@/components/ui/Toast.vue'
 
 const auth = useAuthStore()
+const theme = useThemeStore()
 
 const IDLE_TIMEOUT_MS = 10 * 60 * 1000
 let idleTimer: ReturnType<typeof setTimeout> | null = null
@@ -45,9 +47,12 @@ function handleVisibilityChange() {
 
 watch(
   () => auth.isUnlocked,
-  (unlocked) => {
+  async (unlocked) => {
     if (unlocked) {
       attachIdleListeners()
+      if (!theme.loaded) {
+        await theme.load()
+      }
     } else {
       detachIdleListeners()
     }

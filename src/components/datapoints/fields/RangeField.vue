@@ -13,7 +13,7 @@ const currentValue = () => props.modelValue ?? props.config.min
 
 <template>
   <div class="flex items-center gap-3">
-    <span class="text-xs text-gray-400 w-6 text-right">{{ config.min }}</span>
+    <span class="text-xs text-ink-faint w-6 text-right shrink-0">{{ config.min }}</span>
     <input
       type="range"
       :min="config.min"
@@ -21,9 +21,9 @@ const currentValue = () => props.modelValue ?? props.config.min
       :step="config.step"
       :value="currentValue()"
       @input="emit('update:modelValue', Number(($event.target as HTMLInputElement).value))"
-      class="flex-1 accent-indigo-600"
+      class="flex-1 accent-accent"
     />
-    <span class="text-xs text-gray-400 w-6">{{ config.max }}</span>
-    <span class="text-sm font-medium text-gray-700 w-8 text-right">{{ currentValue() }}</span>
+    <span class="text-xs text-ink-faint w-6 shrink-0">{{ config.max }}</span>
+    <span class="text-sm font-semibold text-ink w-8 text-right shrink-0">{{ currentValue() }}</span>
   </div>
 </template>

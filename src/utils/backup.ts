@@ -1,5 +1,5 @@
 import { encrypt, decrypt } from './crypto'
-import type { DataPointConfig, DiaryEntry } from '@/types'
+import type { DataPointConfig, DiaryEntry, ThemeSettings } from '@/types'
 
 const BACKUP_SENTINEL = 'inkvault-backup-v1'
 const PBKDF2_ITERATIONS = 600_000
@@ -38,12 +38,14 @@ export interface BackupFile {
   verify: string
   datapoints: string
   entries: Record<string, string>
+  theme?: string
 }
 
 export async function createBackup(
   passphrase: string,
   datapointConfigs: DataPointConfig[],
   diaryEntries: DiaryEntry[],
+  themeSettings?: ThemeSettings,
 ): Promise<BackupFile> {
   const salt = crypto.getRandomValues(new Uint8Array(16))
   const key = await deriveBackupKey(passphrase, salt)
@@ -53,7 +55,7 @@ export async function createBackup(
   for (const entry of diaryEntries) {
     encEntries[entry.date] = await encrypt(key, JSON.stringify(entry))
   }
-  return {
+  const result: BackupFile = {
     version: 1,
     exportedAt: new Date().toISOString(),
     salt: toBase64(salt),
@@ -61,12 +63,16 @@ export async function createBackup(
     datapoints: encDatapoints,
     entries: encEntries,
   }
+  if (themeSettings) {
+    result.theme = await encrypt(key, JSON.stringify(themeSettings))
+  }
+  return result
 }
 
 export async function restoreBackup(
   backup: BackupFile,
   passphrase: string,
-): Promise<{ datapoints: DataPointConfig[]; entries: DiaryEntry[] }> {
+): Promise<{ datapoints: DataPointConfig[]; entries: DiaryEntry[]; theme: ThemeSettings | null }> {
   if (backup.version !== 1) throw new Error('Unsupported backup version')
   const salt = fromBase64(backup.salt)
   const key = await deriveBackupKey(passphrase, salt)
@@ -83,5 +89,13 @@ export async function restoreBackup(
       async (blob) => JSON.parse(await decrypt(key, blob)) as DiaryEntry,
     ),
   )
-  return { datapoints, entries }
+  let theme: ThemeSettings | null = null
+  if (backup.theme) {
+    try {
+      theme = JSON.parse(await decrypt(key, backup.theme)) as ThemeSettings
+    } catch {
+      // old backup without theme — ignore
+    }
+  }
+  return { datapoints, entries, theme }
 }

@@ -54,3 +54,19 @@ export interface TimeRange {
   end: string
   label: 'week' | 'month' | 'year' | 'all'
 }
+
+export type ColorTheme = 'indigo' | 'violet' | 'teal' | 'rose' | 'amber' | 'slate'
+export type ThemeFont = 'sans' | 'serif' | 'mono'
+export type ThemeMood = 'minimal' | 'cozy' | 'dark'
+
+export interface ThemeSettings {
+  colorTheme: ColorTheme
+  font: ThemeFont
+  mood: ThemeMood
+}
+
+export const DEFAULT_THEME: ThemeSettings = {
+  colorTheme: 'indigo',
+  font: 'sans',
+  mood: 'minimal',
+}

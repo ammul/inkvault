@@ -58,23 +58,29 @@ const displayDate = computed(() => {
 </script>
 
 <template>
-  <div class="space-y-4">
+  <div class="space-y-5">
+    <!-- Header -->
     <div class="flex items-center justify-between">
-      <h2 class="text-lg font-semibold text-gray-800">{{ displayDate }}</h2>
-      <button @click="router.push('/diary')" class="text-sm text-gray-400 hover:text-gray-600">
+      <h2 class="text-lg font-semibold text-ink">{{ displayDate }}</h2>
+      <button
+        @click="router.push('/diary')"
+        class="text-sm text-ink-muted hover:text-ink transition-colors px-2 py-1 rounded-input hover:bg-subtle"
+      >
         ← Back
       </button>
     </div>
 
+    <!-- Free text -->
     <textarea
       v-model="text"
       placeholder="What happened today?"
-      rows="6"
-      class="w-full border border-gray-200 rounded-lg p-3 text-gray-700 resize-none focus:outline-none focus:ring-2 focus:ring-indigo-500"
+      rows="7"
+      class="w-full border border-edge rounded-card px-4 py-3 text-sm text-ink bg-raised placeholder:text-ink-faint resize-none focus:outline-none focus:ring-2 focus:ring-accent/25 focus:border-accent transition-colors"
     />
 
-    <div v-if="datapoints.configs.length" class="space-y-3">
-      <h3 class="text-sm font-medium text-gray-400 uppercase tracking-wide">Data Points</h3>
+    <!-- Data points -->
+    <div v-if="datapoints.configs.length" class="space-y-2">
+      <h3 class="text-xs font-medium text-ink-faint uppercase tracking-widest">Data Points</h3>
       <DataPointField
         v-for="config in datapoints.configs"
         :key="config.id"
@@ -84,13 +90,14 @@ const displayDate = computed(() => {
       />
     </div>
 
-    <div class="flex items-center gap-3">
+    <!-- Save -->
+    <div>
       <button
         @click="save"
         :disabled="saving"
-        class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 disabled:opacity-50 transition text-sm font-medium"
+        class="bg-accent text-on-accent px-5 py-2 rounded-input text-sm font-medium hover:bg-accent-dim disabled:opacity-50 transition-colors"
       >
-        {{ saving ? 'Saving…' : 'Save' }}
+        {{ saving ? 'Saving…' : 'Save entry' }}
       </button>
     </div>
   </div>

@@ -4,6 +4,7 @@ import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useDiaryStore } from '@/stores/diary'
 import { useDataPointsStore } from '@/stores/datapoints'
+import { useThemeStore } from '@/stores/theme'
 import { restoreBackup } from '@/utils/backup'
 import type { BackupFile } from '@/utils/backup'
 import { scorePassphrase, MIN_PASSPHRASE_LENGTH } from '@/utils/passphrase'
@@ -12,6 +13,7 @@ const router = useRouter()
 const auth = useAuthStore()
 const diary = useDiaryStore()
 const datapoints = useDataPointsStore()
+const theme = useThemeStore()
 
 const passphrase = ref('')
 const confirmPassphrase = ref('')
@@ -61,17 +63,22 @@ async function submitImport() {
   try {
     const text = await importFile.value.text()
     const backup = JSON.parse(text) as BackupFile
-    const { datapoints: importedConfigs, entries: importedEntries } = await restoreBackup(
+    const { datapoints: importedConfigs, entries: importedEntries, theme: importedTheme } = await restoreBackup(
       backup,
       importPassphrase.value,
     )
     await auth.initializeVault(importPassphrase.value)
     vaultCreated = true
+    if (importedTheme) {
+      Object.assign(theme.settings, importedTheme)
+      theme.loaded = true
+      theme.apply()
+      await theme.save()
+    }
     for (const entry of importedEntries) {
       await diary.saveEntry(entry)
     }
     await datapoints.replaceConfigs(importedConfigs)
-    // Mark stores as loaded so views don't re-read before all writes are committed
     await diary.loadEntries()
     await datapoints.loadConfigs()
     router.push('/home')
@@ -123,121 +130,141 @@ async function submit() {
 </script>
 
 <template>
-  <div class="min-h-screen flex items-center justify-center bg-gray-50 p-4">
-    <div class="w-full max-w-sm bg-white rounded-xl shadow-md p-8">
-      <h1 class="text-2xl font-bold text-center mb-2">🔏 InkVault</h1>
+  <div class="min-h-screen flex items-center justify-center bg-surface p-4">
+    <div class="w-full max-w-sm">
+      <!-- Logo -->
+      <div class="text-center mb-8">
+        <p class="text-3xl font-bold text-ink tracking-tight">InkVault</p>
+        <p class="text-sm text-ink-muted mt-1">Your private, encrypted diary</p>
+      </div>
 
-      <!-- Import from backup -->
-      <template v-if="importMode">
-        <p class="text-center text-gray-500 text-sm mb-6">
-          Select a backup file and enter its passphrase to restore your vault.
-        </p>
-        <div class="space-y-4">
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Backup file</label>
-            <input
-              type="file"
-              accept=".json"
-              @change="handleFileSelect"
-              class="w-full text-sm text-gray-600 file:mr-3 file:rounded-lg file:border-0 file:bg-indigo-50 file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-indigo-600 hover:file:bg-indigo-100 cursor-pointer"
-            />
-          </div>
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Backup passphrase</label>
-            <input
-              v-model="importPassphrase"
-              type="password"
-              autocomplete="current-password"
-              placeholder="Enter backup passphrase"
-              class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              autofocus
-            />
-          </div>
-          <p v-if="importError" class="text-red-600 text-sm">{{ importError }}</p>
-          <button
-            @click="submitImport"
-            :disabled="importLoading"
-            class="w-full bg-indigo-600 text-white rounded-lg py-2 font-semibold hover:bg-indigo-700 disabled:opacity-50 transition"
-          >
-            {{ importLoading ? 'Restoring…' : 'Restore Vault' }}
-          </button>
-          <button
-            @click="exitImportMode"
-            :disabled="importLoading"
-            class="w-full text-sm text-gray-500 hover:text-gray-700 transition"
-          >
-            ← Back
-          </button>
-        </div>
-      </template>
+      <div class="bg-raised rounded-card border border-edge shadow-elevated p-8 space-y-5">
 
-      <!-- Create / Unlock -->
-      <template v-else>
-        <p class="text-center text-gray-500 text-sm mb-6">
-          {{ auth.initialized ? 'Enter your passphrase to unlock.' : 'Create a passphrase to get started.' }}
-        </p>
-        <form @submit.prevent="submit" class="space-y-4">
+        <!-- Import from backup -->
+        <template v-if="importMode">
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Passphrase</label>
-            <input
-              v-model="passphrase"
-              type="password"
-              autocomplete="current-password"
-              class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              :placeholder="auth.initialized ? 'Enter passphrase' : 'Choose a strong passphrase'"
-              autofocus
-            />
+            <h2 class="font-semibold text-ink">Restore from backup</h2>
+            <p class="text-sm text-ink-muted mt-1">Select a backup file and enter its passphrase.</p>
           </div>
-          <div v-if="!auth.initialized && passphrase.length > 0" class="space-y-1">
-            <div class="flex gap-1">
-              <div
-                v-for="i in 4"
-                :key="i"
-                class="h-1 flex-1 rounded-full"
-                :class="i <= strength.score
-                  ? strength.score >= 3 ? 'bg-green-500'
-                  : strength.score === 2 ? 'bg-yellow-500'
-                  : 'bg-red-500'
-                  : 'bg-gray-200'"
+          <div class="space-y-3">
+            <div>
+              <label class="block text-xs font-medium text-ink-muted mb-1.5">Backup file</label>
+              <input
+                type="file"
+                accept=".json"
+                @change="handleFileSelect"
+                class="w-full text-sm text-ink-muted file:mr-3 file:rounded-input file:border-0 file:bg-accent-tint file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-accent hover:file:bg-accent-tint cursor-pointer"
               />
             </div>
-            <p
-              class="text-xs"
-              :class="strength.acceptable ? 'text-gray-500' : 'text-red-600'"
-            >{{ strength.label }}</p>
-          </div>
-          <div v-if="!auth.initialized">
-            <label class="block text-sm font-medium text-gray-700 mb-1">Confirm Passphrase</label>
-            <input
-              v-model="confirmPassphrase"
-              type="password"
-              autocomplete="new-password"
-              class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              placeholder="Repeat passphrase"
-            />
-          </div>
-          <p v-if="error" class="text-red-600 text-sm">{{ error }}</p>
-          <button
-            type="submit"
-            :disabled="loading"
-            class="w-full bg-indigo-600 text-white rounded-lg py-2 font-semibold hover:bg-indigo-700 disabled:opacity-50 transition"
-          >
-            {{ loading ? 'Unlocking…' : auth.initialized ? 'Unlock' : 'Create Vault' }}
-          </button>
-          <p v-if="!auth.initialized" class="text-xs text-gray-400 text-center">
-            ⚠️ Losing your passphrase means losing all your data. There is no recovery.
-          </p>
-          <p v-if="!auth.initialized" class="text-center">
+            <div>
+              <label class="block text-xs font-medium text-ink-muted mb-1.5">Backup passphrase</label>
+              <input
+                v-model="importPassphrase"
+                type="password"
+                autocomplete="current-password"
+                placeholder="Enter backup passphrase"
+                class="w-full border border-edge rounded-input px-3 py-2 text-sm text-ink bg-surface placeholder:text-ink-faint focus:outline-none focus:ring-2 focus:ring-accent/25 focus:border-accent transition-colors"
+                autofocus
+              />
+            </div>
+            <p v-if="importError" class="text-sm text-danger">{{ importError }}</p>
             <button
-              type="button"
-              @click="enterImportMode"
-              class="text-sm text-indigo-500 hover:text-indigo-700 transition"
+              @click="submitImport"
+              :disabled="importLoading"
+              class="w-full bg-accent text-on-accent rounded-input py-2.5 text-sm font-semibold hover:bg-accent-dim disabled:opacity-50 transition-colors"
             >
-              Restore from a backup file
+              {{ importLoading ? 'Restoring…' : 'Restore Vault' }}
             </button>
-          </p>
-        </form>
-      </template>
+            <button
+              @click="exitImportMode"
+              :disabled="importLoading"
+              class="w-full text-sm text-ink-muted hover:text-ink transition-colors py-1"
+            >
+              ← Back
+            </button>
+          </div>
+        </template>
+
+        <!-- Create / Unlock -->
+        <template v-else>
+          <div>
+            <h2 class="font-semibold text-ink">
+              {{ auth.initialized ? 'Welcome back' : 'Create your vault' }}
+            </h2>
+            <p class="text-sm text-ink-muted mt-1">
+              {{ auth.initialized ? 'Enter your passphrase to unlock.' : 'Choose a strong passphrase to get started.' }}
+            </p>
+          </div>
+          <form @submit.prevent="submit" class="space-y-3">
+            <div>
+              <label class="block text-xs font-medium text-ink-muted mb-1.5">Passphrase</label>
+              <input
+                v-model="passphrase"
+                type="password"
+                :autocomplete="auth.initialized ? 'current-password' : 'new-password'"
+                class="w-full border border-edge rounded-input px-3 py-2 text-sm text-ink bg-surface placeholder:text-ink-faint focus:outline-none focus:ring-2 focus:ring-accent/25 focus:border-accent transition-colors"
+                :placeholder="auth.initialized ? 'Enter passphrase' : 'Choose a strong passphrase'"
+                autofocus
+              />
+            </div>
+
+            <!-- Passphrase strength meter -->
+            <div v-if="!auth.initialized && passphrase.length > 0" class="space-y-1.5">
+              <div class="flex gap-1">
+                <div
+                  v-for="i in 4"
+                  :key="i"
+                  class="h-1 flex-1 rounded-pill transition-colors"
+                  :class="i <= strength.score
+                    ? strength.score >= 3 ? 'bg-ok'
+                    : strength.score === 2 ? 'bg-warn'
+                    : 'bg-danger'
+                    : 'bg-edge-strong'"
+                />
+              </div>
+              <p
+                class="text-xs"
+                :class="strength.acceptable ? 'text-ink-muted' : 'text-danger'"
+              >{{ strength.label }}</p>
+            </div>
+
+            <div v-if="!auth.initialized">
+              <label class="block text-xs font-medium text-ink-muted mb-1.5">Confirm passphrase</label>
+              <input
+                v-model="confirmPassphrase"
+                type="password"
+                autocomplete="new-password"
+                class="w-full border border-edge rounded-input px-3 py-2 text-sm text-ink bg-surface placeholder:text-ink-faint focus:outline-none focus:ring-2 focus:ring-accent/25 focus:border-accent transition-colors"
+                placeholder="Repeat passphrase"
+              />
+            </div>
+
+            <p v-if="error" class="text-sm text-danger">{{ error }}</p>
+
+            <button
+              type="submit"
+              :disabled="loading"
+              class="w-full bg-accent text-on-accent rounded-input py-2.5 text-sm font-semibold hover:bg-accent-dim disabled:opacity-50 transition-colors"
+            >
+              {{ loading ? 'Unlocking…' : auth.initialized ? 'Unlock' : 'Create Vault' }}
+            </button>
+
+            <p v-if="!auth.initialized" class="text-xs text-ink-faint text-center leading-relaxed">
+              Losing your passphrase means losing all your data. There is no recovery.
+            </p>
+            <p v-if="!auth.initialized" class="text-center">
+              <button
+                type="button"
+                @click="enterImportMode"
+                class="text-sm text-accent hover:text-accent-dim transition-colors"
+              >
+                Restore from a backup file →
+              </button>
+            </p>
+          </form>
+        </template>
+
+      </div>
     </div>
   </div>
 </template>

@@ -4,6 +4,7 @@ import { initVault, unlockVault, deriveVaultKey, PBKDF2_ITERATIONS, PBKDF2_ITERA
 import { KEYS, writePlain, readPlain, remove, listEntryKeys, migrateEncryptedBlobs } from '@/utils/storage'
 import { useDiaryStore } from './diary'
 import { useDataPointsStore } from './datapoints'
+import { useThemeStore } from './theme'
 
 export const useAuthStore = defineStore('auth', () => {
   const key = ref<CryptoKey | null>(null)
@@ -48,6 +49,7 @@ export const useAuthStore = defineStore('auth', () => {
     key.value = null
     useDiaryStore().reset()
     useDataPointsStore().reset()
+    useThemeStore().reset()
   }
 
   function resetVault(): void {
@@ -56,8 +58,10 @@ export const useAuthStore = defineStore('auth', () => {
     remove(KEYS.SALT)
     remove(KEYS.VERIFY)
     remove(KEYS.KDF)
+    remove(KEYS.THEME)
     useDiaryStore().reset()
     useDataPointsStore().reset()
+    useThemeStore().reset()
     key.value = null
     initialized.value = false
   }

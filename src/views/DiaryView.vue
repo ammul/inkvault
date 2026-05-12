@@ -20,7 +20,7 @@ onMounted(async () => {
 
 <template>
   <div>
-    <h1 v-if="!selectedDate" class="text-xl font-bold text-gray-800 mb-4">📓 Diary</h1>
+    <h1 v-if="!selectedDate" class="text-xl font-semibold text-ink mb-6">Diary</h1>
     <CalendarView v-if="!selectedDate" />
     <DayEntry v-else />
   </div>

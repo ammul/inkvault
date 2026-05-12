@@ -64,12 +64,12 @@ async function handleDelete(id: string) {
 
 <template>
   <div>
-    <div class="flex items-center justify-between mb-4">
-      <h1 class="text-xl font-bold text-gray-800">⚙️ Data Points</h1>
+    <div class="flex items-center justify-between mb-6">
+      <h1 class="text-xl font-semibold text-ink">Data Points</h1>
       <button
         v-if="!showEditor"
         @click="openNew"
-        class="text-sm bg-indigo-600 text-white px-3 py-1.5 rounded-lg hover:bg-indigo-700 transition"
+        class="text-sm bg-accent text-on-accent px-4 py-2 rounded-input hover:bg-accent-dim transition-colors font-medium"
       >
         + Add
       </button>

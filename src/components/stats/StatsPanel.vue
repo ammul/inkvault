@@ -34,12 +34,12 @@ function formatValue(v: DataPointValue): string {
 </script>
 
 <template>
-  <div class="bg-white rounded-xl border border-gray-100 p-4">
+  <div class="bg-raised rounded-card border border-edge shadow-card p-4">
     <div class="flex items-center gap-2 mb-3">
-      <span class="text-xl">{{ config.icon }}</span>
-      <h3 class="font-semibold text-gray-800">{{ config.label }}</h3>
-      <span v-if="average !== null" class="ml-auto text-sm text-gray-400">
-        avg: {{ average }}
+      <span class="text-lg">{{ config.icon }}</span>
+      <h3 class="font-semibold text-ink">{{ config.label }}</h3>
+      <span v-if="average !== null" class="ml-auto text-sm text-ink-muted">
+        avg <span class="font-medium text-ink">{{ average }}</span>
       </span>
     </div>
 
@@ -47,12 +47,12 @@ function formatValue(v: DataPointValue): string {
       <div
         v-for="item in values"
         :key="item.date"
-        class="flex justify-between text-sm text-gray-600"
+        class="flex justify-between text-sm py-0.5"
       >
-        <span class="text-gray-400">{{ item.date }}</span>
-        <span>{{ formatValue(item.value) }}</span>
+        <span class="text-ink-faint">{{ item.date }}</span>
+        <span class="text-ink">{{ formatValue(item.value) }}</span>
       </div>
     </div>
-    <p v-else class="text-sm text-gray-400 text-center py-2">No data in this range.</p>
+    <p v-else class="text-sm text-ink-faint text-center py-3">No data in this range.</p>
   </div>
 </template>

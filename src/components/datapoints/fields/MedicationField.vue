@@ -39,21 +39,21 @@ function emitUpdate() {
       min="0"
       step="any"
       placeholder="0"
-      class="w-20 border border-gray-200 rounded px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500"
+      class="w-20 border border-edge rounded-input px-2.5 py-1.5 text-sm text-ink bg-surface focus:outline-none focus:ring-2 focus:ring-accent/25 focus:border-accent transition-colors"
       @change="emitUpdate"
     />
     <select
       v-model="unit"
-      class="border border-gray-200 rounded px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500"
+      class="border border-edge rounded-input px-2.5 py-1.5 text-sm text-ink bg-surface focus:outline-none focus:ring-2 focus:ring-accent/25 focus:border-accent transition-colors"
       @change="emitUpdate"
     >
       <option v-for="u in UNITS" :key="u" :value="u">{{ u }}</option>
     </select>
-    <span class="text-xs text-gray-400">at</span>
+    <span class="text-xs text-ink-faint">at</span>
     <input
       v-model="time"
       type="time"
-      class="border border-gray-200 rounded px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500"
+      class="border border-edge rounded-input px-2.5 py-1.5 text-sm text-ink bg-surface focus:outline-none focus:ring-2 focus:ring-accent/25 focus:border-accent transition-colors"
       @change="emitUpdate"
     />
   </div>

@@ -44,11 +44,11 @@ const trackableConfigs = computed(() => datapoints.configs)
 
 <template>
   <div>
-    <div class="flex items-center justify-between mb-4">
-      <h1 class="text-xl font-bold text-gray-800">📊 Statistics</h1>
+    <div class="flex items-center justify-between mb-6">
+      <h1 class="text-xl font-semibold text-ink">Statistics</h1>
       <select
         v-model="rangeLabel"
-        class="border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500"
+        class="border border-edge rounded-input px-3 py-2 text-sm text-ink bg-raised focus:outline-none focus:ring-2 focus:ring-accent/25 focus:border-accent transition-colors"
       >
         <option value="week">Last 7 days</option>
         <option value="month">Last 30 days</option>
@@ -65,9 +65,9 @@ const trackableConfigs = computed(() => datapoints.configs)
         :time-range="timeRange"
       />
     </div>
-    <p v-else class="text-center text-gray-400 text-sm py-12">
+    <p v-else class="text-center text-ink-faint text-sm py-16">
       No data points yet. Add some in
-      <router-link to="/data" class="text-indigo-500 hover:underline">Data Points</router-link>.
+      <router-link to="/data" class="text-accent hover:text-accent-dim transition-colors">Data Points</router-link>.
     </p>
   </div>
 </template>

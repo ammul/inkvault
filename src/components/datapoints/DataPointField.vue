@@ -17,12 +17,12 @@ const emit = defineEmits<{
 </script>
 
 <template>
-  <div class="flex items-start gap-3 p-3 bg-white rounded-lg border border-gray-100">
-    <span class="text-xl leading-none mt-0.5" :style="{ color: config.color }">
+  <div class="flex items-start gap-3 p-3 bg-raised rounded-card border border-edge">
+    <span class="text-lg leading-none mt-0.5 shrink-0" :style="{ color: config.color }">
       {{ config.icon }}
     </span>
-    <div class="flex-1">
-      <p class="text-sm font-medium text-gray-700 mb-1.5">{{ config.label }}</p>
+    <div class="flex-1 min-w-0">
+      <p class="text-xs font-medium text-ink-muted mb-2">{{ config.label }}</p>
       <RangeField
         v-if="config.type === 'range'"
         :config="(config.config as RangeConfig)"
