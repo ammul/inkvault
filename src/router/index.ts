@@ -1,0 +1,60 @@
+import { createRouter, createWebHashHistory } from 'vue-router'
+import type { RouteRecordRaw } from 'vue-router'
+import { useAuthStore } from '@/stores/auth'
+
+const routes: RouteRecordRaw[] = [
+  {
+    path: '/',
+    redirect: '/home',
+  },
+  {
+    path: '/home',
+    name: 'home',
+    component: () => import('@/views/HomeView.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/diary',
+    name: 'diary',
+    component: () => import('@/views/DiaryView.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/diary/:date',
+    name: 'diary-day',
+    component: () => import('@/views/DiaryView.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/stats',
+    name: 'stats',
+    component: () => import('@/views/StatisticsView.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/data',
+    name: 'datapoints',
+    component: () => import('@/views/DataPointsView.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/settings',
+    name: 'settings',
+    component: () => import('@/views/SettingsView.vue'),
+    meta: { requiresAuth: true },
+  },
+]
+
+const router = createRouter({
+  history: createWebHashHistory(),
+  routes,
+})
+
+router.beforeEach((to) => {
+  const auth = useAuthStore()
+  if (to.meta.requiresAuth && !auth.isUnlocked) {
+    return false
+  }
+})
+
+export default router

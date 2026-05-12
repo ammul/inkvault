@@ -1,0 +1,66 @@
+import { defineStore } from 'pinia'
+import { ref, computed } from 'vue'
+import { initVault, unlockVault, deriveVaultKey, PBKDF2_ITERATIONS, PBKDF2_ITERATIONS_LEGACY } from '@/utils/crypto'
+import { KEYS, writePlain, readPlain, remove, listEntryKeys, migrateEncryptedBlobs } from '@/utils/storage'
+import { useDiaryStore } from './diary'
+import { useDataPointsStore } from './datapoints'
+
+export const useAuthStore = defineStore('auth', () => {
+  const key = ref<CryptoKey | null>(null)
+  const initialized = ref(false)
+
+  const isUnlocked = computed(() => key.value !== null)
+
+  function checkInitialized(): boolean {
+    const hasVault = !!readPlain(KEYS.SALT) && !!readPlain(KEYS.VERIFY)
+    initialized.value = hasVault
+    return hasVault
+  }
+
+  async function initializeVault(passphrase: string): Promise<void> {
+    const { salt, verifyBlob, key: derivedKey } = await initVault(passphrase)
+    writePlain(KEYS.SALT, salt)
+    writePlain(KEYS.VERIFY, verifyBlob)
+    writePlain(KEYS.KDF, String(PBKDF2_ITERATIONS))
+    key.value = derivedKey
+    initialized.value = true
+  }
+
+  async function unlock(passphrase: string): Promise<void> {
+    const salt = readPlain(KEYS.SALT)
+    const verifyBlob = readPlain(KEYS.VERIFY)
+    if (!salt || !verifyBlob) throw new Error('Vault not initialized')
+
+    const storedIterations = parseInt(readPlain(KEYS.KDF) ?? String(PBKDF2_ITERATIONS_LEGACY), 10)
+    const oldKey = await unlockVault(passphrase, salt, verifyBlob, storedIterations)
+
+    if (storedIterations < PBKDF2_ITERATIONS) {
+      const newKey = await deriveVaultKey(passphrase, salt, PBKDF2_ITERATIONS)
+      await migrateEncryptedBlobs(oldKey, newKey)
+      writePlain(KEYS.KDF, String(PBKDF2_ITERATIONS))
+      key.value = newKey
+    } else {
+      key.value = oldKey
+    }
+  }
+
+  function lock(): void {
+    key.value = null
+    useDiaryStore().reset()
+    useDataPointsStore().reset()
+  }
+
+  function resetVault(): void {
+    for (const entryKey of listEntryKeys()) remove(entryKey)
+    remove(KEYS.DATAPOINTS)
+    remove(KEYS.SALT)
+    remove(KEYS.VERIFY)
+    remove(KEYS.KDF)
+    useDiaryStore().reset()
+    useDataPointsStore().reset()
+    key.value = null
+    initialized.value = false
+  }
+
+  return { key, initialized, isUnlocked, checkInitialized, initializeVault, unlock, lock, resetVault }
+})

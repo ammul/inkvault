@@ -1,0 +1,14 @@
+i want to create a customizable, totally private (encrypted?) Diary app. it should be hosted on GitHub pages (see Pipeline file). here are the Basic requirements:
+
+- Diary View (calendar view, days clickable to view and enter data)
+- Statistics view (to view certain data values across a timeline (week, month, year, all time))
+- Data View (create and edit new data Points to track)
+- Example Data Points: Mood (good to bad), medication (what, when, how much), weather, … so Arrays of strings, number ranges, everything 2-dimensional, but freely createable and editable (label, Color, Icon (for now Emoji as string))
+- later Hosted on GitHub pages, so publicly available
+- Pipeline with Test -> build -> deploy
+- Tech Stack: vue3, vitest, playwright, typescript
+- Architecture: DRY, KISS, SOLID
+- Design: i will ask claude design to Deliver a design later, so only prepary components and a bare, sane layout
+- Security/Privacy: My first idea was to store encrypted data on the user's device. the app itself does not store the data, user Settings or data Point configs. but i dont know how to do this totally secure
+
+Security/Privacy is the most important Point. a Diary should be really secure 
