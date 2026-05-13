@@ -135,6 +135,16 @@ export default {
       year: 'Last year',
       all: 'All time',
     },
+    filter: {
+      label: 'Filters',
+      dataPoints: 'Data points',
+      clear: 'Clear filters',
+      activeHint: 'Filtered',
+      min: 'Min',
+      max: 'Max',
+      boolAll: 'All',
+      stringSearchPlaceholder: 'Search in values…',
+    },
   },
 
   backup: {

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
-import type { DataPointConfig, TimeRange, DataPointValue } from '@/types'
+import type { DataPointConfig, TimeRange, DataPointValue, ConfigFilter, MedicationValue } from '@/types'
 import { useDiaryStore } from '@/stores/diary'
 
 const { t } = useI18n()
@@ -9,17 +9,49 @@ const { t } = useI18n()
 const props = defineProps<{
   config: DataPointConfig
   timeRange: TimeRange
+  filter: ConfigFilter | null
 }>()
 
 const diary = useDiaryStore()
 
-const values = computed(() =>
-  [...diary.entries.values()]
+const values = computed(() => {
+  let list = [...diary.entries.values()]
     .filter((e) => e.date >= props.timeRange.start && e.date <= props.timeRange.end)
     .sort((a, b) => a.date.localeCompare(b.date))
     .map((e) => ({ date: e.date, value: e.dataValues[props.config.id] ?? null }))
-    .filter((v) => v.value !== null && !(Array.isArray(v.value) && v.value.length === 0)),
-)
+    .filter((v) => v.value !== null && !(Array.isArray(v.value) && v.value.length === 0))
+
+  if (!props.filter) return list
+
+  if (props.config.type === 'range') {
+    if (props.filter.rangeMin !== null)
+      list = list.filter((v) => (v.value as number) >= props.filter!.rangeMin!)
+    if (props.filter.rangeMax !== null)
+      list = list.filter((v) => (v.value as number) <= props.filter!.rangeMax!)
+  } else if (props.config.type === 'boolean') {
+    if (props.filter.boolValue !== null)
+      list = list.filter((v) => v.value === props.filter!.boolValue)
+  } else if (props.config.type === 'multi-string') {
+    if (props.filter.multiStringIncludes.length > 0)
+      list = list.filter((v) =>
+        (v.value as string[]).some((o) => props.filter!.multiStringIncludes.includes(o)),
+      )
+  } else if (props.config.type === 'string') {
+    const q = props.filter.stringSearch.trim().toLowerCase()
+    if (q) list = list.filter((v) => (v.value as string).toLowerCase().includes(q))
+  } else if (props.config.type === 'medication') {
+    if (props.filter.medicationAmountMin !== null)
+      list = list.filter(
+        (v) => (v.value as MedicationValue).amount >= props.filter!.medicationAmountMin!,
+      )
+    if (props.filter.medicationAmountMax !== null)
+      list = list.filter(
+        (v) => (v.value as MedicationValue).amount <= props.filter!.medicationAmountMax!,
+      )
+  }
+
+  return list
+})
 
 const average = computed(() => {
   if (props.config.type !== 'range') return null

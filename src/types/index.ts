@@ -72,6 +72,16 @@ export interface ThemeSettings {
   contentWidth: ThemeContentWidth
 }
 
+export interface ConfigFilter {
+  rangeMin: number | null
+  rangeMax: number | null
+  boolValue: boolean | null
+  multiStringIncludes: string[]
+  stringSearch: string
+  medicationAmountMin: number | null
+  medicationAmountMax: number | null
+}
+
 export const DEFAULT_THEME: ThemeSettings = {
   colorTheme: 'indigo',
   font: 'sans',

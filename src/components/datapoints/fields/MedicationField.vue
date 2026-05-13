@@ -26,8 +26,20 @@ watch(
   },
 )
 
+function autofillTime() {
+  if (!time.value) {
+    const now = new Date()
+    time.value = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`
+  }
+}
+
 function emitUpdate() {
   emit('update:modelValue', { amount: amount.value, unit: unit.value, time: time.value })
+}
+
+function handleAmountOrUnitChange() {
+  autofillTime()
+  emitUpdate()
 }
 
 function applyPreset(preset: string) {
@@ -35,6 +47,7 @@ function applyPreset(preset: string) {
   if (numMatch) amount.value = parseFloat(numMatch[1])
   const matchedUnit = UNITS.find((u) => preset.includes(u))
   if (matchedUnit) unit.value = matchedUnit
+  autofillTime()
   emitUpdate()
 }
 </script>
@@ -60,12 +73,12 @@ function applyPreset(preset: string) {
       step="any"
       placeholder="0"
       class="w-20 border border-edge rounded-input px-2.5 py-1.5 text-sm text-ink bg-surface focus:outline-none focus:ring-2 focus:ring-accent/25 focus:border-accent transition-colors"
-      @change="emitUpdate"
+      @change="handleAmountOrUnitChange"
     />
     <select
       v-model="unit"
       class="border border-edge rounded-input px-2.5 py-1.5 text-sm text-ink bg-surface focus:outline-none focus:ring-2 focus:ring-accent/25 focus:border-accent transition-colors"
-      @change="emitUpdate"
+      @change="handleAmountOrUnitChange"
     >
       <option v-for="u in UNITS" :key="u" :value="u">{{ u }}</option>
     </select>
