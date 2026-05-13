@@ -114,7 +114,12 @@ export default {
         optionsPlaceholder: 'Good, Neutral, Bad',
       },
       boolean: { trueLabel: 'True label', falseLabel: 'False label' },
-      medication: { name: 'Medication name', namePlaceholder: 'e.g. Ibuprofen' },
+      medication: {
+        name: 'Medication name',
+        namePlaceholder: 'e.g. Ibuprofen',
+        dosagePresets: 'Dosage presets (comma-separated)',
+        dosagePresetsPlaceholder: 'e.g. 10mg, 40mg, 100mg',
+      },
     },
   },
 

@@ -45,7 +45,7 @@ function closeEditor() {
 async function handleSave(data: Omit<DataPointConfig, 'id' | 'createdAt'>) {
   if (editingConfig.value) {
     const patch = editingLocked.value
-      ? { label: data.label, color: data.color, icon: data.icon }
+      ? { label: data.label, color: data.color, icon: data.icon, config: data.config }
       : data
     await datapoints.updateConfig(editingConfig.value.id, patch)
   } else {

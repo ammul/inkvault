@@ -9,6 +9,7 @@ import type {
   BooleanConfig,
   MedicationConfig,
 } from '@/types'
+import EmojiPicker from '@/components/ui/EmojiPicker.vue'
 
 const { t } = useI18n()
 
@@ -30,6 +31,7 @@ const trueLabel = ref('Yes')
 const falseLabel = ref('No')
 const placeholder = ref('')
 const medicationName = ref('')
+const dosagePresetsRaw = ref('')
 
 watch(
   () => props.initial,
@@ -52,6 +54,7 @@ watch(
       falseLabel.value = c.falseLabel
     } else if (v.type === 'medication') {
       medicationName.value = (v.config as MedicationConfig).medication
+      dosagePresetsRaw.value = (v.config as MedicationConfig).dosagePresets?.join(', ') ?? ''
     }
   },
   { immediate: true },
@@ -73,7 +76,13 @@ function buildConfig() {
     case 'boolean':
       return { trueLabel: trueLabel.value, falseLabel: falseLabel.value }
     case 'medication':
-      return { medication: medicationName.value.trim() }
+      return {
+        medication: medicationName.value.trim(),
+        dosagePresets: dosagePresetsRaw.value
+          .split(',')
+          .map((s) => s.trim())
+          .filter(Boolean),
+      }
   }
 }
 
@@ -106,12 +115,7 @@ function submit() {
       </div>
       <div>
         <label class="block text-xs font-medium text-ink-muted mb-1.5">{{ t('dataPoints.editor.icon') }}</label>
-        <input
-          v-model="icon"
-          type="text"
-          placeholder="😊"
-          class="w-full border border-edge rounded-input px-3 py-2 text-sm text-ink bg-surface placeholder:text-ink-faint focus:outline-none focus:ring-2 focus:ring-accent/25 focus:border-accent transition-colors"
-        />
+        <EmojiPicker v-model="icon" />
       </div>
     </div>
 
@@ -198,6 +202,16 @@ function submit() {
         v-model="medicationName"
         type="text"
         :placeholder="t('dataPoints.editor.medication.namePlaceholder')"
+        class="w-full border border-edge rounded-input px-3 py-2 text-sm text-ink bg-surface placeholder:text-ink-faint focus:outline-none focus:ring-2 focus:ring-accent/25 focus:border-accent transition-colors"
+      />
+    </div>
+
+    <div v-if="type === 'medication'">
+      <label class="block text-xs font-medium text-ink-muted mb-1.5">{{ t('dataPoints.editor.medication.dosagePresets') }}</label>
+      <input
+        v-model="dosagePresetsRaw"
+        type="text"
+        :placeholder="t('dataPoints.editor.medication.dosagePresetsPlaceholder')"
         class="w-full border border-edge rounded-input px-3 py-2 text-sm text-ink bg-surface placeholder:text-ink-faint focus:outline-none focus:ring-2 focus:ring-accent/25 focus:border-accent transition-colors"
       />
     </div>

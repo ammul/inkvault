@@ -29,9 +29,29 @@ watch(
 function emitUpdate() {
   emit('update:modelValue', { amount: amount.value, unit: unit.value, time: time.value })
 }
+
+function applyPreset(preset: string) {
+  const numMatch = preset.match(/^(\d+(?:\.\d+)?)/)
+  if (numMatch) amount.value = parseFloat(numMatch[1])
+  const matchedUnit = UNITS.find((u) => preset.includes(u))
+  if (matchedUnit) unit.value = matchedUnit
+  emitUpdate()
+}
 </script>
 
 <template>
+  <div>
+  <div v-if="config.dosagePresets?.length" class="flex flex-wrap gap-1.5 mb-2">
+    <button
+      v-for="preset in config.dosagePresets"
+      :key="preset"
+      type="button"
+      @click="applyPreset(preset)"
+      class="text-xs px-3 py-1 rounded-full border border-edge text-ink-muted hover:border-accent hover:text-accent transition-colors"
+    >
+      {{ preset }}
+    </button>
+  </div>
   <div class="flex flex-wrap gap-2 items-center">
     <input
       v-model.number="amount"
@@ -56,5 +76,6 @@ function emitUpdate() {
       class="border border-edge rounded-input px-2.5 py-1.5 text-sm text-ink bg-surface focus:outline-none focus:ring-2 focus:ring-accent/25 focus:border-accent transition-colors"
       @change="emitUpdate"
     />
+  </div>
   </div>
 </template>

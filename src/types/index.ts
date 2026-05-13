@@ -22,6 +22,7 @@ export interface BooleanConfig {
 
 export interface MedicationConfig {
   medication: string
+  dosagePresets?: string[]
 }
 
 export interface MedicationValue {
