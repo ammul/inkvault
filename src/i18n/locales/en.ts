@@ -184,6 +184,7 @@ export default {
       minimal: { label: 'Minimal', description: 'Clean, airy, focused' },
       cozy: { label: 'Cozy', description: 'Warm, rounded, soft' },
       dark: { label: 'Dark', description: 'Dark, intimate, private' },
+      system: { label: 'System', description: 'Follows OS dark/light setting' },
     },
     color: {
       title: 'Color',
@@ -201,6 +202,27 @@ export default {
       sans: 'Sans-serif',
       serif: 'Serif',
       mono: 'Monospace',
+    },
+    fontSize: {
+      title: 'Text size',
+      subtitle: 'Scales the base font size across the app.',
+      sm: { label: 'Small', description: 'Compact, fits more' },
+      md: { label: 'Medium', description: 'Default size' },
+      lg: { label: 'Large', description: 'Easier to read' },
+    },
+    lineSpacing: {
+      title: 'Line spacing',
+      subtitle: 'Controls how much space appears between lines.',
+      compact: { label: 'Compact', description: 'Tight, dense' },
+      normal: { label: 'Normal', description: 'Balanced' },
+      relaxed: { label: 'Relaxed', description: 'Airy, open' },
+    },
+    contentWidth: {
+      title: 'Content width',
+      subtitle: 'Sets the maximum width of the main content column.',
+      narrow: { label: 'Narrow', description: 'Like a journal' },
+      normal: { label: 'Normal', description: 'Balanced' },
+      wide: { label: 'Wide', description: 'Uses more screen' },
     },
   },
 

@@ -58,16 +58,25 @@ export interface TimeRange {
 
 export type ColorTheme = 'indigo' | 'violet' | 'teal' | 'rose' | 'amber' | 'slate'
 export type ThemeFont = 'sans' | 'serif' | 'mono'
-export type ThemeMood = 'minimal' | 'cozy' | 'dark'
+export type ThemeMood = 'minimal' | 'cozy' | 'dark' | 'system'
+export type ThemeFontSize = 'sm' | 'md' | 'lg'
+export type ThemeLineSpacing = 'compact' | 'normal' | 'relaxed'
+export type ThemeContentWidth = 'narrow' | 'normal' | 'wide'
 
 export interface ThemeSettings {
   colorTheme: ColorTheme
   font: ThemeFont
   mood: ThemeMood
+  fontSize: ThemeFontSize
+  lineSpacing: ThemeLineSpacing
+  contentWidth: ThemeContentWidth
 }
 
 export const DEFAULT_THEME: ThemeSettings = {
   colorTheme: 'indigo',
   font: 'sans',
   mood: 'minimal',
+  fontSize: 'md',
+  lineSpacing: 'normal',
+  contentWidth: 'normal',
 }
