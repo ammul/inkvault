@@ -8,7 +8,9 @@
       "Bash(npm list *)",
       "Bash(npm install *)",
       "Bash(npx vue-tsc *)",
-      "Bash(xargs ls)"
+      "Bash(xargs ls)",
+      "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\Anwender\\\\dev\\\\inkvault\\\\src\\\\views\" -File)",
+      "Bash(Select-Object Name)"
     ]
   }
 }

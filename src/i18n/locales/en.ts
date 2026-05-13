@@ -46,9 +46,19 @@ export default {
     stats: 'Stats',
     dataPoints: 'Data Points',
     theme: 'Theme',
+    settings: 'Settings',
     backup: 'Backup',
     lock: 'Lock',
     toggleMenu: 'Toggle menu',
+  },
+
+  appSettings: {
+    title: 'Settings',
+    appearance: 'Appearance',
+    animations: 'Animations',
+    animationsDescription: 'Enable transitions and motion effects throughout the app.',
+    on: 'On',
+    off: 'Off',
   },
 
   home: {
@@ -71,14 +81,25 @@ export default {
 
   diary: {
     title: 'Diary',
-    whatHappened: 'What happened today?',
     dataPointsSection: 'Data Points',
-    saving: 'Saving…',
-    saveEntry: 'Save entry',
     entryLoaded: 'Entry loaded',
     entrySaved: 'Entry saved',
     back: '← Back',
     weekdays: ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'],
+    addEntry: 'Add entry',
+    addText: 'Add text entry',
+    closeAddMenu: 'Close',
+    toggleDataPoint: 'Toggle {label}',
+    editEntry: 'Edit',
+    deleteEntry: 'Delete',
+    done: 'Done',
+    newEntryPlaceholder: 'What happened?',
+    noEntries: 'No entries yet. Press + to start writing.',
+    deleteConfirm: 'Delete this entry? This cannot be undone.',
+    confirm: 'Delete',
+    cancel: 'Cancel',
+    addDataPoint: 'Log {label}',
+    editDataPoint: 'Edit {label}',
   },
 
   dataPoints: {

@@ -40,6 +40,7 @@ const navLinks = [
   { to: '/stats', key: 'nav.stats' },
   { to: '/data', key: 'nav.dataPoints' },
   { to: '/theme', key: 'nav.theme' },
+  { to: '/app-settings', key: 'nav.settings' },
   { to: '/settings', key: 'nav.backup' },
 ]
 </script>

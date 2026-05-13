@@ -5,6 +5,7 @@ import { KEYS, writePlain, readPlain, remove, listEntryKeys, migrateEncryptedBlo
 import { useDiaryStore } from './diary'
 import { useDataPointsStore } from './datapoints'
 import { useThemeStore } from './theme'
+import { useAppSettingsStore } from './appSettings'
 
 export const useAuthStore = defineStore('auth', () => {
   const key = ref<CryptoKey | null>(null)
@@ -50,6 +51,7 @@ export const useAuthStore = defineStore('auth', () => {
     useDiaryStore().reset()
     useDataPointsStore().reset()
     useThemeStore().reset()
+    useAppSettingsStore().reset()
   }
 
   function resetVault(): void {
@@ -59,9 +61,11 @@ export const useAuthStore = defineStore('auth', () => {
     remove(KEYS.VERIFY)
     remove(KEYS.KDF)
     remove(KEYS.THEME)
+    remove(KEYS.APP_SETTINGS)
     useDiaryStore().reset()
     useDataPointsStore().reset()
     useThemeStore().reset()
+    useAppSettingsStore().reset()
     key.value = null
     initialized.value = false
   }

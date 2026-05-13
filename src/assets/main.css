@@ -166,3 +166,15 @@
 
 :root[data-width="narrow"] { --content-width: 36rem; }
 :root[data-width="wide"]   { --content-width: 64rem; }
+
+/* ══════════════════════════════════════════════════════════
+   ANIMATIONS TOGGLE
+   ══════════════════════════════════════════════════════════ */
+
+:root[data-animations="off"] *,
+:root[data-animations="off"] *::before,
+:root[data-animations="off"] *::after {
+  animation-duration: 0.01ms !important;
+  transition-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+}

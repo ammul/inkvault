@@ -43,9 +43,24 @@ export interface DataPointConfig {
 
 export type DataPointValue = number | string | string[] | boolean | MedicationValue | null
 
+export interface DiaryTimelineEntry {
+  id: string
+  text: string
+  createdAt: string
+}
+
+export interface DiaryDataEntry {
+  id: string
+  configId: string
+  value: DataPointValue
+  createdAt: string
+}
+
 export interface DiaryEntry {
   date: string
   text: string
+  entries: DiaryTimelineEntry[]
+  dataEntries?: DiaryDataEntry[]
   dataValues: Record<string, DataPointValue>
   updatedAt: string
 }
@@ -70,6 +85,14 @@ export interface ThemeSettings {
   fontSize: ThemeFontSize
   lineSpacing: ThemeLineSpacing
   contentWidth: ThemeContentWidth
+}
+
+export interface AppSettings {
+  animations: boolean
+}
+
+export const DEFAULT_APP_SETTINGS: AppSettings = {
+  animations: true,
 }
 
 export interface ConfigFilter {

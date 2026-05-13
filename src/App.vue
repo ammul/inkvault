@@ -2,12 +2,14 @@
 import { onMounted, onUnmounted, watch } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import { useThemeStore } from '@/stores/theme'
+import { useAppSettingsStore } from '@/stores/appSettings'
 import UnlockScreen from '@/components/auth/UnlockScreen.vue'
 import AppShell from '@/components/layout/AppShell.vue'
 import Toast from '@/components/ui/Toast.vue'
 
 const auth = useAuthStore()
 const theme = useThemeStore()
+const appSettings = useAppSettingsStore()
 
 const IDLE_TIMEOUT_MS = 10 * 60 * 1000
 let idleTimer: ReturnType<typeof setTimeout> | null = null
@@ -50,9 +52,8 @@ watch(
   async (unlocked) => {
     if (unlocked) {
       attachIdleListeners()
-      if (!theme.loaded) {
-        await theme.load()
-      }
+      if (!theme.loaded) await theme.load()
+      if (!appSettings.loaded) await appSettings.load()
     } else {
       detachIdleListeners()
     }

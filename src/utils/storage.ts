@@ -6,6 +6,7 @@ export const KEYS = {
   KDF: 'iv:kdf',
   DATAPOINTS: 'iv:datapoints',
   THEME: 'iv:theme',
+  APP_SETTINGS: 'iv:app-settings',
   ENTRY: (date: string) => `iv:entry:${date}`,
   ALL_ENTRY_PREFIX: 'iv:entry:',
 } as const
@@ -43,7 +44,7 @@ export function remove(storageKey: string): void {
 }
 
 export async function migrateEncryptedBlobs(oldKey: CryptoKey, newKey: CryptoKey): Promise<void> {
-  const storageKeys = [KEYS.VERIFY, KEYS.DATAPOINTS, KEYS.THEME, ...listEntryKeys()]
+  const storageKeys = [KEYS.VERIFY, KEYS.DATAPOINTS, KEYS.THEME, KEYS.APP_SETTINGS, ...listEntryKeys()]
   for (const k of storageKeys) {
     const blob = localStorage.getItem(k)
     if (!blob) continue

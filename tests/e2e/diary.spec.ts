@@ -23,8 +23,7 @@ test('clicking a calendar day opens the day entry view', async ({ page }) => {
   await page.goto('/inkvault/#/diary')
   // Click the first numbered day cell
   await page.locator('.grid > div').filter({ hasText: /^1$/ }).first().click()
-  await expect(page.getByPlaceholder('What happened today?')).toBeVisible()
-  await expect(page.getByRole('button', { name: 'Save' })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Add entry' })).toBeVisible()
 })
 
 test('back button returns to calendar', async ({ page }) => {
@@ -41,8 +40,10 @@ test('saving a diary entry persists after unlock', async ({ page }) => {
   // Navigate to today's entry via the URL
   const today = new Date().toISOString().slice(0, 10)
   await page.goto(`/inkvault/#/diary/${today}`)
-  await page.getByPlaceholder('What happened today?').fill('A truly memorable day!')
-  await page.getByRole('button', { name: 'Save' }).click()
+  await page.getByRole('button', { name: 'Add entry' }).click()
+  await page.getByRole('button', { name: 'Add text entry' }).click()
+  await page.getByPlaceholder('What happened?').fill('A truly memorable day!')
+  await page.getByRole('button', { name: 'Done' }).click()
   await expect(page.getByText('Entry saved')).toBeVisible()
 
   // Reload and unlock
@@ -53,6 +54,5 @@ test('saving a diary entry persists after unlock', async ({ page }) => {
 
   // Navigate back to the same day
   await page.goto(`/inkvault/#/diary/${today}`)
-  await expect(page.getByPlaceholder('What happened today?')).toBeVisible()
-  await expect(page.getByPlaceholder('What happened today?')).toHaveValue('A truly memorable day!')
+  await expect(page.getByText('A truly memorable day!')).toBeVisible()
 })

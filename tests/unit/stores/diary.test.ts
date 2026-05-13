@@ -10,7 +10,7 @@ beforeEach(async () => {
 })
 
 function makeEntry(date: string, text = 'Test entry'): DiaryEntry {
-  return { date, text, dataValues: {}, updatedAt: new Date().toISOString() }
+  return { date, text, entries: [], dataValues: {}, updatedAt: new Date().toISOString() }
 }
 
 describe('diary store', () => {
