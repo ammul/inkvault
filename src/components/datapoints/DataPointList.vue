@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
 import type { DataPointConfig } from '@/types'
+import DataPointIcon from '@/components/ui/DataPointIcon.vue'
 
 const { t } = useI18n()
 
@@ -20,15 +21,11 @@ const emit = defineEmits<{
         :key="config.id"
         class="flex items-center gap-3 p-3 bg-raised rounded-card border border-edge"
       >
-        <span class="text-lg leading-none shrink-0">{{ config.icon }}</span>
+        <DataPointIcon :icon="config.icon" :color="config.color" :label="config.label" />
         <div class="flex-1 min-w-0">
           <p class="font-medium text-ink text-sm truncate">{{ config.label }}</p>
           <p class="text-xs text-ink-faint">{{ config.type }}</p>
         </div>
-        <div
-          class="w-3 h-3 rounded-pill border border-edge shrink-0"
-          :style="{ backgroundColor: config.color }"
-        />
         <button
           @click="emit('edit', config)"
           class="text-xs text-accent hover:text-accent-dim transition-colors px-2 py-1 rounded-input hover:bg-accent-tint"

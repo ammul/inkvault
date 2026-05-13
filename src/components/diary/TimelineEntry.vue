@@ -2,6 +2,7 @@
 import { ref, watch, nextTick, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import type { DiaryTimelineEntry } from '@/types'
+import { useAppSettingsStore } from '@/stores/appSettings'
 
 const props = defineProps<{
   entry: DiaryTimelineEntry
@@ -18,6 +19,7 @@ const emit = defineEmits<{
 }>()
 
 const { t, locale } = useI18n()
+const appSettings = useAppSettingsStore()
 const textareaRef = ref<HTMLTextAreaElement | null>(null)
 
 watch(() => props.isEditing, (val) => {
@@ -36,8 +38,9 @@ const formattedTime = computed(() =>
   <div class="flex gap-3">
     <!-- Left: dot + connector line -->
     <div class="flex flex-col items-center w-8 shrink-0">
-      <div class="w-4 h-4 rounded-full bg-accent shrink-0 mt-1" />
-      <div v-if="!isLast" class="w-px flex-1 bg-edge mt-1" />
+      <div v-if="appSettings.settings.useEmojis" class="w-4 h-4 rounded-full bg-accent shrink-0 mt-1" />
+      <div v-else class="w-8 h-8 rounded-full bg-accent flex items-center justify-center text-xs font-bold text-on-accent shrink-0">T</div>
+      <div v-if="!isLast" class="w-px flex-1 bg-edge" :class="appSettings.settings.useEmojis ? 'mt-1' : ''" />
     </div>
 
     <!-- Right: content -->

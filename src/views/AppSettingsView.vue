@@ -15,6 +15,11 @@ async function setAnimations(val: boolean) {
   appSettings.apply()
   await appSettings.save()
 }
+
+async function setUseEmojis(val: boolean) {
+  appSettings.settings.useEmojis = val
+  await appSettings.save()
+}
 </script>
 
 <template>
@@ -42,6 +47,29 @@ async function setAnimations(val: boolean) {
           <button
             @click="setAnimations(false)"
             :class="!appSettings.settings.animations
+              ? 'bg-accent text-on-accent'
+              : 'bg-subtle text-ink-muted hover:bg-edge'"
+            class="text-sm px-3 py-1.5 rounded-input transition-colors font-medium"
+          >{{ t('appSettings.off') }}</button>
+        </div>
+      </div>
+
+      <div class="bg-raised border border-edge rounded-card p-4 flex items-start justify-between gap-4">
+        <div>
+          <p class="text-sm font-medium text-ink">{{ t('appSettings.useEmojis') }}</p>
+          <p class="text-xs text-ink-muted mt-0.5">{{ t('appSettings.useEmojisDescription') }}</p>
+        </div>
+        <div class="flex gap-1 shrink-0">
+          <button
+            @click="setUseEmojis(true)"
+            :class="appSettings.settings.useEmojis
+              ? 'bg-accent text-on-accent'
+              : 'bg-subtle text-ink-muted hover:bg-edge'"
+            class="text-sm px-3 py-1.5 rounded-input transition-colors font-medium"
+          >{{ t('appSettings.on') }}</button>
+          <button
+            @click="setUseEmojis(false)"
+            :class="!appSettings.settings.useEmojis
               ? 'bg-accent text-on-accent'
               : 'bg-subtle text-ink-muted hover:bg-edge'"
             class="text-sm px-3 py-1.5 rounded-input transition-colors font-medium"

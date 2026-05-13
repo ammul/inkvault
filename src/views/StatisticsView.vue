@@ -5,6 +5,7 @@ import type { TimeRange, ConfigFilter, MultiStringConfig, BooleanConfig } from '
 import { useDiaryStore } from '@/stores/diary'
 import { useDataPointsStore } from '@/stores/datapoints'
 import StatsPanel from '@/components/stats/StatsPanel.vue'
+import DataPointIcon from '@/components/ui/DataPointIcon.vue'
 
 const { t } = useI18n()
 const diary = useDiaryStore()
@@ -176,7 +177,7 @@ function parseNullableNumber(val: string): number | null {
                 : 'border-edge text-ink hover:border-ink-muted'
             "
           >
-            <span>{{ config.icon }}</span>
+            <DataPointIcon :icon="config.icon" :color="config.color" :label="config.label" size="sm" />
             <span>{{ config.label }}</span>
             <span
               v-if="isFilterActive(config.id)"
@@ -191,7 +192,7 @@ function parseNullableNumber(val: string): number | null {
         <div class="border-t border-edge pt-3">
           <div class="flex items-center justify-between mb-2">
             <span class="text-xs font-medium text-ink flex items-center gap-1.5">
-              <span>{{ config.icon }}</span>
+              <DataPointIcon :icon="config.icon" :color="config.color" :label="config.label" size="sm" />
               <span>{{ config.label }}</span>
             </span>
             <button

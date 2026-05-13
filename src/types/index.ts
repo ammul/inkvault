@@ -89,10 +89,12 @@ export interface ThemeSettings {
 
 export interface AppSettings {
   animations: boolean
+  useEmojis: boolean
 }
 
 export const DEFAULT_APP_SETTINGS: AppSettings = {
   animations: true,
+  useEmojis: true,
 }
 
 export interface ConfigFilter {

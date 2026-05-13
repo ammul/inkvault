@@ -57,6 +57,8 @@ export default {
     appearance: 'Appearance',
     animations: 'Animations',
     animationsDescription: 'Enable transitions and motion effects throughout the app.',
+    useEmojis: 'Use emojis',
+    useEmojisDescription: 'Show emoji icons for data points. When off, displays the first letter of the label instead.',
     on: 'On',
     off: 'Off',
   },

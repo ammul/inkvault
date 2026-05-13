@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { DataPointConfig, DataPointValue, RangeConfig, StringConfig, MultiStringConfig, BooleanConfig, MedicationConfig, MedicationValue } from '@/types'
+import DataPointIcon from '@/components/ui/DataPointIcon.vue'
 import RangeField from './fields/RangeField.vue'
 import StringField from './fields/StringField.vue'
 import MultiStringField from './fields/MultiStringField.vue'
@@ -14,13 +15,12 @@ defineProps<{
 const emit = defineEmits<{
   'update:modelValue': [value: DataPointValue]
 }>()
+
 </script>
 
 <template>
   <div class="flex items-start gap-3 p-3 bg-raised rounded-card border border-edge">
-    <span class="text-lg leading-none mt-0.5 shrink-0" :style="{ color: config.color }">
-      {{ config.icon }}
-    </span>
+    <DataPointIcon :icon="config.icon" :color="config.color" :label="config.label" class="mt-0.5" />
     <div class="flex-1 min-w-0">
       <p class="text-xs font-medium text-ink-muted mb-2">{{ config.label }}</p>
       <RangeField

@@ -3,6 +3,7 @@ import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import type { DataPointConfig, TimeRange, DataPointValue, ConfigFilter, MedicationValue } from '@/types'
 import { useDiaryStore } from '@/stores/diary'
+import DataPointIcon from '@/components/ui/DataPointIcon.vue'
 
 const { t } = useI18n()
 
@@ -71,7 +72,7 @@ function formatValue(v: DataPointValue): string {
 <template>
   <div class="bg-raised rounded-card border border-edge shadow-card p-4">
     <div class="flex items-center gap-2 mb-3">
-      <span class="text-lg">{{ config.icon }}</span>
+      <DataPointIcon :icon="config.icon" :color="config.color" :label="config.label" />
       <h3 class="font-semibold text-ink">{{ config.label }}</h3>
       <span v-if="average !== null" class="ml-auto text-sm text-ink-muted">
         {{ t('statistics.avg') }} <span class="font-medium text-ink">{{ average }}</span>

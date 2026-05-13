@@ -6,9 +6,11 @@ import type { DiaryEntry, DiaryTimelineEntry, DiaryDataEntry, DataPointConfig, D
 import { useDiaryStore } from '@/stores/diary'
 import { useDataPointsStore } from '@/stores/datapoints'
 import { useToastStore } from '@/stores/toast'
+import { useAppSettingsStore } from '@/stores/appSettings'
 import TimelineEntry from '@/components/diary/TimelineEntry.vue'
 import ConfirmModal from '@/components/ui/ConfirmModal.vue'
 import EntryModal from '@/components/diary/EntryModal.vue'
+import DataPointIcon from '@/components/ui/DataPointIcon.vue'
 
 const { t, locale } = useI18n()
 const route = useRoute()
@@ -16,6 +18,7 @@ const router = useRouter()
 const diary = useDiaryStore()
 const datapoints = useDataPointsStore()
 const toast = useToastStore()
+const appSettings = useAppSettingsStore()
 
 const date = computed(() => route.params.date as string)
 const timelineEntries = ref<DiaryTimelineEntry[]>([])
@@ -242,7 +245,7 @@ const menuItems = computed(() => [
   ...datapoints.configs.map(c => ({
     id: c.id,
     label: c.label,
-    icon: c.icon,
+    icon: appSettings.settings.useEmojis ? c.icon : c.label[0].toUpperCase(),
     color: c.color,
     action: () => openDataPointModal(c),
   })),
@@ -355,10 +358,12 @@ const displayDate = computed(() => {
           <!-- Data point entry -->
           <div v-else class="flex gap-3">
             <div class="flex flex-col items-center w-8 shrink-0">
-              <div
-                class="w-8 h-8 rounded-full flex items-center justify-center text-base leading-none shrink-0 shadow-card"
-                :style="{ backgroundColor: datapoints.configs.find(c => c.id === (item as DataTimelineItem).configId)?.color ?? 'var(--color-accent)' }"
-              >{{ datapoints.configs.find(c => c.id === (item as DataTimelineItem).configId)?.icon }}</div>
+              <DataPointIcon
+                :icon="datapoints.configs.find(c => c.id === (item as DataTimelineItem).configId)?.icon ?? ''"
+                :color="datapoints.configs.find(c => c.id === (item as DataTimelineItem).configId)?.color ?? 'var(--color-accent)'"
+                :label="datapoints.configs.find(c => c.id === (item as DataTimelineItem).configId)?.label ?? ''"
+                class="shadow-card"
+              />
               <div v-if="index < allTimelineItems.length - 1" class="w-px flex-1 bg-edge" />
             </div>
             <div class="flex-1 pb-5">
@@ -409,7 +414,10 @@ const displayDate = computed(() => {
             :key="menuItem.id"
             :disabled="saving"
             :aria-label="menuItem.label"
-            :style="radialItemStyle(i, menuItem.id === '__text__' ? '' : menuItem.color)"
+            :style="[
+              radialItemStyle(i, menuItem.id === '__text__' ? '' : menuItem.color),
+              menuItem.id !== '__text__' && !appSettings.settings.useEmojis ? { color: 'white', fontSize: '0.75rem', fontWeight: '700' } : {},
+            ]"
             @click="menuItem.action()"
             class="w-11 h-11 rounded-full flex items-center justify-center text-xl leading-none shadow-card disabled:opacity-50"
             :class="menuItem.id === '__text__' ? 'bg-accent text-on-accent hover:bg-accent-dim' : 'hover:opacity-80'"
