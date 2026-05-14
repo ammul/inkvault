@@ -241,7 +241,7 @@ function submit() {
       />
     </div>
 
-    <div v-if="type === 'medication'">
+    <div v-if="type === 'medication' && !locked">
       <label class="block text-xs font-medium text-ink-muted mb-1.5">{{ t('dataPoints.editor.medication.dosagePresets') }}</label>
       <input
         v-model="dosagePresetsRaw"
