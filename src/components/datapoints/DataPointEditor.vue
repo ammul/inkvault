@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { ref, watch, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import type {
   DataPointConfig,
@@ -78,6 +78,8 @@ watch(
   { immediate: true },
 )
 
+const currentTypeOption = computed(() => TYPE_OPTIONS.find(o => o.value === type.value)!)
+
 watch(type, (newType) => {
   if (!props.locked) icon.value = TYPE_EMOJIS[newType]
 })
@@ -153,23 +155,39 @@ function submit() {
     <!-- Type picker -->
     <div>
       <label class="block text-xs font-medium text-ink-muted mb-1.5">{{ t('dataPoints.editor.type') }}</label>
-      <div class="grid grid-cols-5 gap-2">
+
+      <!-- Locked: read-only display, no interaction possible -->
+      <div v-if="locked" class="flex items-center gap-2 px-3 py-2 border border-edge rounded-input bg-surface opacity-60 cursor-not-allowed select-none">
+        <span v-if="appSettings.settings.useEmojis" class="text-xl leading-none">{{ currentTypeOption.emoji }}</span>
+        <span class="text-sm text-ink">{{ t(`dataPoints.editor.types.${currentTypeOption.i18nKey}.label`) }}</span>
+      </div>
+
+      <!-- Unlocked, no-emoji mode: dropdown -->
+      <select
+        v-else-if="!appSettings.settings.useEmojis"
+        v-model="type"
+        class="w-full border border-edge rounded-input px-3 py-2 text-sm text-ink bg-surface focus:outline-none focus:ring-2 focus:ring-accent/25 focus:border-accent transition-colors"
+      >
+        <option v-for="opt in TYPE_OPTIONS" :key="opt.value" :value="opt.value">
+          {{ t(`dataPoints.editor.types.${opt.i18nKey}.label`) }}
+        </option>
+      </select>
+
+      <!-- Unlocked, emoji mode: button grid -->
+      <div v-else class="grid grid-cols-5 gap-2">
         <button
           v-for="opt in TYPE_OPTIONS"
           :key="opt.value"
           type="button"
-          :disabled="locked"
-          @click="!locked && (type = opt.value)"
+          @click="type = opt.value"
           :class="[
-            'flex flex-col items-center gap-0.5 py-2.5 px-1 rounded-card border-2 transition-colors text-center',
+            'flex flex-col items-center gap-0.5 py-2.5 px-1 rounded-card border-2 transition-colors text-center cursor-pointer',
             type === opt.value
               ? 'border-accent bg-accent-tint'
-              : locked
-                ? 'border-edge opacity-50 cursor-not-allowed'
-                : 'border-edge hover:border-accent/40 hover:bg-subtle cursor-pointer'
+              : 'border-edge hover:border-accent/40 hover:bg-subtle'
           ]"
         >
-          <span v-if="appSettings.settings.useEmojis" class="text-xl leading-none">{{ opt.emoji }}</span>
+          <span class="text-xl leading-none">{{ opt.emoji }}</span>
           <span class="text-[11px] font-medium text-ink leading-tight mt-0.5">
             {{ t(`dataPoints.editor.types.${opt.i18nKey}.label`) }}
           </span>
