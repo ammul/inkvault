@@ -10,8 +10,10 @@ import type {
   MedicationConfig,
 } from '@/types'
 import EmojiPicker from '@/components/ui/EmojiPicker.vue'
+import { useAppSettingsStore } from '@/stores/appSettings'
 
 const { t } = useI18n()
+const appSettings = useAppSettingsStore()
 
 const props = defineProps<{ initial?: DataPointConfig; locked?: boolean }>()
 const emit = defineEmits<{
@@ -77,7 +79,7 @@ watch(
 )
 
 watch(type, (newType) => {
-  if (!props.initial) icon.value = TYPE_EMOJIS[newType]
+  if (!props.locked) icon.value = TYPE_EMOJIS[newType]
 })
 
 function buildConfig() {
@@ -134,7 +136,7 @@ function submit() {
           class="w-full border border-edge rounded-input px-3 py-2 text-sm text-ink bg-surface placeholder:text-ink-faint focus:outline-none focus:ring-2 focus:ring-accent/25 focus:border-accent transition-colors"
         />
       </div>
-      <div>
+      <div v-if="appSettings.settings.useEmojis">
         <label class="block text-xs font-medium text-ink-muted mb-1.5">{{ t('dataPoints.editor.icon') }}</label>
         <EmojiPicker v-model="icon" />
       </div>
@@ -167,7 +169,7 @@ function submit() {
                 : 'border-edge hover:border-accent/40 hover:bg-subtle cursor-pointer'
           ]"
         >
-          <span class="text-xl leading-none">{{ opt.emoji }}</span>
+          <span v-if="appSettings.settings.useEmojis" class="text-xl leading-none">{{ opt.emoji }}</span>
           <span class="text-[11px] font-medium text-ink leading-tight mt-0.5">
             {{ t(`dataPoints.editor.types.${opt.i18nKey}.label`) }}
           </span>
