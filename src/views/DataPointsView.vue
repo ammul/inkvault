@@ -30,7 +30,8 @@ function openNew() {
   showEditor.value = true
 }
 
-function openEdit(config: DataPointConfig) {
+async function openEdit(config: DataPointConfig) {
+  if (!diary.loaded) await diary.loadAllEntries()
   editingConfig.value = config
   editingLocked.value = hasStoredData(config.id)
   showEditor.value = true

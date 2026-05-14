@@ -19,9 +19,25 @@ const emit = defineEmits<{
   cancel: []
 }>()
 
+const TYPE_EMOJIS: Record<DataPointType, string> = {
+  range: '📊',
+  string: '📝',
+  'multi-string': '📋',
+  boolean: '✅',
+  medication: '💊',
+}
+
+const TYPE_OPTIONS: { value: DataPointType; emoji: string; i18nKey: string }[] = [
+  { value: 'range',        emoji: '📊', i18nKey: 'range' },
+  { value: 'string',       emoji: '📝', i18nKey: 'string' },
+  { value: 'multi-string', emoji: '📋', i18nKey: 'multiString' },
+  { value: 'boolean',      emoji: '✅', i18nKey: 'boolean' },
+  { value: 'medication',   emoji: '💊', i18nKey: 'medication' },
+]
+
 const label = ref('')
 const color = ref('#6366f1')
-const icon = ref('📝')
+const icon = ref(props.initial?.icon ?? TYPE_EMOJIS['range'])
 const type = ref<DataPointType>('range')
 const rangeMin = ref(0)
 const rangeMax = ref(10)
@@ -59,6 +75,10 @@ watch(
   },
   { immediate: true },
 )
+
+watch(type, (newType) => {
+  if (!props.initial) icon.value = TYPE_EMOJIS[newType]
+})
 
 function buildConfig() {
   switch (type.value) {
@@ -102,8 +122,9 @@ function submit() {
   <form @submit.prevent="submit" class="space-y-4 bg-raised rounded-card border border-edge shadow-card p-5">
     <h3 class="font-semibold text-ink">{{ initial ? t('dataPoints.editor.editTitle') : t('dataPoints.editor.newTitle') }}</h3>
 
-    <div class="grid grid-cols-2 gap-3">
-      <div>
+    <!-- Label + icon + color in one row -->
+    <div class="flex gap-3 items-end">
+      <div class="flex-1">
         <label class="block text-xs font-medium text-ink-muted mb-1.5">{{ t('dataPoints.editor.label') }}</label>
         <input
           v-model="label"
@@ -117,30 +138,43 @@ function submit() {
         <label class="block text-xs font-medium text-ink-muted mb-1.5">{{ t('dataPoints.editor.icon') }}</label>
         <EmojiPicker v-model="icon" />
       </div>
-    </div>
-
-    <div class="grid grid-cols-2 gap-3">
       <div>
         <label class="block text-xs font-medium text-ink-muted mb-1.5">{{ t('dataPoints.editor.color') }}</label>
         <input
           v-model="color"
           type="color"
-          class="h-9 w-full border border-edge rounded-input cursor-pointer bg-surface"
+          class="h-10 w-14 border border-edge rounded-input cursor-pointer bg-surface"
         />
       </div>
-      <div>
-        <label class="block text-xs font-medium text-ink-muted mb-1.5">{{ t('dataPoints.editor.type') }}</label>
-        <select
-          v-model="type"
+    </div>
+
+    <!-- Type picker -->
+    <div>
+      <label class="block text-xs font-medium text-ink-muted mb-1.5">{{ t('dataPoints.editor.type') }}</label>
+      <div class="grid grid-cols-5 gap-2">
+        <button
+          v-for="opt in TYPE_OPTIONS"
+          :key="opt.value"
+          type="button"
           :disabled="locked"
-          class="w-full border border-edge rounded-input px-3 py-2 text-sm text-ink bg-surface focus:outline-none focus:ring-2 focus:ring-accent/25 focus:border-accent disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          @click="!locked && (type = opt.value)"
+          :class="[
+            'flex flex-col items-center gap-0.5 py-2.5 px-1 rounded-card border-2 transition-colors text-center',
+            type === opt.value
+              ? 'border-accent bg-accent-tint'
+              : locked
+                ? 'border-edge opacity-50 cursor-not-allowed'
+                : 'border-edge hover:border-accent/40 hover:bg-subtle cursor-pointer'
+          ]"
         >
-          <option value="range">{{ t('dataPoints.editor.types.range') }}</option>
-          <option value="string">{{ t('dataPoints.editor.types.string') }}</option>
-          <option value="multi-string">{{ t('dataPoints.editor.types.multiString') }}</option>
-          <option value="boolean">{{ t('dataPoints.editor.types.boolean') }}</option>
-          <option value="medication">{{ t('dataPoints.editor.types.medication') }}</option>
-        </select>
+          <span class="text-xl leading-none">{{ opt.emoji }}</span>
+          <span class="text-[11px] font-medium text-ink leading-tight mt-0.5">
+            {{ t(`dataPoints.editor.types.${opt.i18nKey}.label`) }}
+          </span>
+          <span class="text-[10px] text-ink-faint leading-tight hidden sm:block">
+            {{ t(`dataPoints.editor.types.${opt.i18nKey}.description`) }}
+          </span>
+        </button>
       </div>
     </div>
 
@@ -194,6 +228,7 @@ function submit() {
         :placeholder="t('dataPoints.editor.multiString.optionsPlaceholder')"
         class="w-full border border-edge rounded-input px-3 py-2 text-sm text-ink bg-surface placeholder:text-ink-faint focus:outline-none focus:ring-2 focus:ring-accent/25 focus:border-accent transition-colors"
       />
+      <p class="text-xs text-ink-faint mt-1">{{ t('dataPoints.editor.multiString.optionsHint') }}</p>
     </div>
 
     <div v-if="type === 'medication' && !locked">

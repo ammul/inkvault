@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
-import type { DataPointConfig } from '@/types'
+import type { DataPointConfig, DataPointType } from '@/types'
 import DataPointIcon from '@/components/ui/DataPointIcon.vue'
 
 const { t } = useI18n()
@@ -11,6 +11,18 @@ const emit = defineEmits<{
   edit: [config: DataPointConfig]
   delete: [id: string]
 }>()
+
+const TYPE_KEY_MAP: Record<DataPointType, string> = {
+  range: 'range',
+  string: 'string',
+  'multi-string': 'multiString',
+  boolean: 'boolean',
+  medication: 'medication',
+}
+
+function typeLabel(type: DataPointType): string {
+  return t(`dataPoints.editor.types.${TYPE_KEY_MAP[type]}.label`)
+}
 </script>
 
 <template>
@@ -24,7 +36,7 @@ const emit = defineEmits<{
         <DataPointIcon :icon="config.icon" :color="config.color" :label="config.label" />
         <div class="flex-1 min-w-0">
           <p class="font-medium text-ink text-sm truncate">{{ config.label }}</p>
-          <p class="text-xs text-ink-faint">{{ config.type }}</p>
+          <p class="text-xs text-ink-faint">{{ typeLabel(config.type) }}</p>
         </div>
         <button
           @click="emit('edit', config)"
