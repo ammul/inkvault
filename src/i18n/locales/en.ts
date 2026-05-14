@@ -159,6 +159,7 @@ export default {
       year: 'Last year',
       all: 'All time',
     },
+    chart: 'Chart',
     filter: {
       label: 'Filters',
       dataPoints: 'Data points',

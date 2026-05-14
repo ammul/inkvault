@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import type { DataPointConfig, TimeRange, DataPointValue, ConfigFilter, MedicationValue } from '@/types'
 import { useDiaryStore } from '@/stores/diary'
 import DataPointIcon from '@/components/ui/DataPointIcon.vue'
+import ChartModal from '@/components/stats/ChartModal.vue'
 
 const { t } = useI18n()
 
@@ -61,6 +62,8 @@ const average = computed(() => {
   return (nums.reduce((a, b) => a + b, 0) / nums.length).toFixed(1)
 })
 
+const showChart = ref(false)
+
 function formatValue(v: DataPointValue): string {
   if (v === null) return '—'
   if (Array.isArray(v)) return v.join(', ')
@@ -74,9 +77,19 @@ function formatValue(v: DataPointValue): string {
     <div class="flex items-center gap-2 mb-3">
       <DataPointIcon :icon="config.icon" :color="config.color" :label="config.label" />
       <h3 class="font-semibold text-ink">{{ config.label }}</h3>
-      <span v-if="average !== null" class="ml-auto text-sm text-ink-muted">
+      <span v-if="average !== null" class="text-sm text-ink-muted">
         {{ t('statistics.avg') }} <span class="font-medium text-ink">{{ average }}</span>
       </span>
+      <button
+        @click="showChart = true"
+        class="ml-auto p-1 rounded text-ink-muted hover:text-ink hover:bg-surface transition-colors"
+        :aria-label="t('statistics.chart')"
+        :title="t('statistics.chart')"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 20 20" fill="currentColor">
+          <path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zm6-4a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zm6-3a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z" />
+        </svg>
+      </button>
     </div>
 
     <div v-if="values.length" class="space-y-1">
@@ -91,4 +104,11 @@ function formatValue(v: DataPointValue): string {
     </div>
     <p v-else class="text-sm text-ink-faint text-center py-3">{{ t('statistics.noData') }}</p>
   </div>
+
+  <ChartModal
+    v-if="showChart"
+    :config="config"
+    :values="values"
+    @close="showChart = false"
+  />
 </template>
