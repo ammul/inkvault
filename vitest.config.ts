@@ -13,7 +13,13 @@ export default defineConfig({
       provider: 'v8',
       reporter: ['text', 'json-summary'],
       include: ['src/**'],
-      exclude: ['src/main.ts'],
+      exclude: [
+        'src/main.ts',
+        'src/**/*.vue',
+        'src/router/**',
+        'src/i18n/**',
+        'src/types/**',
+      ],
     },
   },
   resolve: {

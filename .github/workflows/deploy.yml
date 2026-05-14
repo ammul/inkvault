@@ -40,6 +40,10 @@ jobs:
       - run: npx playwright install --with-deps chromium
       - run: npm run build
       - run: npm run test:e2e
+      - uses: actions/upload-artifact@v4
+        with:
+          name: e2e-results
+          path: e2e-results.json
 
   build:
     name: Build
@@ -58,6 +62,10 @@ jobs:
         with:
           name: coverage
           path: coverage/
+      - uses: actions/download-artifact@v4
+        with:
+          name: e2e-results
+          path: .
       - name: Generate coverage badge
         run: |
           node -e "
@@ -66,6 +74,18 @@ jobs:
           const color = pct >= 80 ? 'brightgreen' : pct >= 60 ? 'yellow' : 'red';
           require('fs').writeFileSync('dist/coverage-badge.json', JSON.stringify({
             schemaVersion: 1, label: 'coverage', message: pct + '%', color
+          }));
+          "
+      - name: Generate E2E badge
+        run: |
+          node -e "
+          const r = JSON.parse(require('fs').readFileSync('e2e-results.json'));
+          const passed = r.stats.expected;
+          const failed = r.stats.unexpected;
+          const color = failed === 0 ? 'brightgreen' : 'red';
+          const msg = failed === 0 ? passed + ' passed' : failed + ' failed';
+          require('fs').writeFileSync('dist/e2e-badge.json', JSON.stringify({
+            schemaVersion: 1, label: 'e2e', message: msg, color
           }));
           "
       - uses: actions/upload-artifact@v4
