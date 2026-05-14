@@ -48,6 +48,7 @@ export default {
     theme: 'Theme',
     settings: 'Settings',
     backup: 'Backup',
+    about: 'About',
     lock: 'Lock',
     toggleMenu: 'Toggle menu',
   },
@@ -257,6 +258,12 @@ export default {
       normal: { label: 'Normal', description: 'Balanced' },
       wide: { label: 'Wide', description: 'Uses more screen' },
     },
+  },
+
+  about: {
+    title: 'About InkVault',
+    description: 'A private, fully client-side encrypted diary. No backend, no accounts — your data never leaves your device.',
+    github: 'View on GitHub →',
   },
 
   passphrase: {

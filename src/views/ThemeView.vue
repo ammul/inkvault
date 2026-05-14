@@ -2,13 +2,16 @@
 import { onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useThemeStore } from '@/stores/theme'
-import type { ColorTheme, ThemeFont, ThemeMood, ThemeFontSize, ThemeLineSpacing, ThemeContentWidth } from '@/types'
+import { useAppSettingsStore } from '@/stores/appSettings'
+import type { ColorTheme, ThemeFont, ThemeMood, ThemeFontSize } from '@/types'
 
 const { t } = useI18n()
 const theme = useThemeStore()
+const appSettings = useAppSettingsStore()
 
 onMounted(async () => {
   if (!theme.loaded) await theme.load()
+  if (!appSettings.loaded) await appSettings.load()
 })
 
 async function setMood(mood: ThemeMood) {
@@ -35,16 +38,15 @@ async function setFontSize(fontSize: ThemeFontSize) {
   await theme.save()
 }
 
-async function setLineSpacing(lineSpacing: ThemeLineSpacing) {
-  theme.settings.lineSpacing = lineSpacing
-  theme.apply()
-  await theme.save()
+async function setAnimations(val: boolean) {
+  appSettings.settings.animations = val
+  appSettings.apply()
+  await appSettings.save()
 }
 
-async function setContentWidth(contentWidth: ThemeContentWidth) {
-  theme.settings.contentWidth = contentWidth
-  theme.apply()
-  await theme.save()
+async function setUseEmojis(val: boolean) {
+  appSettings.settings.useEmojis = val
+  await appSettings.save()
 }
 
 const moods: { value: ThemeMood }[] = [
@@ -73,18 +75,6 @@ const fontSizes: { value: ThemeFontSize }[] = [
   { value: 'sm' },
   { value: 'md' },
   { value: 'lg' },
-]
-
-const spacings: { value: ThemeLineSpacing }[] = [
-  { value: 'compact' },
-  { value: 'normal' },
-  { value: 'relaxed' },
-]
-
-const widths: { value: ThemeContentWidth }[] = [
-  { value: 'narrow' },
-  { value: 'normal' },
-  { value: 'wide' },
 ]
 </script>
 
@@ -217,61 +207,56 @@ const widths: { value: ThemeContentWidth }[] = [
       </div>
     </section>
 
-    <!-- Line spacing -->
-    <section class="bg-raised border border-edge rounded-card shadow-card p-6 space-y-4">
-      <div>
-        <h2 class="font-semibold text-ink">{{ t('theme.lineSpacing.title') }}</h2>
-        <p class="text-sm text-ink-muted mt-1">{{ t('theme.lineSpacing.subtitle') }}</p>
+    <!-- Behavior -->
+    <section class="bg-raised border border-edge rounded-card shadow-card p-6 space-y-3">
+      <div class="mb-1">
+        <h2 class="font-semibold text-ink">{{ t('appSettings.appearance') }}</h2>
       </div>
-      <div class="grid grid-cols-3 gap-3">
-        <button
-          v-for="spacing in spacings"
-          :key="spacing.value"
-          @click="setLineSpacing(spacing.value)"
-          :class="[
-            'flex flex-col items-center gap-2 p-4 rounded-card border-2 transition-all text-center',
-            theme.settings.lineSpacing === spacing.value
-              ? 'border-accent bg-accent-tint'
-              : 'border-edge hover:border-accent/40 hover:bg-subtle',
-          ]"
-        >
-          <span
-            class="font-medium text-sm"
-            :class="theme.settings.lineSpacing === spacing.value ? 'text-accent' : 'text-ink'"
-          >
-            {{ t(`theme.lineSpacing.${spacing.value}.label`) }}
-          </span>
-          <span class="text-xs text-ink-muted">{{ t(`theme.lineSpacing.${spacing.value}.description`) }}</span>
-        </button>
-      </div>
-    </section>
 
-    <!-- Content width -->
-    <section class="bg-raised border border-edge rounded-card shadow-card p-6 space-y-4">
-      <div>
-        <h2 class="font-semibold text-ink">{{ t('theme.contentWidth.title') }}</h2>
-        <p class="text-sm text-ink-muted mt-1">{{ t('theme.contentWidth.subtitle') }}</p>
+      <div class="flex items-start justify-between gap-4">
+        <div>
+          <p class="text-sm font-medium text-ink">{{ t('appSettings.animations') }}</p>
+          <p class="text-xs text-ink-muted mt-0.5">{{ t('appSettings.animationsDescription') }}</p>
+        </div>
+        <div class="flex gap-1 shrink-0">
+          <button
+            @click="setAnimations(true)"
+            :class="appSettings.settings.animations
+              ? 'bg-accent text-on-accent'
+              : 'bg-subtle text-ink-muted hover:bg-edge'"
+            class="text-sm px-3 py-1.5 rounded-input transition-colors font-medium"
+          >{{ t('appSettings.on') }}</button>
+          <button
+            @click="setAnimations(false)"
+            :class="!appSettings.settings.animations
+              ? 'bg-accent text-on-accent'
+              : 'bg-subtle text-ink-muted hover:bg-edge'"
+            class="text-sm px-3 py-1.5 rounded-input transition-colors font-medium"
+          >{{ t('appSettings.off') }}</button>
+        </div>
       </div>
-      <div class="grid grid-cols-3 gap-3">
-        <button
-          v-for="width in widths"
-          :key="width.value"
-          @click="setContentWidth(width.value)"
-          :class="[
-            'flex flex-col items-center gap-2 p-4 rounded-card border-2 transition-all text-center',
-            theme.settings.contentWidth === width.value
-              ? 'border-accent bg-accent-tint'
-              : 'border-edge hover:border-accent/40 hover:bg-subtle',
-          ]"
-        >
-          <span
-            class="font-medium text-sm"
-            :class="theme.settings.contentWidth === width.value ? 'text-accent' : 'text-ink'"
-          >
-            {{ t(`theme.contentWidth.${width.value}.label`) }}
-          </span>
-          <span class="text-xs text-ink-muted">{{ t(`theme.contentWidth.${width.value}.description`) }}</span>
-        </button>
+
+      <div class="border-t border-edge pt-3 flex items-start justify-between gap-4">
+        <div>
+          <p class="text-sm font-medium text-ink">{{ t('appSettings.useEmojis') }}</p>
+          <p class="text-xs text-ink-muted mt-0.5">{{ t('appSettings.useEmojisDescription') }}</p>
+        </div>
+        <div class="flex gap-1 shrink-0">
+          <button
+            @click="setUseEmojis(true)"
+            :class="appSettings.settings.useEmojis
+              ? 'bg-accent text-on-accent'
+              : 'bg-subtle text-ink-muted hover:bg-edge'"
+            class="text-sm px-3 py-1.5 rounded-input transition-colors font-medium"
+          >{{ t('appSettings.on') }}</button>
+          <button
+            @click="setUseEmojis(false)"
+            :class="!appSettings.settings.useEmojis
+              ? 'bg-accent text-on-accent'
+              : 'bg-subtle text-ink-muted hover:bg-edge'"
+            class="text-sm px-3 py-1.5 rounded-input transition-colors font-medium"
+          >{{ t('appSettings.off') }}</button>
+        </div>
       </div>
     </section>
   </div>
