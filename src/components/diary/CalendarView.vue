@@ -47,7 +47,7 @@ const days = computed(() => {
     cells.push({
       date,
       day: d,
-      hasEntry: !!diary.getEntry(date),
+      hasEntry: diary.availableDates.has(date),
       isToday: date === todayStr,
     })
   }

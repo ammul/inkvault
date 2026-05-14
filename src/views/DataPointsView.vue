@@ -13,7 +13,7 @@ const diary = useDiaryStore()
 
 onMounted(async () => {
   if (!datapoints.loaded) await datapoints.loadConfigs()
-  if (!diary.loaded) await diary.loadEntries()
+  if (!diary.loaded) await diary.loadAllEntries()
 })
 
 const showEditor = ref(false)

@@ -1,7 +1,8 @@
 import { setActivePinia, createPinia } from 'pinia'
 import { useAuthStore } from '@/stores/auth'
 import { deriveVaultKey, encrypt, PBKDF2_ITERATIONS_LEGACY, VAULT_SENTINEL } from '@/utils/crypto'
-import { KEYS, writePlain } from '@/utils/storage'
+import { KEYS, writePlain, readSchemaVersion } from '@/utils/storage'
+import { CURRENT_SCHEMA_VERSION } from '@/utils/migrations'
 
 beforeEach(() => {
   setActivePinia(createPinia())
@@ -91,5 +92,49 @@ describe('auth store', () => {
     await auth.initializeVault('passphrase')
     auth.resetVault()
     expect(localStorage.getItem('iv:kdf')).toBeNull()
+  })
+
+  test('initializeVault writes iv:schema at the current schema version', async () => {
+    const auth = useAuthStore()
+    await auth.initializeVault('passphrase')
+    expect(localStorage.getItem('iv:schema')).toBe(String(CURRENT_SCHEMA_VERSION))
+  })
+
+  test('resetVault removes iv:schema', async () => {
+    const auth = useAuthStore()
+    await auth.initializeVault('passphrase')
+    auth.resetVault()
+    expect(localStorage.getItem('iv:schema')).toBeNull()
+  })
+
+  test('unlock runs migrations and writes iv:schema before setting the key', async () => {
+    const auth = useAuthStore()
+    await auth.initializeVault('passphrase')
+    auth.lock()
+    // Simulate an old vault by deleting iv:schema
+    localStorage.removeItem('iv:schema')
+    expect(readSchemaVersion()).toBe(0)
+    await auth.unlock('passphrase')
+    expect(auth.isUnlocked).toBe(true)
+    expect(readSchemaVersion()).toBe(CURRENT_SCHEMA_VERSION)
+  })
+
+  test('unlock with simultaneous KDF and schema migration completes both', async () => {
+    const passphrase = 'legacy-passphrase'
+    const saltBytes = crypto.getRandomValues(new Uint8Array(16))
+    const saltB64 = btoa(String.fromCharCode(...saltBytes))
+    const legacyKey = await deriveVaultKey(passphrase, saltB64, PBKDF2_ITERATIONS_LEGACY)
+    const verifyBlob = await encrypt(legacyKey, VAULT_SENTINEL)
+    writePlain(KEYS.SALT, saltB64)
+    writePlain(KEYS.VERIFY, verifyBlob)
+    // Simulate a very old vault: no iv:kdf, no iv:schema
+
+    const auth = useAuthStore()
+    auth.checkInitialized()
+    await auth.unlock(passphrase)
+
+    expect(auth.isUnlocked).toBe(true)
+    expect(localStorage.getItem('iv:kdf')).toBe('600000')
+    expect(readSchemaVersion()).toBe(CURRENT_SCHEMA_VERSION)
   })
 })

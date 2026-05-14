@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted } from 'vue'
+import { computed, onMounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useDiaryStore } from '@/stores/diary'
@@ -15,8 +15,16 @@ const datapoints = useDataPointsStore()
 const selectedDate = computed(() => route.params.date as string | undefined)
 
 onMounted(async () => {
-  if (!diary.loaded) await diary.loadEntries()
+  if (selectedDate.value) {
+    await diary.loadEntry(selectedDate.value)
+  } else {
+    if (!diary.datesLoaded) diary.getAvailableDates()
+  }
   if (!datapoints.loaded) await datapoints.loadConfigs()
+})
+
+watch(selectedDate, async (date) => {
+  if (date) await diary.loadEntry(date)
 })
 </script>
 

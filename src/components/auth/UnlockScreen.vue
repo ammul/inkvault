@@ -81,7 +81,6 @@ async function submitImport() {
       await diary.saveEntry(entry)
     }
     await datapoints.replaceConfigs(importedConfigs)
-    await diary.loadEntries()
     await datapoints.loadConfigs()
     router.push('/home')
   } catch (e) {

@@ -15,7 +15,7 @@ const datapoints = useDataPointsStore()
 const theme = useThemeStore()
 
 onMounted(async () => {
-  if (!diary.loaded) await diary.loadEntries()
+  if (!diary.loaded) await diary.loadAllEntries()
   if (!datapoints.loaded) await datapoints.loadConfigs()
 })
 

@@ -115,11 +115,11 @@ function load() {
 
 onMounted(load)
 watch(date, load)
-watch(() => diary.loaded, (loaded) => { if (loaded) load() })
+watch(() => diary.entries.get(date.value), (entry) => { if (entry !== undefined) load() })
 
 // ─── Persistence ─────────────────────────────────────────────────────────────
 
-async function autoSave() {
+async function autoSave(silent = false) {
   saving.value = true
   const entry: DiaryEntry = {
     date: date.value,
@@ -131,7 +131,7 @@ async function autoSave() {
   }
   await diary.saveEntry(entry)
   saving.value = false
-  toast.show(t('diary.entrySaved'))
+  if (!silent) toast.show(t('diary.entrySaved'))
 }
 
 // ─── Text entries ─────────────────────────────────────────────────────────────
@@ -145,11 +145,11 @@ function addEntry() {
   timelineEntries.value = [...timelineEntries.value, newEntry]
   editingId.value = newEntry.id
   showAddMenu.value = false
-  autoSave()
+  autoSave(true)
 }
 
 function startEdit(id: string) {
-  if (editingId.value && editingId.value !== id) autoSave()
+  if (editingId.value && editingId.value !== id) autoSave(true)
   editingId.value = id
 }
 
@@ -160,6 +160,7 @@ function updateEntryText(id: string, text: string) {
 }
 
 function confirmEdit() {
+  if (editingId.value === null) return
   editingId.value = null
   autoSave()
 }

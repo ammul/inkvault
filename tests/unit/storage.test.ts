@@ -1,4 +1,4 @@
-import { writeEncrypted, readEncrypted, listEntryKeys, writePlain, readPlain, remove } from '@/utils/storage'
+import { writeEncrypted, readEncrypted, listEntryKeys, listEntryDates, readSchemaVersion, writeSchemaVersion, writePlain, readPlain, remove } from '@/utils/storage'
 import { initVault } from '@/utils/crypto'
 
 beforeEach(() => {
@@ -48,5 +48,25 @@ describe('storage', () => {
     writePlain('remove:me', 'value')
     remove('remove:me')
     expect(readPlain('remove:me')).toBeNull()
+  })
+
+  test('listEntryDates returns bare date strings without the iv:entry: prefix', () => {
+    localStorage.setItem('iv:entry:2024-01-01', 'x')
+    localStorage.setItem('iv:entry:2024-01-02', 'x')
+    localStorage.setItem('iv:salt', 'y')
+    const dates = listEntryDates()
+    expect(dates).toHaveLength(2)
+    expect(dates).toContain('2024-01-01')
+    expect(dates).toContain('2024-01-02')
+    expect(dates.every((d) => !d.startsWith('iv:entry:'))).toBe(true)
+  })
+
+  test('readSchemaVersion returns 0 when iv:schema is absent', () => {
+    expect(readSchemaVersion()).toBe(0)
+  })
+
+  test('writeSchemaVersion and readSchemaVersion round-trip', () => {
+    writeSchemaVersion(3)
+    expect(readSchemaVersion()).toBe(3)
   })
 })

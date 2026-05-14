@@ -4,6 +4,7 @@ export const KEYS = {
   SALT: 'iv:salt',
   VERIFY: 'iv:verify',
   KDF: 'iv:kdf',
+  SCHEMA: 'iv:schema',
   DATAPOINTS: 'iv:datapoints',
   THEME: 'iv:theme',
   APP_SETTINGS: 'iv:app-settings',
@@ -13,6 +14,20 @@ export const KEYS = {
 
 export function listEntryKeys(): string[] {
   return Object.keys(localStorage).filter((k) => k.startsWith(KEYS.ALL_ENTRY_PREFIX))
+}
+
+export function listEntryDates(): string[] {
+  return listEntryKeys().map((k) => k.slice(KEYS.ALL_ENTRY_PREFIX.length))
+}
+
+export function readSchemaVersion(): number {
+  const raw = readPlain(KEYS.SCHEMA)
+  const n = parseInt(raw ?? '', 10)
+  return isNaN(n) ? 0 : n
+}
+
+export function writeSchemaVersion(v: number): void {
+  writePlain(KEYS.SCHEMA, String(v))
 }
 
 export async function writeEncrypted(

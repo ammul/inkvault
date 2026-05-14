@@ -59,7 +59,8 @@ test('data point appears as a field in the diary day entry', async ({ page }) =>
   // Open today's diary entry
   const today = new Date().toISOString().slice(0, 10)
   await page.goto(`/inkvault/#/diary/${today}`)
-  await expect(page.getByPlaceholder('What happened today?')).toBeVisible()
-  await expect(page.getByRole('heading', { name: 'Data Points' })).toBeVisible()
-  await expect(page.getByText('Mood')).toBeVisible()
+
+  // Open the add menu — the data point should appear as a log option
+  await page.getByRole('button', { name: 'Add entry' }).click()
+  await expect(page.getByRole('button', { name: 'Mood' })).toBeVisible()
 })

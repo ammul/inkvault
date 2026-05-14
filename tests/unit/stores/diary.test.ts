@@ -21,13 +21,13 @@ describe('diary store', () => {
     expect(diary.getEntry('2024-06-01')).toEqual(entry)
   })
 
-  test('loadEntries restores previously saved entries after reset', async () => {
+  test('loadAllEntries restores previously saved entries after reset', async () => {
     const diary = useDiaryStore()
     await diary.saveEntry(makeEntry('2024-06-01'))
     await diary.saveEntry(makeEntry('2024-06-02'))
     diary.reset()
     expect(diary.entries.size).toBe(0)
-    await diary.loadEntries()
+    await diary.loadAllEntries()
     expect(diary.entries.size).toBe(2)
   })
 
@@ -58,5 +58,67 @@ describe('diary store', () => {
     await diary.saveEntry(makeEntry('2024-06-01', 'original'))
     await diary.saveEntry(makeEntry('2024-06-01', 'updated'))
     expect(diary.getEntry('2024-06-01')?.text).toBe('updated')
+  })
+
+  test('getAvailableDates returns dates without decrypting entries', async () => {
+    const diary = useDiaryStore()
+    await diary.saveEntry(makeEntry('2024-06-01'))
+    await diary.saveEntry(makeEntry('2024-06-02'))
+    diary.reset()
+    const dates = diary.getAvailableDates()
+    expect(dates).toHaveLength(2)
+    expect(dates).toContain('2024-06-01')
+    expect(dates).toContain('2024-06-02')
+    // entries Map should still be empty (no decryption performed)
+    expect(diary.entries.size).toBe(0)
+    expect(diary.datesLoaded).toBe(true)
+  })
+
+  test('loadEntry decrypts and caches a single entry', async () => {
+    const diary = useDiaryStore()
+    await diary.saveEntry(makeEntry('2024-06-01'))
+    await diary.saveEntry(makeEntry('2024-06-02'))
+    diary.reset()
+    const entry = await diary.loadEntry('2024-06-01')
+    expect(entry?.date).toBe('2024-06-01')
+    expect(diary.entries.size).toBe(1)
+  })
+
+  test('loadEntry returns cached entry on second call', async () => {
+    const diary = useDiaryStore()
+    await diary.saveEntry(makeEntry('2024-06-01'))
+    await diary.loadEntry('2024-06-01')
+    const sizeBefore = diary.entries.size
+    await diary.loadEntry('2024-06-01')
+    expect(diary.entries.size).toBe(sizeBefore)
+  })
+
+  test('loadEntry returns null for a missing date', async () => {
+    const diary = useDiaryStore()
+    const result = await diary.loadEntry('1900-01-01')
+    expect(result).toBeNull()
+  })
+
+  test('saveEntry updates availableDates', async () => {
+    const diary = useDiaryStore()
+    await diary.saveEntry(makeEntry('2024-06-01'))
+    expect(diary.availableDates.has('2024-06-01')).toBe(true)
+  })
+
+  test('deleteEntry removes from availableDates', async () => {
+    const diary = useDiaryStore()
+    await diary.saveEntry(makeEntry('2024-06-01'))
+    await diary.deleteEntry('2024-06-01')
+    expect(diary.availableDates.has('2024-06-01')).toBe(false)
+  })
+
+  test('reset clears availableDates and datesLoaded', async () => {
+    const diary = useDiaryStore()
+    await diary.saveEntry(makeEntry('2024-06-01'))
+    diary.getAvailableDates()
+    expect(diary.datesLoaded).toBe(true)
+    diary.reset()
+    expect(diary.availableDates.size).toBe(0)
+    expect(diary.datesLoaded).toBe(false)
   })
 })

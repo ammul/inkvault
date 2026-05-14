@@ -12,7 +12,7 @@ const diary = useDiaryStore()
 const datapoints = useDataPointsStore()
 
 onMounted(async () => {
-  if (!diary.loaded) await diary.loadEntries()
+  if (!diary.loaded) await diary.loadAllEntries()
   if (!datapoints.loaded) await datapoints.loadConfigs()
 })
 

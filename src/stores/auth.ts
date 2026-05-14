@@ -2,6 +2,7 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { initVault, unlockVault, deriveVaultKey, PBKDF2_ITERATIONS, PBKDF2_ITERATIONS_LEGACY } from '@/utils/crypto'
 import { KEYS, writePlain, readPlain, remove, listEntryKeys, migrateEncryptedBlobs } from '@/utils/storage'
+import { runMigrations, CURRENT_SCHEMA_VERSION } from '@/utils/migrations'
 import { useDiaryStore } from './diary'
 import { useDataPointsStore } from './datapoints'
 import { useThemeStore } from './theme'
@@ -24,6 +25,7 @@ export const useAuthStore = defineStore('auth', () => {
     writePlain(KEYS.SALT, salt)
     writePlain(KEYS.VERIFY, verifyBlob)
     writePlain(KEYS.KDF, String(PBKDF2_ITERATIONS))
+    writePlain(KEYS.SCHEMA, String(CURRENT_SCHEMA_VERSION))
     key.value = derivedKey
     initialized.value = true
   }
@@ -36,14 +38,17 @@ export const useAuthStore = defineStore('auth', () => {
     const storedIterations = parseInt(readPlain(KEYS.KDF) ?? String(PBKDF2_ITERATIONS_LEGACY), 10)
     const oldKey = await unlockVault(passphrase, salt, verifyBlob, storedIterations)
 
+    let finalKey: CryptoKey
     if (storedIterations < PBKDF2_ITERATIONS) {
-      const newKey = await deriveVaultKey(passphrase, salt, PBKDF2_ITERATIONS)
-      await migrateEncryptedBlobs(oldKey, newKey)
+      finalKey = await deriveVaultKey(passphrase, salt, PBKDF2_ITERATIONS)
+      await migrateEncryptedBlobs(oldKey, finalKey)
       writePlain(KEYS.KDF, String(PBKDF2_ITERATIONS))
-      key.value = newKey
     } else {
-      key.value = oldKey
+      finalKey = oldKey
     }
+
+    await runMigrations(finalKey)
+    key.value = finalKey
   }
 
   function lock(): void {
@@ -60,6 +65,7 @@ export const useAuthStore = defineStore('auth', () => {
     remove(KEYS.SALT)
     remove(KEYS.VERIFY)
     remove(KEYS.KDF)
+    remove(KEYS.SCHEMA)
     remove(KEYS.THEME)
     remove(KEYS.APP_SETTINGS)
     useDiaryStore().reset()
