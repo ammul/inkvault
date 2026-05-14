@@ -1,4 +1,4 @@
-import { writeEncrypted, readEncrypted, listEntryKeys, listEntryDates, readSchemaVersion, writeSchemaVersion, writePlain, readPlain, remove } from '@/utils/storage'
+import { writeEncrypted, readEncrypted, listEntryKeys, listEntryDates, readSchemaVersion, writeSchemaVersion, writePlain, readPlain, remove, KEYS, migrateEncryptedBlobs } from '@/utils/storage'
 import { initVault } from '@/utils/crypto'
 
 beforeEach(() => {
@@ -68,5 +68,25 @@ describe('storage', () => {
   test('writeSchemaVersion and readSchemaVersion round-trip', () => {
     writeSchemaVersion(3)
     expect(readSchemaVersion()).toBe(3)
+  })
+
+  test('migrateEncryptedBlobs re-encrypts blobs so the new key can read them', async () => {
+    const { key: oldKey } = await initVault('old-vault-migrate')
+    const { key: newKey } = await initVault('new-vault-migrate')
+    await writeEncrypted(oldKey, KEYS.DATAPOINTS, { migrated: true })
+    await writeEncrypted(oldKey, KEYS.THEME, { colorTheme: 'teal' })
+    await migrateEncryptedBlobs(oldKey, newKey)
+    const dp = await readEncrypted<{ migrated: boolean }>(newKey, KEYS.DATAPOINTS)
+    const theme = await readEncrypted<{ colorTheme: string }>(newKey, KEYS.THEME)
+    expect(dp).toEqual({ migrated: true })
+    expect(theme).toEqual({ colorTheme: 'teal' })
+  })
+
+  test('old key cannot decrypt blobs after migration', async () => {
+    const { key: oldKey } = await initVault('old-vault-stale')
+    const { key: newKey } = await initVault('new-vault-stale')
+    await writeEncrypted(oldKey, KEYS.DATAPOINTS, { secret: 'data' })
+    await migrateEncryptedBlobs(oldKey, newKey)
+    await expect(readEncrypted(oldKey, KEYS.DATAPOINTS)).rejects.toThrow()
   })
 })
