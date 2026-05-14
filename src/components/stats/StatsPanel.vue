@@ -20,7 +20,11 @@ const values = computed(() => {
   let list = [...diary.entries.values()]
     .filter((e) => e.date >= props.timeRange.start && e.date <= props.timeRange.end)
     .sort((a, b) => a.date.localeCompare(b.date))
-    .map((e) => ({ date: e.date, value: e.dataValues[props.config.id] ?? null }))
+    .map((e) => {
+      const dataEntry = e.dataEntries?.filter((d) => d.configId === props.config.id).at(-1)
+      const value = dataEntry?.value ?? e.dataValues[props.config.id] ?? null
+      return { date: e.date, value }
+    })
     .filter((v) => v.value !== null && !(Array.isArray(v.value) && v.value.length === 0))
 
   if (!props.filter) return list
