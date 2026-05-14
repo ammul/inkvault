@@ -1,5 +1,7 @@
 # InkVault
 
+[![coverage](https://img.shields.io/endpoint?url=https://ammul.github.io/inkvault/coverage-badge.json)](https://ammul.github.io/inkvault/)
+
 A private diary with no backend, no accounts, and no telemetry. Every entry is encrypted directly in your browser using AES-256-GCM before it ever touches storage. Your data never leaves your device.
 
 > **Status:** active development. The security model has been reviewed, but this is a personal project, not an audited product. See [Threat model](#threat-model) for what InkVault does and does not defend against.

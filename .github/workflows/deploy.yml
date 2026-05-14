@@ -21,7 +21,11 @@ jobs:
           cache: 'npm'
       - run: npm ci
       - run: npm run type-check
-      - run: npm run test:unit
+      - run: npm run test:coverage
+      - uses: actions/upload-artifact@v4
+        with:
+          name: coverage
+          path: coverage/coverage-summary.json
 
   e2e:
     name: E2E Tests
@@ -50,6 +54,20 @@ jobs:
           cache: 'npm'
       - run: npm ci
       - run: npm run build
+      - uses: actions/download-artifact@v4
+        with:
+          name: coverage
+          path: coverage/
+      - name: Generate coverage badge
+        run: |
+          node -e "
+          const s = JSON.parse(require('fs').readFileSync('coverage/coverage-summary.json'));
+          const pct = s.total.lines.pct;
+          const color = pct >= 80 ? 'brightgreen' : pct >= 60 ? 'yellow' : 'red';
+          require('fs').writeFileSync('dist/coverage-badge.json', JSON.stringify({
+            schemaVersion: 1, label: 'coverage', message: pct + '%', color
+          }));
+          "
       - uses: actions/upload-artifact@v4
         with:
           name: dist
