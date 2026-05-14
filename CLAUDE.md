@@ -6,7 +6,7 @@ InkVault is a private, fully client-side encrypted diary app built with Vue 3 + 
 All user data is encrypted on-device with AES-256-GCM. No backend. No accounts.
 Deployed to GitHub Pages as a static site.
 
-See `ARCHITECTURE.md` for the full technical reference.
+See `docs/ARCHITECTURE.md` for the full technical reference.
 
 ## Commands
 
