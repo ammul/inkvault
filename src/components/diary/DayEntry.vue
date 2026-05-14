@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, watch, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import type { DiaryEntry, DiaryTimelineEntry, DiaryDataEntry, DataPointConfig, DataPointValue, MedicationValue } from '@/types'
@@ -7,7 +7,6 @@ import { useDiaryStore } from '@/stores/diary'
 import { useDataPointsStore } from '@/stores/datapoints'
 import { useToastStore } from '@/stores/toast'
 import { useAppSettingsStore } from '@/stores/appSettings'
-import TimelineEntry from '@/components/diary/TimelineEntry.vue'
 import ConfirmModal from '@/components/ui/ConfirmModal.vue'
 import EntryModal from '@/components/diary/EntryModal.vue'
 import DataPointIcon from '@/components/ui/DataPointIcon.vue'
@@ -335,96 +334,148 @@ const displayDate = computed(() => {
       </button>
     </div>
 
-    <!-- Timeline -->
-    <div>
-      <p v-if="!allTimelineItems.length" class="text-sm text-ink-faint py-2">
-        {{ t('diary.noEntries') }}
-      </p>
+    <!-- Timeline: centered beads on a continuous rope -->
+    <div class="relative flex flex-col items-center pt-6">
+      <!-- Continuous rope line — spans from center of first bead to center of + button,
+           sits behind everything (z-index below z-10 elements) -->
+      <div
+        v-if="allTimelineItems.length > 0"
+        class="absolute left-1/2 -translate-x-px w-0.5 bg-edge-strong pointer-events-none"
+        style="top: 24px; bottom: 28px"
+      />
 
-      <TransitionGroup name="timeline" tag="div">
-        <div v-for="(item, index) in allTimelineItems" :key="item.id">
+      <TransitionGroup name="timeline" tag="div" class="w-full flex flex-col items-center">
+        <div
+          v-for="(item, index) in allTimelineItems"
+          :key="item.id"
+          class="w-full flex flex-col items-center"
+        >
+          <!-- Gap between beads — rope is visible through here -->
+          <div v-if="index > 0" class="h-10" />
+
           <!-- Text entry -->
-          <TimelineEntry
-            v-if="item.type === 'text'"
-            :entry="(item as DiaryTimelineEntry)"
-            :is-editing="editingId === item.id"
-            :is-last="index === allTimelineItems.length - 1"
-            @update:text="updateEntryText(item.id, $event)"
-            @edit="startEdit(item.id)"
-            @confirm="confirmEdit"
-            @blur="confirmEdit"
-            @delete="requestDeleteEntry(item.id)"
-          />
+          <template v-if="item.type === 'text'">
+            <div class="relative w-full">
+            <div
+              class="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20 w-12 h-12 rounded-full bg-accent text-on-accent flex items-center justify-center shadow-card select-none"
+              :class="appSettings.settings.useEmojis ? 'text-2xl' : 'text-sm font-bold'"
+            >{{ appSettings.settings.useEmojis ? '✎' : 'T' }}</div>
+            <!-- Entry box — bubble overlaps top border -->
+            <div class="relative z-10 w-full bg-raised border border-edge-strong rounded-card px-3 pt-8 pb-3">
+              <div class="flex items-center justify-between mb-2">
+                <span class="text-xs text-ink-faint">
+                  {{ new Date(item.createdAt).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' }) }}
+                </span>
+                <div v-if="editingId !== item.id" class="flex gap-1">
+                  <button
+                    @click="startEdit(item.id)"
+                    class="text-xs text-ink-muted hover:text-ink px-1.5 py-0.5 rounded-input hover:bg-subtle transition-colors"
+                  >{{ t('diary.editEntry') }}</button>
+                  <button
+                    @click="requestDeleteEntry(item.id)"
+                    class="text-xs text-danger px-1.5 py-0.5 rounded-input hover:bg-subtle transition-colors"
+                  >{{ t('diary.deleteEntry') }}</button>
+                </div>
+                <button
+                  v-else
+                  @click="confirmEdit"
+                  class="text-xs text-accent px-1.5 py-0.5 rounded-input hover:bg-accent-tint transition-colors"
+                >{{ t('diary.done') }}</button>
+              </div>
+              <p
+                v-if="editingId !== item.id"
+                @dblclick="startEdit(item.id)"
+                class="text-sm text-ink whitespace-pre-wrap cursor-text min-h-5"
+              >{{ (item as TextTimelineItem).text || '…' }}</p>
+              <textarea
+                v-else
+                :ref="(el: any) => el && nextTick(() => (el as HTMLTextAreaElement).focus())"
+                :value="(item as TextTimelineItem).text"
+                @input="updateEntryText(item.id, ($event.target as HTMLTextAreaElement).value)"
+                @blur="confirmEdit"
+                @keydown.escape="confirmEdit"
+                rows="3"
+                :placeholder="t('diary.newEntryPlaceholder')"
+                class="w-full border border-edge rounded-card px-3 py-2 text-sm text-ink bg-raised placeholder:text-ink-faint resize-none focus:outline-none focus:ring-2 focus:ring-accent/25 focus:border-accent transition-colors"
+              />
+            </div>
+            </div>
+          </template>
 
           <!-- Data point entry -->
-          <div v-else class="flex gap-3">
-            <div class="flex flex-col items-center w-8 shrink-0">
+          <template v-else>
+            <div class="relative w-full">
+            <div class="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20">
               <DataPointIcon
                 :icon="datapoints.configs.find(c => c.id === (item as DataTimelineItem).configId)?.icon ?? ''"
                 :color="datapoints.configs.find(c => c.id === (item as DataTimelineItem).configId)?.color ?? 'var(--color-accent)'"
                 :label="datapoints.configs.find(c => c.id === (item as DataTimelineItem).configId)?.label ?? ''"
+                size="lg"
                 class="shadow-card"
               />
-              <div v-if="index < allTimelineItems.length - 1" class="w-px flex-1 bg-edge" />
             </div>
-            <div class="flex-1 pb-5">
-              <div class="flex items-center justify-between mb-1">
-                <span class="text-xs text-ink-faint">
-                  {{ new Date(item.createdAt).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' }) }}
+            <!-- Entry box — bubble overlaps top border -->
+            <div class="relative z-10 w-full bg-raised border border-edge-strong rounded-card px-3 pt-8 pb-3">
+              <div class="flex items-start justify-between mb-1">
+                <span class="text-sm font-semibold text-ink leading-tight">
+                  {{ datapoints.configs.find(c => c.id === (item as DataTimelineItem).configId)?.label }}
                 </span>
-                <div class="flex gap-1">
-                  <button
-                    @click="editDataEntry(item as DataTimelineItem)"
-                    class="text-xs text-ink-muted hover:text-ink px-1.5 py-0.5 rounded-input hover:bg-subtle transition-colors"
-                  >{{ t('diary.editEntry') }}</button>
-                  <button
-                    @click="requestDeleteDataEntry(item.id)"
-                    class="text-xs text-danger px-1.5 py-0.5 rounded-input hover:bg-subtle transition-colors"
-                  >{{ t('diary.deleteEntry') }}</button>
+                <div class="flex items-center gap-2 shrink-0 ml-2">
+                  <span class="text-xs text-ink-faint">
+                    {{ new Date(item.createdAt).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' }) }}
+                  </span>
+                  <div class="flex gap-1">
+                    <button
+                      @click="editDataEntry(item as DataTimelineItem)"
+                      class="text-xs text-ink-muted hover:text-ink px-1.5 py-0.5 rounded-input hover:bg-subtle transition-colors"
+                    >{{ t('diary.editEntry') }}</button>
+                    <button
+                      @click="requestDeleteDataEntry(item.id)"
+                      class="text-xs text-danger px-1.5 py-0.5 rounded-input hover:bg-subtle transition-colors"
+                    >{{ t('diary.deleteEntry') }}</button>
+                  </div>
                 </div>
               </div>
-              <div class="flex items-center gap-2 flex-wrap">
-                <span class="text-xs font-medium text-ink-muted">{{ datapoints.configs.find(c => c.id === (item as DataTimelineItem).configId)?.label }}</span>
-                <span class="text-sm text-ink">{{ formatDataValue(item as DataTimelineItem) }}</span>
-              </div>
+              <span class="text-sm text-ink">{{ formatDataValue(item as DataTimelineItem) }}</span>
             </div>
-          </div>
+            </div>
+          </template>
         </div>
       </TransitionGroup>
 
-      <!-- Add menu -->
-      <div class="flex items-center gap-3 mt-1">
-        <div class="flex flex-col items-center w-8">
-          <div class="w-px h-3 bg-edge" />
-        </div>
+      <!-- Gap before + button — rope visible here -->
+      <div v-if="allTimelineItems.length > 0" class="h-10" />
 
-        <!-- Radial menu anchor -->
-        <div class="relative w-10 h-10">
-          <!-- + / × toggle button -->
-          <button
-            @click="showAddMenu = !showAddMenu"
-            :disabled="saving"
-            :aria-label="showAddMenu ? t('diary.closeAddMenu') : t('diary.addEntry')"
-            class="w-10 h-10 rounded-full bg-accent text-on-accent flex items-center justify-center text-2xl leading-none hover:bg-accent-dim disabled:opacity-50 shadow-card"
-            :style="{ transform: showAddMenu ? 'rotate(45deg)' : 'rotate(0deg)', transition: 'transform 240ms cubic-bezier(0.34, 1.56, 0.64, 1)' }"
-          >+</button>
+      <!-- + button bead -->
+      <div class="relative z-10 w-14 h-14">
+        <button
+          @click="showAddMenu = !showAddMenu"
+          :disabled="saving"
+          :aria-label="showAddMenu ? t('diary.closeAddMenu') : t('diary.addEntry')"
+          class="w-14 h-14 rounded-full bg-accent text-on-accent flex items-center justify-center text-3xl leading-none hover:bg-accent-dim disabled:opacity-50 shadow-card"
+          :style="{ transform: showAddMenu ? 'rotate(45deg)' : 'rotate(0deg)', transition: 'transform 240ms cubic-bezier(0.34, 1.56, 0.64, 1)' }"
+        >+</button>
 
-          <!-- Radial items -->
-          <button
-            v-for="(menuItem, i) in menuItems"
-            :key="menuItem.id"
-            :disabled="saving"
-            :aria-label="menuItem.label"
-            :style="[
-              radialItemStyle(i, menuItem.id === '__text__' ? '' : menuItem.color),
-              menuItem.id !== '__text__' && !appSettings.settings.useEmojis ? { color: 'white', fontSize: '0.75rem', fontWeight: '700' } : {},
-            ]"
-            @click="menuItem.action()"
-            class="w-11 h-11 rounded-full flex items-center justify-center text-xl leading-none shadow-card disabled:opacity-50"
-            :class="menuItem.id === '__text__' ? 'bg-accent text-on-accent hover:bg-accent-dim' : 'hover:opacity-80'"
-          >{{ menuItem.icon }}</button>
-        </div>
+        <!-- Radial items -->
+        <button
+          v-for="(menuItem, i) in menuItems"
+          :key="menuItem.id"
+          :disabled="saving"
+          :aria-label="menuItem.label"
+          :style="[
+            radialItemStyle(i, menuItem.id === '__text__' ? '' : menuItem.color),
+            menuItem.id !== '__text__' && !appSettings.settings.useEmojis ? { color: 'white', fontSize: '0.75rem', fontWeight: '700' } : {},
+          ]"
+          @click="menuItem.action()"
+          class="w-12 h-12 rounded-full flex items-center justify-center text-xl leading-none shadow-card disabled:opacity-50"
+          :class="menuItem.id === '__text__' ? 'bg-accent text-on-accent hover:bg-accent-dim' : 'hover:opacity-80'"
+        >{{ menuItem.icon }}</button>
       </div>
+
+      <!-- Empty-state hint -->
+      <p v-if="!allTimelineItems.length" class="mt-4 text-sm text-ink-faint text-center">
+        {{ t('diary.noEntries') }}
+      </p>
     </div>
 
     <!-- Confirm delete: text entry -->
