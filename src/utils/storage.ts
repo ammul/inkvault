@@ -5,7 +5,7 @@ export const KEYS = {
   VERIFY: 'iv:verify',
   KDF: 'iv:kdf',
   SCHEMA: 'iv:schema',
-  TRACKERS: 'iv:datapoints',
+  TRACKERS: 'iv:trackers',
   THEME: 'iv:theme',
   APP_SETTINGS: 'iv:app-settings',
   ENTRY: (date: string) => `iv:entry:${date}`,

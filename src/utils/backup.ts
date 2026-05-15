@@ -36,7 +36,7 @@ export interface BackupFile {
   exportedAt: string
   salt: string
   verify: string
-  datapoints: string
+  trackers: string
   entries: Record<string, string>
   theme?: string
 }
@@ -60,7 +60,7 @@ export async function createBackup(
     exportedAt: new Date().toISOString(),
     salt: toBase64(salt),
     verify,
-    datapoints: encTrackers,
+    trackers: encTrackers,
     entries: encEntries,
   }
   if (themeSettings) {
@@ -83,7 +83,7 @@ export async function restoreBackup(
     throw new Error('Wrong backup passphrase')
   }
   if (sentinel !== BACKUP_SENTINEL) throw new Error('Wrong backup passphrase')
-  const trackers = JSON.parse(await decrypt(key, backup.datapoints)) as TrackerConfig[]
+  const trackers = JSON.parse(await decrypt(key, backup.trackers)) as TrackerConfig[]
   const entries = await Promise.all(
     Object.values(backup.entries).map(
       async (blob) => JSON.parse(await decrypt(key, blob)) as DiaryEntry,

@@ -252,7 +252,7 @@ const liveConfig = computed<TrackerConfig>(() => ({
             class="flex items-center gap-2 px-3 py-2 border border-edge rounded-input bg-surface opacity-60 cursor-not-allowed select-none"
           >
             <span v-if="appSettings.settings.useEmojis" class="text-xl leading-none">{{ currentTypeOption.emoji }}</span>
-            <span class="text-sm text-ink">{{ t(`dataPoints.editor.types.${currentTypeOption.i18nKey}.label`) }}</span>
+            <span class="text-sm text-ink">{{ t(`trackers.editor.types.${currentTypeOption.i18nKey}.label`) }}</span>
           </div>
 
           <!-- Unlocked, no-emoji mode: dropdown -->
@@ -262,7 +262,7 @@ const liveConfig = computed<TrackerConfig>(() => ({
             class="w-full border border-edge rounded-input px-3 py-2 text-sm text-ink bg-surface focus:outline-none focus:ring-2 focus:ring-accent/25 focus:border-accent transition-colors"
           >
             <option v-for="opt in TYPE_OPTIONS" :key="opt.value" :value="opt.value">
-              {{ t(`dataPoints.editor.types.${opt.i18nKey}.label`) }}
+              {{ t(`trackers.editor.types.${opt.i18nKey}.label`) }}
             </option>
           </select>
 
@@ -282,10 +282,10 @@ const liveConfig = computed<TrackerConfig>(() => ({
             >
               <span class="text-xl leading-none">{{ opt.emoji }}</span>
               <span class="text-[11px] font-medium text-ink leading-tight mt-0.5">
-                {{ t(`dataPoints.editor.types.${opt.i18nKey}.label`) }}
+                {{ t(`trackers.editor.types.${opt.i18nKey}.label`) }}
               </span>
               <span class="text-[10px] text-ink-faint leading-tight hidden sm:block">
-                {{ t(`dataPoints.editor.types.${opt.i18nKey}.description`) }}
+                {{ t(`trackers.editor.types.${opt.i18nKey}.description`) }}
               </span>
             </button>
           </div>

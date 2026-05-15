@@ -89,7 +89,7 @@ const TYPE_KEY_MAP: Record<TrackerType, string> = {
 }
 
 function typeLabel(type: TrackerType): string {
-  return t(`dataPoints.editor.types.${TYPE_KEY_MAP[type]}.label`)
+  return t(`trackers.editor.types.${TYPE_KEY_MAP[type]}.label`)
 }
 
 function subLine(config: TrackerConfig): string {
