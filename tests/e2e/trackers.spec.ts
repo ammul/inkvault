@@ -26,7 +26,7 @@ test('editing a tracker updates its label', async ({ page }) => {
   await page.getByPlaceholder('e.g. Mood').fill('Mood')
   await page.getByRole('button', { name: 'Add tracker' }).click()
 
-  await page.getByRole('button', { name: 'Edit' }).click()
+  await page.getByRole('button', { name: 'Mood' }).click()
   await page.getByPlaceholder('e.g. Mood').clear()
   await page.getByPlaceholder('e.g. Mood').fill('Happiness')
   await page.getByRole('button', { name: 'Save changes' }).click()
@@ -42,7 +42,7 @@ test('deleting a tracker removes it from the list', async ({ page }) => {
   await page.getByRole('button', { name: 'Add tracker' }).click()
 
   page.on('dialog', (dialog) => dialog.accept())
-  await page.getByRole('button', { name: 'Delete' }).click()
+  await page.getByRole('button', { name: 'Delete', exact: true }).click()
   await expect(page.getByText('Sleep')).not.toBeVisible()
   await expect(page.getByText('No trackers yet.')).toBeVisible()
 })
