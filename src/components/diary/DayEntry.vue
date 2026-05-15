@@ -107,8 +107,6 @@ function load() {
 
   if (hasLegacyText) {
     autoSave()
-  } else {
-    toast.show(t('diary.entryLoaded'))
   }
 }
 

@@ -85,7 +85,6 @@ export default {
   diary: {
     title: 'Diary',
     dataPointsSection: 'Data Points',
-    entryLoaded: 'Entry loaded',
     entrySaved: 'Entry saved',
     back: '← Back',
     weekdays: ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'],
