@@ -8,21 +8,29 @@ const props = defineProps<{
   open: boolean
   config: TrackerConfig | null
   initialValue: TrackerValue
+  initialTime?: string
   isEdit: boolean
 }>()
 
 const emit = defineEmits<{
-  save: [value: TrackerValue]
+  save: [value: TrackerValue, time: string]
   close: []
   delete: []
 }>()
 
 const { t } = useI18n()
 const localValue = ref<TrackerValue>(null)
+const entryTime = ref('')
 
 watch(() => props.open, (val) => {
   if (val) {
     localValue.value = props.initialValue
+    if (props.initialTime) {
+      entryTime.value = props.initialTime
+    } else {
+      const d = new Date()
+      entryTime.value = `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
+    }
     document.addEventListener('keydown', onKeyDown)
   } else {
     document.removeEventListener('keydown', onKeyDown)
@@ -68,6 +76,14 @@ function onKeyDown(e: KeyboardEvent) {
               :model-value="localValue"
               @update:model-value="localValue = $event"
             />
+            <div class="flex items-center gap-2">
+              <label class="text-xs text-ink-muted shrink-0">{{ t('diary.timeLabel') }}</label>
+              <input
+                type="time"
+                v-model="entryTime"
+                class="text-sm text-ink bg-subtle border border-edge rounded-input px-2 py-1 focus:outline-none focus:ring-2 focus:ring-accent/25"
+              />
+            </div>
             <div class="flex gap-2 items-center">
               <button
                 v-if="isEdit"
@@ -80,7 +96,7 @@ function onKeyDown(e: KeyboardEvent) {
                   class="text-sm px-3 py-1.5 rounded-input text-ink-muted hover:text-ink hover:bg-subtle transition-colors"
                 >{{ t('diary.cancel') }}</button>
                 <button
-                  @click="emit('save', localValue)"
+                  @click="emit('save', localValue, entryTime)"
                   class="text-sm px-3 py-1.5 rounded-input bg-accent text-on-accent hover:bg-accent-dim transition-colors"
                 >{{ t('diary.done') }}</button>
               </div>

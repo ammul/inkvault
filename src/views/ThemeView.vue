@@ -2,17 +2,14 @@
 import { ref, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useThemeStore } from '@/stores/theme'
-import { useAppSettingsStore } from '@/stores/appSettings'
 import { rerollTheme } from '@/utils/seedData'
 import type { ColorTheme, ThemeFont, ThemeMood, ThemeFontSize } from '@/types'
 
 const { t } = useI18n()
 const theme = useThemeStore()
-const appSettings = useAppSettingsStore()
 
 onMounted(async () => {
   if (!theme.loaded) await theme.load()
-  if (!appSettings.loaded) await appSettings.load()
 })
 
 async function setMood(mood: ThemeMood) {
@@ -39,12 +36,6 @@ async function setFontSize(fontSize: ThemeFontSize) {
   await theme.save()
 }
 
-async function setAnimations(val: boolean) {
-  appSettings.settings.animations = val
-  appSettings.apply()
-  await appSettings.save()
-}
-
 const randomizing = ref(false)
 
 async function handleRandomize() {
@@ -54,11 +45,6 @@ async function handleRandomize() {
   } finally {
     randomizing.value = false
   }
-}
-
-async function setUseEmojis(val: boolean) {
-  appSettings.settings.useEmojis = val
-  await appSettings.save()
 }
 
 const moods: { value: ThemeMood }[] = [
@@ -228,57 +214,5 @@ const fontSizes: { value: ThemeFontSize }[] = [
       </div>
     </section>
 
-    <!-- Behavior -->
-    <section class="bg-raised border border-edge rounded-card shadow-card p-6 space-y-3">
-      <div class="mb-1">
-        <h2 class="font-semibold text-ink">{{ t('appSettings.appearance') }}</h2>
-      </div>
-
-      <div class="flex items-start justify-between gap-4">
-        <div>
-          <p class="text-sm font-medium text-ink">{{ t('appSettings.animations') }}</p>
-          <p class="text-xs text-ink-muted mt-0.5">{{ t('appSettings.animationsDescription') }}</p>
-        </div>
-        <div class="flex gap-1 shrink-0">
-          <button
-            @click="setAnimations(true)"
-            :class="appSettings.settings.animations
-              ? 'bg-accent text-on-accent'
-              : 'bg-subtle text-ink-muted hover:bg-edge'"
-            class="text-sm px-3 py-1.5 rounded-input transition-colors font-medium"
-          >{{ t('appSettings.on') }}</button>
-          <button
-            @click="setAnimations(false)"
-            :class="!appSettings.settings.animations
-              ? 'bg-accent text-on-accent'
-              : 'bg-subtle text-ink-muted hover:bg-edge'"
-            class="text-sm px-3 py-1.5 rounded-input transition-colors font-medium"
-          >{{ t('appSettings.off') }}</button>
-        </div>
-      </div>
-
-      <div class="border-t border-edge pt-3 flex items-start justify-between gap-4">
-        <div>
-          <p class="text-sm font-medium text-ink">{{ t('appSettings.useEmojis') }}</p>
-          <p class="text-xs text-ink-muted mt-0.5">{{ t('appSettings.useEmojisDescription') }}</p>
-        </div>
-        <div class="flex gap-1 shrink-0">
-          <button
-            @click="setUseEmojis(true)"
-            :class="appSettings.settings.useEmojis
-              ? 'bg-accent text-on-accent'
-              : 'bg-subtle text-ink-muted hover:bg-edge'"
-            class="text-sm px-3 py-1.5 rounded-input transition-colors font-medium"
-          >{{ t('appSettings.on') }}</button>
-          <button
-            @click="setUseEmojis(false)"
-            :class="!appSettings.settings.useEmojis
-              ? 'bg-accent text-on-accent'
-              : 'bg-subtle text-ink-muted hover:bg-edge'"
-            class="text-sm px-3 py-1.5 rounded-input transition-colors font-medium"
-          >{{ t('appSettings.off') }}</button>
-        </div>
-      </div>
-    </section>
   </div>
 </template>

@@ -30,6 +30,7 @@ const formattedTime = computed(() =>
   new Date(props.entry.createdAt).toLocaleTimeString(locale.value, {
     hour: '2-digit',
     minute: '2-digit',
+    hour12: appSettings.settings.clockDisplay === 'ampm',
   })
 )
 </script>

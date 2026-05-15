@@ -9,6 +9,7 @@ import { useToastStore } from '@/stores/toast'
 import { useAppSettingsStore } from '@/stores/appSettings'
 import ConfirmModal from '@/components/ui/ConfirmModal.vue'
 import EntryModal from '@/components/diary/EntryModal.vue'
+import EnterDayModal from '@/components/diary/EnterDayModal.vue'
 import EntryValue from '@/components/diary/EntryValue.vue'
 
 const { t, locale } = useI18n()
@@ -36,6 +37,10 @@ const pendingDeleteDataId = ref<string | null>(null)
 const entryModalConfig = ref<TrackerConfig | null>(null)
 const entryModalValue = ref<TrackerValue>(null)
 const entryModalEditId = ref<string | null>(null)
+const entryModalTime = ref<string | undefined>(undefined)
+
+// Enter Day modal state
+const showEnterDayModal = ref(false)
 
 // ─── Unified timeline ────────────────────────────────────────────────────────
 
@@ -167,13 +172,34 @@ async function autoSave(silent = false) {
   if (!silent) toast.show(t('diary.entrySaved'))
 }
 
+// ─── Time helpers ─────────────────────────────────────────────────────────────
+
+function currentHHMM(): string {
+  const d = new Date()
+  return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
+}
+
+function isoToHHMM(iso: string): string {
+  const d = new Date(iso)
+  return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
+}
+
+function timeToISO(d: string, hhmm: string): string {
+  const [h, m] = hhmm.split(':').map(Number)
+  const [y, mo, day] = d.split('-').map(Number)
+  return new Date(y, mo - 1, day, h, m).toISOString()
+}
+
 // ─── Text entries ─────────────────────────────────────────────────────────────
 
+const editingTime = ref('')
+
 function addEntry() {
+  editingTime.value = currentHHMM()
   const newEntry: DiaryTimelineEntry = {
     id: crypto.randomUUID(),
     text: '',
-    createdAt: new Date().toISOString(),
+    createdAt: timeToISO(date.value, editingTime.value),
   }
   timelineEntries.value = [...timelineEntries.value, newEntry]
   editingId.value = newEntry.id
@@ -184,6 +210,10 @@ function addEntry() {
 function startEdit(id: string) {
   if (editingId.value && editingId.value !== id) autoSave(true)
   editingId.value = id
+  const entry = timelineEntries.value.find(e => e.id === id)
+  if (entry) {
+    editingTime.value = isoToHHMM(entry.createdAt)
+  }
 }
 
 function updateEntryText(id: string, text: string) {
@@ -194,8 +224,21 @@ function updateEntryText(id: string, text: string) {
 
 function confirmEdit() {
   if (editingId.value === null) return
+  const id = editingId.value
+  if (editingTime.value) {
+    timelineEntries.value = timelineEntries.value.map(e =>
+      e.id === id ? { ...e, createdAt: timeToISO(date.value, editingTime.value) } : e
+    )
+  }
   editingId.value = null
   autoSave()
+}
+
+function onTextareaBlur(e: FocusEvent) {
+  // Don't end editing when focus moves to the time input inside the same edit block
+  const rel = e.relatedTarget as HTMLElement | null
+  if (rel?.closest?.('[data-edit-controls]')) return
+  confirmEdit()
 }
 
 function requestDeleteEntry(id: string) {
@@ -217,23 +260,24 @@ function openDataPointModal(config: TrackerConfig) {
   entryModalConfig.value = config
   entryModalValue.value = null
   entryModalEditId.value = null
+  entryModalTime.value = undefined
   closeMenu()
 }
 
-function saveDataEntry(value: TrackerValue) {
+function saveDataEntry(value: TrackerValue, hhmm: string) {
   const config = entryModalConfig.value
   if (!config) return
   const editId = entryModalEditId.value
   if (editId) {
     dataEntries.value = dataEntries.value.map(e =>
-      e.id === editId ? { ...e, value } : e
+      e.id === editId ? { ...e, value, createdAt: timeToISO(date.value, hhmm) } : e
     )
   } else {
     dataEntries.value = [...dataEntries.value, {
       id: crypto.randomUUID(),
       configId: config.id,
       value,
-      createdAt: new Date().toISOString(),
+      createdAt: timeToISO(date.value, hhmm),
     }]
   }
   closeDataModal()
@@ -244,6 +288,7 @@ function closeDataModal() {
   entryModalConfig.value = null
   entryModalValue.value = null
   entryModalEditId.value = null
+  entryModalTime.value = undefined
 }
 
 function editDataEntry(item: DataTimelineItem) {
@@ -253,6 +298,7 @@ function editDataEntry(item: DataTimelineItem) {
   entryModalConfig.value = config
   entryModalValue.value = item.value
   entryModalEditId.value = item.id
+  entryModalTime.value = isoToHHMM(item.createdAt)
 }
 
 function requestDeleteDataEntry(id: string) {
@@ -284,6 +330,39 @@ function handleDeleteFromModal() {
   if (!id) return
   closeDataModal()
   pendingDeleteDataId.value = id
+}
+
+// ─── Enter Day modal ─────────────────────────────────────────────────────────
+
+function saveEnterDay(payload: {
+  textEntry?: { text: string; hhmm: string | null }
+  trackerEntries: Array<{ configId: string; value: TrackerValue; hhmm: string }>
+}) {
+  if (payload.textEntry?.text?.trim()) {
+    const hhmm = payload.textEntry.hhmm || currentHHMM()
+    timelineEntries.value = [...timelineEntries.value, {
+      id: crypto.randomUUID(),
+      text: payload.textEntry.text,
+      createdAt: timeToISO(date.value, hhmm),
+    }]
+  }
+  for (const row of payload.trackerEntries) {
+    dataEntries.value = [...dataEntries.value, {
+      id: crypto.randomUUID(),
+      configId: row.configId,
+      value: row.value,
+      createdAt: timeToISO(date.value, row.hhmm),
+    }]
+  }
+  showEnterDayModal.value = false
+  autoSave()
+}
+
+// ─── View toggle ──────────────────────────────────────────────────────────────
+
+async function toggleDiaryView(mode: 'timeline' | 'day') {
+  appSettings.settings.diaryView = mode
+  await appSettings.save()
 }
 
 // ─── Radial add menu ──────────────────────────────────────────────────────────
@@ -396,12 +475,7 @@ const headerDate = computed(() => {
   return new Date(y, m - 1, d).toLocaleDateString(locale.value, opts)
 })
 
-// ─── 24-hour detection ────────────────────────────────────────────────────────
-
-const is24Hour = computed(() => {
-  const f = new Intl.DateTimeFormat(locale.value, { hour: 'numeric' }).format(new Date(2000, 0, 1, 13))
-  return !/[ap]m/i.test(f)
-})
+const is24Hour = computed(() => appSettings.settings.clockDisplay === '24h')
 
 // ─── Summary chips ────────────────────────────────────────────────────────────
 
@@ -492,6 +566,19 @@ function asDataItem(item: DisplayItem): DataTimelineItem {
         <div v-if="hasSummary" class="text-[11.5px] text-ink-muted mt-1">
           <b class="text-ink">{{ allTimelineItems.length }}</b> {{ allTimelineItems.length === 1 ? 'entry' : 'entries' }}
         </div>
+        <!-- View toggle pill -->
+        <div class="flex justify-center gap-0.5 mt-2">
+          <button
+            @click="toggleDiaryView('timeline')"
+            :class="appSettings.settings.diaryView === 'timeline' ? 'bg-accent text-on-accent' : 'text-ink-muted hover:text-ink hover:bg-subtle'"
+            class="text-[10.5px] font-semibold px-2.5 py-0.5 rounded-l-full transition-colors"
+          >{{ t('diary.viewToggle.timeline') }}</button>
+          <button
+            @click="toggleDiaryView('day')"
+            :class="appSettings.settings.diaryView === 'day' ? 'bg-accent text-on-accent' : 'text-ink-muted hover:text-ink hover:bg-subtle'"
+            class="text-[10.5px] font-semibold px-2.5 py-0.5 rounded-r-full transition-colors"
+          >{{ t('diary.viewToggle.day') }}</button>
+        </div>
       </div>
 
       <!-- Next day -->
@@ -506,8 +593,9 @@ function asDataItem(item: DisplayItem): DataTimelineItem {
       </button>
     </div>
 
-    <!-- Timeline -->
+    <!-- Timeline (timeline view) -->
     <div
+      v-if="appSettings.settings.diaryView === 'timeline'"
       class="timeline relative pt-6"
       :class="{ 'timeline--dimmed': showAddMenu }"
     >
@@ -585,7 +673,7 @@ function asDataItem(item: DisplayItem): DataTimelineItem {
                   :value="(item as TextTimelineItem).text"
                   @click.stop
                   @input="updateEntryText((item as TextTimelineItem).id, ($event.target as HTMLTextAreaElement).value)"
-                  @blur="confirmEdit"
+                  @blur="onTextareaBlur"
                   @keydown.escape="confirmEdit"
                   rows="3"
                   :placeholder="t('diary.newEntryPlaceholder')"
@@ -593,9 +681,18 @@ function asDataItem(item: DisplayItem): DataTimelineItem {
                 />
                 <div
                   v-if="editingId === (item as TextTimelineItem).id"
-                  class="flex gap-1.5 mt-1.5 justify-end"
+                  data-edit-controls
+                  class="flex flex-wrap gap-1.5 mt-1.5 items-center justify-end"
                   @click.stop
                 >
+                  <div class="flex items-center gap-1 mr-auto" @click.stop>
+                    <label class="text-[10.5px] text-ink-muted">{{ t('diary.timeLabel') }}</label>
+                    <input
+                      type="time"
+                      v-model="editingTime"
+                      class="text-xs text-ink bg-subtle border border-edge rounded-input px-1.5 py-0.5 focus:outline-none focus:ring-2 focus:ring-accent/25"
+                    />
+                  </div>
                   <button
                     @click.stop="requestDeleteEntry((item as TextTimelineItem).id)"
                     class="text-xs text-danger px-2 py-1 rounded-input hover:bg-subtle transition-colors"
@@ -626,11 +723,103 @@ function asDataItem(item: DisplayItem): DataTimelineItem {
       </p>
 
       <!-- Add zone -->
-      <div v-if="!showAddMenu" class="mt-1 w-[52px] flex justify-center">
+      <div v-if="!showAddMenu" class="mt-1 flex flex-col items-start gap-2">
+        <div class="w-[52px] flex justify-center">
+          <button
+            @click="openMenu()"
+            :disabled="saving"
+            :aria-label="t('diary.addEntry')"
+            class="w-10 h-10 rounded-full bg-accent text-on-accent flex items-center justify-center hover:bg-accent-dim disabled:opacity-50 transition-colors"
+            style="box-shadow: 0 6px 16px rgba(79,70,229,.35), 0 0 0 5px var(--color-surface)"
+          >
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+              <line x1="9" y1="2" x2="9" y2="16"/>
+              <line x1="2" y1="9" x2="16" y2="9"/>
+            </svg>
+          </button>
+        </div>
         <button
-          @click="openMenu()"
+          @click="showEnterDayModal = true"
+          class="text-[11.5px] text-ink-muted hover:text-ink underline underline-offset-2 transition-colors pl-1"
+        >{{ t('diary.enterDay') }}</button>
+      </div>
+    </div>
+
+    <!-- Whole-day view -->
+    <div v-else class="pt-6 space-y-3">
+      <!-- Empty state -->
+      <p v-if="!allTimelineItems.length" class="mt-4 text-sm text-ink-faint text-center">
+        {{ t('diary.noEntries') }}
+      </p>
+
+      <!-- Text entries -->
+      <template v-for="entry in timelineEntries" :key="entry.id">
+        <div
+          class="cursor-pointer rounded-card border border-edge p-3"
+          @click="startEdit(entry.id)"
+        >
+          <div class="text-[10.5px] font-semibold uppercase tracking-[0.08em] text-ink-muted mb-1">{{ t('diary.noteLabel') }}</div>
+          <p
+            v-if="editingId !== entry.id"
+            class="text-[14.5px] leading-[1.6] text-ink whitespace-pre-wrap break-words min-h-5"
+          >{{ entry.text || '…' }}</p>
+          <template v-else>
+            <textarea
+              :ref="(el: unknown) => el && nextTick(() => (el as HTMLTextAreaElement).focus())"
+              :value="entry.text"
+              @click.stop
+              @input="updateEntryText(entry.id, ($event.target as HTMLTextAreaElement).value)"
+              @blur="onTextareaBlur"
+              @keydown.escape="confirmEdit"
+              rows="3"
+              :placeholder="t('diary.newEntryPlaceholder')"
+              class="w-full text-[14.5px] leading-[1.6] text-ink bg-transparent placeholder:text-ink-faint resize-none focus:outline-none focus:ring-2 focus:ring-accent/25 rounded-sm"
+            />
+            <div data-edit-controls class="flex flex-wrap gap-1.5 mt-1.5 items-center justify-end" @click.stop>
+              <div class="flex items-center gap-1 mr-auto" @click.stop>
+                <label class="text-[10.5px] text-ink-muted">{{ t('diary.timeLabel') }}</label>
+                <input
+                  type="time"
+                  v-model="editingTime"
+                  class="text-xs text-ink bg-subtle border border-edge rounded-input px-1.5 py-0.5 focus:outline-none focus:ring-2 focus:ring-accent/25"
+                />
+              </div>
+              <button
+                @click.stop="requestDeleteEntry(entry.id)"
+                class="text-xs text-danger px-2 py-1 rounded-input hover:bg-subtle transition-colors"
+              >{{ t('diary.deleteEntry') }}</button>
+              <button
+                @click.stop="confirmEdit()"
+                class="text-xs text-accent px-2 py-1 rounded-input hover:bg-accent-tint transition-colors"
+              >{{ t('diary.done') }}</button>
+            </div>
+          </template>
+        </div>
+      </template>
+
+      <!-- Tracker entries -->
+      <template v-for="entry in dataEntries" :key="entry.id">
+        <div
+          class="cursor-pointer rounded-card border border-edge p-3"
+          @click="editDataEntry({ type: 'data', id: entry.id, configId: entry.configId, value: entry.value, createdAt: entry.createdAt })"
+        >
+          <div
+            class="text-[10.5px] font-semibold uppercase tracking-[0.08em] mb-1"
+            :style="{ color: trackers.configs.find(c => c.id === entry.configId)?.color ?? 'var(--color-ink-muted)' }"
+          >{{ trackers.configs.find(c => c.id === entry.configId)?.label ?? '' }}</div>
+          <EntryValue
+            :config="trackers.configs.find(c => c.id === entry.configId)"
+            :value="entry.value"
+            :use-emojis="appSettings.settings.useEmojis"
+          />
+        </div>
+      </template>
+
+      <!-- Add button (whole-day mode) -->
+      <div class="pt-2 flex justify-center">
+        <button
+          @click="showEnterDayModal = true"
           :disabled="saving"
-          :aria-label="t('diary.addEntry')"
           class="w-10 h-10 rounded-full bg-accent text-on-accent flex items-center justify-center hover:bg-accent-dim disabled:opacity-50 transition-colors"
           style="box-shadow: 0 6px 16px rgba(79,70,229,.35), 0 0 0 5px var(--color-surface)"
         >
@@ -642,17 +831,17 @@ function asDataItem(item: DisplayItem): DataTimelineItem {
       </div>
     </div>
 
-    <!-- Radial backdrop (full-viewport click catcher) -->
+    <!-- Radial backdrop (full-viewport click catcher, timeline mode only) -->
     <div
-      v-if="showAddMenu"
+      v-if="showAddMenu && appSettings.settings.diaryView === 'timeline'"
       class="fixed inset-0 z-[9]"
       @click="closeMenu()"
       aria-hidden="true"
     />
 
-    <!-- Radial menu (fixed, centered in viewport) -->
+    <!-- Radial menu (fixed, centered in viewport, timeline mode only) -->
     <div
-      v-if="showAddMenu"
+      v-if="showAddMenu && appSettings.settings.diaryView === 'timeline'"
       class="fixed z-10 w-0 h-0"
       style="left: 50%; top: 50%; transform: translate(-50%, -50%)"
     >
@@ -708,10 +897,20 @@ function asDataItem(item: DisplayItem): DataTimelineItem {
       :open="entryModalConfig !== null"
       :config="entryModalConfig"
       :initial-value="entryModalValue"
+      :initial-time="entryModalTime"
       :is-edit="entryModalEditId !== null"
       @save="saveDataEntry"
       @close="closeDataModal"
       @delete="handleDeleteFromModal"
+    />
+
+    <!-- Enter Day modal -->
+    <EnterDayModal
+      :open="showEnterDayModal"
+      :date="date"
+      :tracker-configs="trackers.configs"
+      @save="saveEnterDay"
+      @close="showEnterDayModal = false"
     />
   </div>
 </template>

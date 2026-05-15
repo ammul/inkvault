@@ -86,13 +86,6 @@ function applyPreset(preset: string) {
     >
       <option v-for="u in UNITS" :key="u" :value="u">{{ u }}</option>
     </select>
-    <span class="text-xs text-ink-faint">at</span>
-    <input
-      v-model="time"
-      type="time"
-      class="border border-edge rounded-input px-2.5 py-1.5 text-sm text-ink bg-surface focus:outline-none focus:ring-2 focus:ring-accent/25 focus:border-accent transition-colors"
-      @change="emitUpdate"
-    />
   </div>
   </div>
 </template>

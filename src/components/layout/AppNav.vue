@@ -41,8 +41,8 @@ const navLinks = [
   { to: '/trackers', key: 'nav.trackers' },
   { to: '/theme',    key: 'nav.theme' },
   { to: '/about',    key: 'nav.about' },
-  { to: '/data',     key: 'nav.data' },
-  { to: '/settings', key: 'nav.backup' },
+  { to: '/settings', key: 'nav.settings' },
+  { to: '/backup',   key: 'nav.backup' },
 ]
 </script>
 

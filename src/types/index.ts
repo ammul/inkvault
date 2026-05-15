@@ -90,11 +90,15 @@ export interface ThemeSettings {
 export interface AppSettings {
   animations: boolean
   useEmojis: boolean
+  diaryView: 'timeline' | 'day'
+  clockDisplay: '24h' | 'ampm'
 }
 
 export const DEFAULT_APP_SETTINGS: AppSettings = {
   animations: true,
   useEmojis: true,
+  diaryView: 'timeline',
+  clockDisplay: '24h',
 }
 
 export interface ConfigFilter {
