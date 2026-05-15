@@ -333,13 +333,7 @@ function subLine(config: TrackerConfig): string {
 
       <!-- ── Empty state ─────────────────────────────────── -->
       <div v-if="configs.length === 0 && !showDraft" class="text-center py-10">
-        <p class="text-ink-faint text-sm mb-4">{{ t('trackers.empty') }}</p>
-        <button
-          @click="openDraft"
-          class="text-sm bg-accent text-on-accent px-4 py-2 rounded-input hover:bg-accent-dim transition-colors font-medium"
-        >
-          {{ t('trackers.add') }}
-        </button>
+        <p class="text-ink-faint text-sm">{{ t('trackers.empty') }}</p>
       </div>
 
     </div>
