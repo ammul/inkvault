@@ -20,14 +20,74 @@ const TRACKER_SEEDS: Omit<TrackerConfig, 'id' | 'createdAt'>[] = [
   { label: 'Vitamin D',  color: '#d97706', icon: '💊', type: 'medication',   config: { medication: 'Vitamin D3', dosagePresets: ['1000 IU', '2000 IU'] } },
 ]
 
-const ENTRY_SEEDS = [
-  { text: 'Woke up feeling refreshed after a solid eight hours. Made coffee and read for an hour before the day started.', mood: 8, energy: 7, exercised: true,  emotions: ['Joyful', 'Grateful'], vitaminD: { amount: 2000, unit: 'IU', time: '08:30' } },
-  { text: 'Busy day at work, but managed to get a long walk in at lunch. The fresh air helped a lot.',                     mood: 6, energy: 5, exercised: true,  emotions: ['Calm'],               vitaminD: { amount: 1000, unit: 'IU', time: '09:00' } },
-  { text: "Quiet evening. Finished a book I'd been reading for weeks — that satisfying feeling of closing the last page.", mood: 8, energy: 6, exercised: false, emotions: ['Calm', 'Grateful'],   vitaminD: { amount: 1000, unit: 'IU', time: '09:15' } },
-  { text: 'Struggled to focus today. Too many browser tabs. Closed them all and finally got into a flow state.',           mood: 4, energy: 3, exercised: false, emotions: ['Anxious'],             vitaminD: null },
-  { text: 'Met an old friend for dinner. We talked for three hours without noticing the time.',                            mood: 9, energy: 7, exercised: false, emotions: ['Joyful', 'Excited'],   vitaminD: { amount: 2000, unit: 'IU', time: '08:00' } },
-  { text: 'Rainy morning. Did a full workout at home and felt surprisingly good afterward.',                                mood: 7, energy: 8, exercised: true,  emotions: ['Calm', 'Grateful'],   vitaminD: { amount: 2000, unit: 'IU', time: '07:45' } },
-  { text: 'Productive start to the week. Wrote for an hour in the morning before checking email.',                         mood: 8, energy: 9, exercised: true,  emotions: ['Excited'],             vitaminD: { amount: 1000, unit: 'IU', time: '08:00' } },
+interface TrackerTimed<T> { value: T; time: string }
+
+interface EntrySeed {
+  text:     { body: string; time: string }
+  mood:     TrackerTimed<number>
+  energy:   TrackerTimed<number>
+  exercise: TrackerTimed<boolean>
+  emotions: TrackerTimed<string[]>
+  vitaminD: TrackerTimed<{ amount: number; unit: string; time: string }> | null
+}
+
+const ENTRY_SEEDS: EntrySeed[] = [
+  {
+    text:     { body: 'Woke up feeling refreshed after a solid eight hours. Made coffee and read for an hour before the day started.', time: '07:30' },
+    mood:     { value: 8,    time: '07:35' },
+    energy:   { value: 7,    time: '07:35' },
+    vitaminD: { value: { amount: 2000, unit: 'IU', time: '08:30' }, time: '08:30' },
+    exercise: { value: true, time: '17:00' },
+    emotions: { value: ['Joyful', 'Grateful'], time: '21:00' },
+  },
+  {
+    text:     { body: 'Busy day at work, but managed to get a long walk in at lunch. The fresh air helped a lot.', time: '12:15' },
+    mood:     { value: 6,    time: '09:00' },
+    energy:   { value: 5,    time: '09:00' },
+    vitaminD: { value: { amount: 1000, unit: 'IU', time: '09:00' }, time: '09:00' },
+    exercise: { value: true, time: '12:30' },
+    emotions: { value: ['Calm'], time: '18:30' },
+  },
+  {
+    text:     { body: "Quiet evening. Finished a book I'd been reading for weeks — that satisfying feeling of closing the last page.", time: '21:00' },
+    mood:     { value: 8,     time: '09:15' },
+    energy:   { value: 6,     time: '09:15' },
+    vitaminD: { value: { amount: 1000, unit: 'IU', time: '09:15' }, time: '09:15' },
+    exercise: { value: false, time: '17:00' },
+    emotions: { value: ['Calm', 'Grateful'], time: '21:10' },
+  },
+  {
+    text:     { body: 'Struggled to focus today. Too many browser tabs. Closed them all and finally got into a flow state.', time: '14:30' },
+    mood:     { value: 4,     time: '09:00' },
+    energy:   { value: 3,     time: '09:00' },
+    vitaminD: null,
+    exercise: { value: false, time: '17:00' },
+    emotions: { value: ['Anxious'], time: '14:35' },
+  },
+  {
+    text:     { body: 'Met an old friend for dinner. We talked for three hours without noticing the time.', time: '19:00' },
+    mood:     { value: 9,     time: '08:00' },
+    energy:   { value: 7,     time: '08:00' },
+    vitaminD: { value: { amount: 2000, unit: 'IU', time: '08:00' }, time: '08:00' },
+    exercise: { value: false, time: '17:00' },
+    emotions: { value: ['Joyful', 'Excited'], time: '19:30' },
+  },
+  {
+    text:     { body: 'Rainy morning. Did a full workout at home and felt surprisingly good afterward.', time: '08:45' },
+    mood:     { value: 7,    time: '08:00' },
+    energy:   { value: 8,    time: '08:00' },
+    vitaminD: { value: { amount: 2000, unit: 'IU', time: '07:45' }, time: '07:45' },
+    exercise: { value: true, time: '08:30' },
+    emotions: { value: ['Calm', 'Grateful'], time: '20:30' },
+  },
+  {
+    text:     { body: 'Productive start to the week. Wrote for an hour in the morning before checking email.', time: '08:00' },
+    mood:     { value: 8,    time: '07:30' },
+    energy:   { value: 9,    time: '07:30' },
+    vitaminD: { value: { amount: 1000, unit: 'IU', time: '08:00' }, time: '08:00' },
+    exercise: { value: true, time: '06:45' },
+    emotions: { value: ['Excited'], time: '08:10' },
+  },
 ]
 
 function pick<T>(arr: readonly T[]): T {
@@ -73,19 +133,26 @@ export async function seedDemoData(): Promise<void> {
 
   for (let i = 0; i < ENTRY_SEEDS.length; i++) {
     const seed = ENTRY_SEEDS[i]
-    const dataValues: DiaryEntry['dataValues'] = {
-      [moodId]:     seed.mood,
-      [energyId]:   seed.energy,
-      [exerciseId]: seed.exercised,
-      [emotionsId]: seed.emotions,
+    const date = dateISO(i)
+    const ts = (time: string) => new Date(`${date}T${time}:00`).toISOString()
+
+    const dataEntries: DiaryEntry['dataEntries'] = [
+      { id: crypto.randomUUID(), configId: moodId,     value: seed.mood.value,     createdAt: ts(seed.mood.time) },
+      { id: crypto.randomUUID(), configId: energyId,   value: seed.energy.value,   createdAt: ts(seed.energy.time) },
+      { id: crypto.randomUUID(), configId: exerciseId, value: seed.exercise.value, createdAt: ts(seed.exercise.time) },
+      { id: crypto.randomUUID(), configId: emotionsId, value: seed.emotions.value, createdAt: ts(seed.emotions.time) },
+    ]
+    if (seed.vitaminD !== null) {
+      dataEntries.push({ id: crypto.randomUUID(), configId: vitaminDId, value: seed.vitaminD.value, createdAt: ts(seed.vitaminD.time) })
     }
-    if (seed.vitaminD !== null) dataValues[vitaminDId] = seed.vitaminD
+
     const entry: DiaryEntry = {
-      date: dateISO(i),
+      date,
       text: '',
-      entries: [{ id: crypto.randomUUID(), text: seed.text, createdAt: now }],
-      dataValues,
-      updatedAt: now,
+      entries:     [{ id: crypto.randomUUID(), text: seed.text.body, createdAt: ts(seed.text.time) }],
+      dataEntries,
+      dataValues:  {},
+      updatedAt:   ts(seed.text.time),
     }
     await diary.saveEntry(entry)
   }
