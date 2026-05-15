@@ -362,25 +362,28 @@ const displayDate = computed(() => {
             >{{ appSettings.settings.useEmojis ? '✎' : 'T' }}</div>
             <!-- Entry box — bubble overlaps top border -->
             <div class="relative z-10 w-full bg-raised border border-edge-strong rounded-card px-3 pt-8 pb-3">
-              <div class="flex items-center justify-between mb-2">
-                <span class="text-xs text-ink-faint">
-                  {{ new Date(item.createdAt).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' }) }}
-                </span>
-                <div v-if="editingId !== item.id" class="flex gap-1">
+              <div class="flex items-start justify-between mb-2">
+                <span class="text-sm font-semibold text-ink leading-tight">{{ t('diary.noteLabel') }}</span>
+                <div class="flex items-center gap-2 shrink-0 ml-2">
+                  <span class="text-xs text-ink-faint">
+                    {{ new Date(item.createdAt).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' }) }}
+                  </span>
+                  <div v-if="editingId !== item.id" class="flex gap-1">
+                    <button
+                      @click="startEdit(item.id)"
+                      class="text-xs text-ink-muted hover:text-ink px-1.5 py-0.5 rounded-input hover:bg-subtle transition-colors"
+                    >{{ t('diary.editEntry') }}</button>
+                    <button
+                      @click="requestDeleteEntry(item.id)"
+                      class="text-xs text-danger px-1.5 py-0.5 rounded-input hover:bg-subtle transition-colors"
+                    >{{ t('diary.deleteEntry') }}</button>
+                  </div>
                   <button
-                    @click="startEdit(item.id)"
-                    class="text-xs text-ink-muted hover:text-ink px-1.5 py-0.5 rounded-input hover:bg-subtle transition-colors"
-                  >{{ t('diary.editEntry') }}</button>
-                  <button
-                    @click="requestDeleteEntry(item.id)"
-                    class="text-xs text-danger px-1.5 py-0.5 rounded-input hover:bg-subtle transition-colors"
-                  >{{ t('diary.deleteEntry') }}</button>
+                    v-else
+                    @click="confirmEdit"
+                    class="text-xs text-accent px-1.5 py-0.5 rounded-input hover:bg-accent-tint transition-colors"
+                  >{{ t('diary.done') }}</button>
                 </div>
-                <button
-                  v-else
-                  @click="confirmEdit"
-                  class="text-xs text-accent px-1.5 py-0.5 rounded-input hover:bg-accent-tint transition-colors"
-                >{{ t('diary.done') }}</button>
               </div>
               <p
                 v-if="editingId !== item.id"

@@ -89,6 +89,7 @@ export default {
     entrySaved: 'Entry saved',
     back: '← Back',
     weekdays: ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'],
+    noteLabel: 'Note',
     addEntry: 'Add entry',
     addText: 'Add text entry',
     closeAddMenu: 'Close',
