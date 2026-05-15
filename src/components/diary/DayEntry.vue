@@ -366,16 +366,15 @@ const today = computed(() => new Date().toISOString().slice(0, 10))
 
 function offsetDate(base: string, days: number): string {
   const [y, m, d] = base.split('-').map(Number)
-  return new Date(y, m - 1, d + days).toISOString().slice(0, 10)
+  const result = new Date(y, m - 1, d + days)
+  const yyyy = result.getFullYear()
+  const mm = String(result.getMonth() + 1).padStart(2, '0')
+  const dd = String(result.getDate()).padStart(2, '0')
+  return `${yyyy}-${mm}-${dd}`
 }
 
 const prevDate = computed(() => offsetDate(date.value, -1))
 const nextDate = computed(() => offsetDate(date.value, +1))
-const isNextDisabled = computed(() => date.value >= today.value)
-const isPrevDisabled = computed(() => {
-  const dates = [...diary.availableDates].sort()
-  return dates.length > 0 && date.value <= dates[0]
-})
 
 function navigateDay(dir: 'prev' | 'next') {
   router.push(`/diary/${dir === 'prev' ? prevDate.value : nextDate.value}`)
@@ -479,11 +478,8 @@ function asDataItem(item: DisplayItem): DataTimelineItem {
       <!-- Prev day -->
       <button
         @click="navigateDay('prev')"
-        :disabled="isPrevDisabled"
         :aria-label="t('diary.prevDay')"
-        :aria-disabled="isPrevDisabled"
-        :tabindex="isPrevDisabled ? -1 : 0"
-        class="w-8 h-8 rounded-full flex items-center justify-center text-ink-muted hover:bg-subtle hover:text-ink transition-colors disabled:opacity-30 disabled:cursor-default"
+        class="w-8 h-8 rounded-full flex items-center justify-center text-ink-muted hover:bg-subtle hover:text-ink transition-colors"
       >
         <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
           <path d="M10 12L6 8l4-4"/>
@@ -502,11 +498,8 @@ function asDataItem(item: DisplayItem): DataTimelineItem {
       <!-- Next day -->
       <button
         @click="navigateDay('next')"
-        :disabled="isNextDisabled"
         :aria-label="t('diary.nextDay')"
-        :aria-disabled="isNextDisabled"
-        :tabindex="isNextDisabled ? -1 : 0"
-        class="w-8 h-8 rounded-full flex items-center justify-center text-ink-muted hover:bg-subtle hover:text-ink transition-colors disabled:opacity-30 disabled:cursor-default"
+        class="w-8 h-8 rounded-full flex items-center justify-center text-ink-muted hover:bg-subtle hover:text-ink transition-colors"
       >
         <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
           <path d="M6 4l4 4-4 4"/>
