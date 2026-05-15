@@ -1,11 +1,10 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import type { DataPointConfig } from '@/types'
 import { useDataPointsStore } from '@/stores/datapoints'
 import { useDiaryStore } from '@/stores/diary'
 import DataPointList from '@/components/datapoints/DataPointList.vue'
-import DataPointEditor from '@/components/datapoints/DataPointEditor.vue'
 
 const { t } = useI18n()
 const datapoints = useDataPointsStore()
@@ -16,39 +15,18 @@ onMounted(async () => {
   if (!diary.loaded) await diary.loadAllEntries()
 })
 
-const showEditor = ref(false)
-const editingConfig = ref<DataPointConfig | undefined>(undefined)
-const editingLocked = ref(false)
-
-function hasStoredData(id: string): boolean {
-  return [...diary.entries.values()].some((e) => e.dataValues[id] != null)
+function storedData(id: string): number {
+  return [...diary.entries.values()].filter(e => e.dataValues[id] != null).length
 }
 
-function openNew() {
-  editingConfig.value = undefined
-  editingLocked.value = false
-  showEditor.value = true
-}
-
-async function openEdit(config: DataPointConfig) {
-  if (!diary.loaded) await diary.loadAllEntries()
-  editingConfig.value = config
-  editingLocked.value = hasStoredData(config.id)
-  showEditor.value = true
-}
-
-function closeEditor() {
-  showEditor.value = false
-  editingConfig.value = undefined
-  editingLocked.value = false
-}
-
-async function handleSave(data: Omit<DataPointConfig, 'id' | 'createdAt'>) {
-  if (editingConfig.value) {
-    const patch = editingLocked.value
-      ? { label: data.label, color: data.color, icon: data.icon }
-      : data
-    await datapoints.updateConfig(editingConfig.value.id, patch)
+async function handleSave(
+  data: Omit<DataPointConfig, 'id' | 'createdAt'>,
+  existingId: string | null,
+  locked: boolean,
+) {
+  if (existingId) {
+    const patch = locked ? { label: data.label, color: data.color, icon: data.icon } : data
+    await datapoints.updateConfig(existingId, patch)
   } else {
     await datapoints.addConfig({
       ...data,
@@ -56,7 +34,6 @@ async function handleSave(data: Omit<DataPointConfig, 'id' | 'createdAt'>) {
       createdAt: new Date().toISOString(),
     })
   }
-  closeEditor()
 }
 
 async function handleDelete(id: string) {
@@ -66,27 +43,10 @@ async function handleDelete(id: string) {
 </script>
 
 <template>
-  <div>
-    <div class="flex items-center justify-between mb-6">
-      <h1 class="text-xl font-semibold text-ink">{{ t('dataPoints.title') }}</h1>
-      <button
-        v-if="!showEditor"
-        @click="openNew"
-        class="text-sm bg-accent text-on-accent px-4 py-2 rounded-input hover:bg-accent-dim transition-colors font-medium"
-      >
-        {{ t('dataPoints.add') }}
-      </button>
-    </div>
-
-    <DataPointEditor
-      v-if="showEditor"
-      :initial="editingConfig"
-      :locked="editingLocked"
-      @save="handleSave"
-      @cancel="closeEditor"
-      class="mb-4"
-    />
-
-    <DataPointList :configs="datapoints.configs" @edit="openEdit" @delete="handleDelete" />
-  </div>
+  <DataPointList
+    :configs="datapoints.configs"
+    :stored-data="storedData"
+    @save="handleSave"
+    @delete="handleDelete"
+  />
 </template>

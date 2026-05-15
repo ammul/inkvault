@@ -1,0 +1,1249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Data Points — Redesign Exploration</title>
+<style>
+  :root {
+    /* InkVault tokens (light, indigo) */
+    --color-surface: #ffffff;
+    --color-raised: #ffffff;
+    --color-subtle: #f9fafb;
+    --color-accent: #4f46e5;
+    --color-accent-dim: #4338ca;
+    --color-accent-tint: #eef2ff;
+    --color-on-accent: #ffffff;
+    --color-ink: #111827;
+    --color-ink-muted: #6b7280;
+    --color-ink-faint: #9ca3af;
+    --color-edge: #e5e7eb;
+    --color-edge-strong: #d1d5db;
+    --color-danger: #dc2626;
+    --color-danger-tint: #fef2f2;
+    --color-warn: #d97706;
+    --color-warn-tint: #fffbeb;
+    --color-ok: #16a34a;
+    --color-ok-tint: #f0fdf4;
+    --radius-card: 0.5rem;
+    --radius-input: 0.375rem;
+    --shadow-card: 0 1px 3px rgba(0,0,0,.08), 0 1px 2px rgba(0,0,0,.04);
+    --shadow-elevated: 0 4px 12px rgba(0,0,0,.1), 0 2px 4px rgba(0,0,0,.06);
+
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    line-height: 1.6;
+    color: var(--color-ink);
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: #f1f3f7;
+    min-height: 100vh;
+  }
+
+  /* ── Canvas chrome ─────────────────────────────────────── */
+  .canvas-header {
+    padding: 28px 32px 8px;
+  }
+  .canvas-header h1 {
+    margin: 0 0 4px;
+    font-size: 20px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+  .canvas-header p {
+    margin: 0;
+    color: var(--color-ink-muted);
+    font-size: 13px;
+    max-width: 60ch;
+  }
+  .canvas {
+    display: flex;
+    gap: 24px;
+    padding: 24px 32px 64px;
+    overflow-x: auto;
+    align-items: flex-start;
+  }
+  .artboard {
+    flex: 0 0 auto;
+    width: 720px;
+    background: var(--color-surface);
+    border: 1px solid var(--color-edge);
+    border-radius: 12px;
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
+    overflow: hidden;
+  }
+  .artboard-header {
+    padding: 14px 20px;
+    background: var(--color-subtle);
+    border-bottom: 1px solid var(--color-edge);
+  }
+  .artboard-title {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--color-ink-muted);
+    margin: 0 0 2px;
+  }
+  .artboard-name {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--color-ink);
+    margin: 0;
+  }
+  .artboard-note {
+    margin: 4px 0 0;
+    font-size: 12px;
+    color: var(--color-ink-muted);
+    line-height: 1.5;
+  }
+  .frame {
+    padding: 24px;
+  }
+  .frame + .frame {
+    border-top: 1px dashed var(--color-edge);
+  }
+  .frame-tag {
+    display: inline-block;
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--color-ink-faint);
+    margin-bottom: 12px;
+    font-weight: 600;
+  }
+
+  /* ── Generic atoms (mimic Tailwind set used in app) ────── */
+  .h1 { font-size: 20px; font-weight: 600; margin: 0; color: var(--color-ink); }
+  .h2 { font-size: 15px; font-weight: 600; margin: 0; color: var(--color-ink); }
+  .row { display: flex; align-items: center; }
+  .between { justify-content: space-between; }
+  .gap-2 { gap: 8px; } .gap-3 { gap: 12px; } .gap-4 { gap: 16px; }
+  .muted { color: var(--color-ink-muted); }
+  .faint { color: var(--color-ink-faint); }
+  .small { font-size: 12px; }
+  .xs { font-size: 11px; }
+  .label-xs {
+    display: block;
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--color-ink-muted);
+    margin-bottom: 6px;
+    letter-spacing: 0.02em;
+  }
+  .input {
+    width: 100%;
+    border: 1px solid var(--color-edge);
+    background: var(--color-surface);
+    color: var(--color-ink);
+    border-radius: var(--radius-input);
+    padding: 8px 10px;
+    font: inherit;
+    font-size: 13px;
+  }
+  .input:focus {
+    outline: 2px solid color-mix(in oklab, var(--color-accent), transparent 75%);
+    border-color: var(--color-accent);
+  }
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    border: 1px solid var(--color-edge);
+    background: var(--color-surface);
+    color: var(--color-ink-muted);
+    padding: 7px 12px;
+    border-radius: var(--radius-input);
+    font: inherit;
+    font-size: 12.5px;
+    cursor: pointer;
+    transition: background 120ms;
+  }
+  .btn:hover { background: var(--color-subtle); color: var(--color-ink); }
+  .btn-primary {
+    background: var(--color-accent);
+    color: var(--color-on-accent);
+    border-color: transparent;
+    font-weight: 500;
+  }
+  .btn-primary:hover { background: var(--color-accent-dim); color: var(--color-on-accent); }
+  .btn-ghost { border: none; background: transparent; padding: 6px 8px; }
+  .icon-btn {
+    width: 28px; height: 28px;
+    display: inline-flex; align-items: center; justify-content: center;
+    border-radius: 6px; border: 1px solid transparent;
+    background: transparent; cursor: pointer;
+    color: var(--color-ink-faint);
+  }
+  .icon-btn:hover { background: var(--color-subtle); color: var(--color-ink); }
+  .icon-btn.danger:hover { background: var(--color-danger-tint); color: var(--color-danger); }
+
+  /* SVG icons sized to inherit */
+  .icon-btn svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 1.8; }
+
+  .badge {
+    display: inline-block;
+    font-size: 10.5px;
+    font-weight: 500;
+    padding: 2px 7px;
+    border-radius: 999px;
+    background: var(--color-subtle);
+    color: var(--color-ink-muted);
+    border: 1px solid var(--color-edge);
+    letter-spacing: 0.01em;
+  }
+
+  /* Coloured dot icon (DataPointIcon analog) */
+  .dp-ic {
+    width: 32px; height: 32px;
+    border-radius: 999px;
+    display: inline-flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    font-size: 15px;
+    line-height: 1;
+  }
+  .dp-ic.lg { width: 44px; height: 44px; font-size: 20px; }
+  .dp-ic.sm { width: 22px; height: 22px; font-size: 11px; }
+
+  /* ╔════════════════════════════════════════════════════════╗
+     A. STAT CARDS + SIDE-PREVIEW EDITOR
+     ╚════════════════════════════════════════════════════════╝ */
+  .a-toolbar {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 16px;
+  }
+  .a-toolbar .title-block .meta {
+    font-size: 12px; color: var(--color-ink-muted); margin-top: 2px;
+  }
+  .a-filters {
+    display: flex; align-items: center; gap: 6px; margin-bottom: 14px;
+    padding: 4px; background: var(--color-subtle); border-radius: 999px;
+    width: fit-content;
+  }
+  .a-filter-chip {
+    font-size: 11.5px; padding: 5px 11px; border-radius: 999px;
+    color: var(--color-ink-muted); cursor: pointer; user-select: none;
+  }
+  .a-filter-chip.active {
+    background: var(--color-surface); color: var(--color-ink);
+    box-shadow: 0 1px 2px rgba(0,0,0,.06);
+    font-weight: 500;
+  }
+  .a-filter-chip .count { color: var(--color-ink-faint); margin-left: 4px; font-variant-numeric: tabular-nums; }
+  .a-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
+  }
+  .a-card {
+    position: relative;
+    border: 1px solid var(--color-edge);
+    border-radius: var(--radius-card);
+    background: var(--color-raised);
+    padding: 16px;
+    display: flex; flex-direction: column; gap: 12px;
+    transition: border-color 120ms, box-shadow 120ms;
+  }
+  .a-card:hover { border-color: var(--color-edge-strong); box-shadow: var(--shadow-card); }
+  .a-card-head { display: flex; align-items: flex-start; gap: 10px; }
+  .a-card-head .meta { flex: 1; min-width: 0; }
+  .a-card-head .label { font-size: 14px; font-weight: 600; color: var(--color-ink); }
+  .a-card-head .sub { font-size: 11.5px; color: var(--color-ink-faint); margin-top: 1px; }
+  .a-card-actions { display: flex; gap: 2px; opacity: 0; transition: opacity 120ms; }
+  .a-card:hover .a-card-actions { opacity: 1; }
+  .a-card-preview {
+    background: var(--color-subtle);
+    border-radius: 6px;
+    padding: 10px 12px;
+    font-size: 12px;
+    color: var(--color-ink-muted);
+  }
+  .a-card-foot {
+    display: flex; align-items: center; justify-content: space-between;
+    font-size: 11px; color: var(--color-ink-faint);
+  }
+  .a-card-foot .freq {
+    font-variant-numeric: tabular-nums;
+  }
+  .a-card-foot .spark {
+    display: flex; align-items: flex-end; gap: 2px; height: 14px;
+  }
+  .a-card-foot .spark i {
+    display: block; width: 4px; background: var(--color-edge-strong);
+    border-radius: 1px;
+  }
+  .a-card.accent .a-card-foot .spark i { background: color-mix(in oklab, var(--card-color), white 50%); }
+
+  /* Mini previews per type */
+  .preview-range { display: flex; align-items: center; gap: 10px; }
+  .preview-range .scale {
+    position: relative; flex: 1; height: 4px; background: var(--color-edge);
+    border-radius: 999px;
+  }
+  .preview-range .scale .fill {
+    position: absolute; left: 0; top: 0; bottom: 0; border-radius: 999px;
+    background: var(--card-color, var(--color-accent));
+  }
+  .preview-range .scale .dot {
+    position: absolute; top: 50%; transform: translate(-50%, -50%);
+    width: 10px; height: 10px; border-radius: 999px;
+    background: var(--card-color, var(--color-accent));
+    border: 2px solid var(--color-surface);
+    box-shadow: 0 0 0 1px var(--card-color, var(--color-accent));
+  }
+  .preview-range .val {
+    font-size: 13px; font-weight: 600; color: var(--color-ink);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .preview-chips { display: flex; flex-wrap: wrap; gap: 4px; }
+  .preview-chip {
+    font-size: 11px; padding: 3px 8px; border-radius: 999px;
+    background: var(--color-surface); border: 1px solid var(--color-edge);
+    color: var(--color-ink-muted);
+  }
+  .preview-chip.selected {
+    background: var(--color-accent-tint);
+    border-color: color-mix(in oklab, var(--color-accent), transparent 70%);
+    color: var(--color-accent-dim);
+    font-weight: 500;
+  }
+
+  .preview-bool { display: flex; gap: 4px; }
+  .preview-bool .opt {
+    flex: 1; text-align: center; font-size: 11.5px; padding: 5px 0;
+    border-radius: 6px; border: 1px solid var(--color-edge);
+    color: var(--color-ink-muted);
+  }
+  .preview-bool .opt.on {
+    background: color-mix(in oklab, var(--card-color, var(--color-accent)), white 90%);
+    color: var(--card-color, var(--color-accent-dim));
+    border-color: color-mix(in oklab, var(--card-color, var(--color-accent)), white 70%);
+    font-weight: 500;
+  }
+
+  .preview-med { display: flex; align-items: center; gap: 8px; }
+  .preview-med .dose {
+    font-size: 11.5px; padding: 3px 8px; border-radius: 6px;
+    background: var(--color-surface); border: 1px solid var(--color-edge);
+    color: var(--color-ink-muted);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .preview-text {
+    font-size: 12px; color: var(--color-ink-faint); font-style: italic;
+  }
+
+  /* ── A editor (drawer / panel) ─────────────────────────── */
+  .a-editor {
+    display: grid; grid-template-columns: 1.05fr 0.95fr; gap: 18px;
+    border: 1px solid var(--color-edge);
+    border-radius: var(--radius-card);
+    background: var(--color-raised);
+    overflow: hidden;
+    box-shadow: var(--shadow-card);
+  }
+  .a-editor-form { padding: 18px 18px 16px; }
+  .a-editor-form h3 {
+    margin: 0 0 14px;
+    font-size: 15px; font-weight: 600;
+  }
+  .a-editor-form .seg {
+    display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px;
+    background: var(--color-subtle);
+    padding: 3px; border-radius: 8px;
+    margin-bottom: 14px;
+  }
+  .a-editor-form .seg button {
+    background: transparent; border: none; padding: 6px 4px;
+    font-size: 11.5px; font-weight: 500; color: var(--color-ink-muted);
+    border-radius: 6px; cursor: pointer; display: flex; flex-direction: column;
+    align-items: center; gap: 2px;
+    font-family: inherit;
+  }
+  .a-editor-form .seg button.on {
+    background: var(--color-surface); color: var(--color-ink);
+    box-shadow: 0 1px 2px rgba(0,0,0,.08);
+  }
+  .a-editor-form .seg button .ic {
+    font-size: 16px;
+  }
+  .a-editor-form .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .a-editor-form .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+  .a-editor-form .field { margin-bottom: 12px; }
+  .a-color-row { display: flex; gap: 6px; }
+  .a-color-row .swatch {
+    width: 24px; height: 24px; border-radius: 999px;
+    border: 2px solid var(--color-surface);
+    box-shadow: 0 0 0 1px var(--color-edge);
+    cursor: pointer;
+  }
+  .a-color-row .swatch.on { box-shadow: 0 0 0 2px var(--color-accent); }
+
+  .a-editor-preview {
+    background: linear-gradient(180deg, var(--color-subtle), #ffffff);
+    padding: 18px;
+    border-left: 1px solid var(--color-edge);
+    display: flex; flex-direction: column; gap: 12px;
+  }
+  .a-editor-preview .preview-tag {
+    font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase;
+    font-weight: 600; color: var(--color-ink-faint);
+    display: flex; align-items: center; gap: 6px;
+  }
+  .a-editor-preview .preview-tag::before {
+    content: ""; display: inline-block; width: 6px; height: 6px;
+    border-radius: 999px; background: var(--color-ok);
+  }
+  .a-preview-card {
+    background: var(--color-surface);
+    border: 1px solid var(--color-edge);
+    border-radius: var(--radius-card);
+    padding: 14px;
+    box-shadow: var(--shadow-card);
+  }
+  .a-preview-card .label {
+    font-size: 11.5px; font-weight: 500; color: var(--color-ink-muted);
+    margin-bottom: 10px;
+  }
+  .a-context {
+    font-size: 11.5px; color: var(--color-ink-muted);
+    background: var(--color-surface); border: 1px dashed var(--color-edge);
+    border-radius: 6px; padding: 8px 10px; line-height: 1.5;
+  }
+  .a-context strong { color: var(--color-ink); font-weight: 500; }
+
+  /* ╔════════════════════════════════════════════════════════╗
+     B. INLINE EXPAND ROWS
+     ╚════════════════════════════════════════════════════════╝ */
+  .b-list { display: flex; flex-direction: column; gap: 6px; }
+  .b-row {
+    display: grid;
+    grid-template-columns: auto 1fr auto auto;
+    align-items: center;
+    gap: 14px;
+    padding: 12px 14px;
+    border: 1px solid var(--color-edge);
+    border-radius: var(--radius-card);
+    background: var(--color-raised);
+    transition: background 120ms;
+  }
+  .b-row:hover { background: var(--color-subtle); }
+  .b-row .meta { min-width: 0; }
+  .b-row .label { font-size: 14px; font-weight: 600; color: var(--color-ink); }
+  .b-row .sub { font-size: 11.5px; color: var(--color-ink-faint); margin-top: 1px; }
+  .b-row .preview {
+    min-width: 200px; max-width: 240px;
+    font-size: 12px; color: var(--color-ink-muted);
+  }
+  .b-row .actions { display: flex; gap: 2px; opacity: 0.4; }
+  .b-row:hover .actions { opacity: 1; }
+
+  .b-row.expanded {
+    grid-template-columns: 1fr;
+    padding: 0;
+    background: var(--color-surface);
+    border-color: var(--color-accent);
+    box-shadow: 0 0 0 3px var(--color-accent-tint);
+  }
+  .b-expand-head {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--color-edge);
+  }
+  .b-expand-head .label { font-size: 14px; font-weight: 600; }
+  .b-expand-head .sub { font-size: 11.5px; color: var(--color-ink-faint); margin-top: 1px; }
+  .b-expand-body {
+    display: grid; grid-template-columns: 1.05fr 0.95fr;
+  }
+  .b-expand-form { padding: 16px; }
+  .b-expand-form .field { margin-bottom: 12px; }
+  .b-expand-preview {
+    border-left: 1px solid var(--color-edge);
+    padding: 16px;
+    background: var(--color-subtle);
+  }
+  .b-expand-foot {
+    padding: 10px 16px;
+    border-top: 1px solid var(--color-edge);
+    display: flex; justify-content: space-between; align-items: center;
+    background: var(--color-subtle);
+  }
+  .b-locked-pill {
+    display: inline-flex; align-items: center; gap: 5px;
+    font-size: 11px; color: var(--color-warn);
+    background: var(--color-warn-tint);
+    border: 1px solid color-mix(in oklab, var(--color-warn), transparent 70%);
+    padding: 3px 8px; border-radius: 999px;
+  }
+  .b-add {
+    margin-top: 6px;
+    display: flex; align-items: center; justify-content: center;
+    gap: 6px;
+    padding: 11px;
+    border: 1px dashed var(--color-edge-strong);
+    border-radius: var(--radius-card);
+    background: transparent;
+    color: var(--color-ink-muted);
+    font-size: 12.5px; font-weight: 500; cursor: pointer;
+    font-family: inherit;
+    width: 100%;
+  }
+  .b-add:hover {
+    border-color: var(--color-accent);
+    background: var(--color-accent-tint);
+    color: var(--color-accent-dim);
+  }
+
+  /* ╔════════════════════════════════════════════════════════╗
+     C. TWO-PANE MANAGER
+     ╚════════════════════════════════════════════════════════╝ */
+  .c-frame {
+    display: grid; grid-template-columns: 240px 1fr;
+    border: 1px solid var(--color-edge);
+    border-radius: var(--radius-card);
+    background: var(--color-raised);
+    overflow: hidden;
+    min-height: 520px;
+  }
+  .c-rail {
+    background: var(--color-subtle);
+    border-right: 1px solid var(--color-edge);
+    padding: 12px 8px;
+    display: flex; flex-direction: column; gap: 14px;
+  }
+  .c-rail .search {
+    margin: 2px 4px 4px;
+    position: relative;
+  }
+  .c-rail .search input {
+    width: 100%;
+    border: 1px solid var(--color-edge);
+    background: var(--color-surface);
+    border-radius: var(--radius-input);
+    padding: 6px 10px 6px 28px;
+    font: inherit;
+    font-size: 12.5px;
+  }
+  .c-rail .search::before {
+    content: "🔍";
+    position: absolute; left: 8px; top: 50%; transform: translateY(-50%);
+    font-size: 12px; opacity: 0.5;
+  }
+  .c-group {
+    display: flex; flex-direction: column; gap: 1px;
+  }
+  .c-group-title {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--color-ink-faint);
+    padding: 6px 10px 4px;
+  }
+  .c-rail-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 7px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 100ms;
+  }
+  .c-rail-item:hover { background: var(--color-surface); }
+  .c-rail-item.on {
+    background: var(--color-surface);
+    box-shadow: inset 2px 0 0 var(--color-accent);
+  }
+  .c-rail-item .label { font-size: 13px; font-weight: 500; color: var(--color-ink); }
+  .c-rail-item .sub { font-size: 10.5px; color: var(--color-ink-faint); }
+  .c-rail-item .text { min-width: 0; flex: 1; }
+
+  .c-rail-add {
+    margin-top: auto;
+    padding: 8px 10px;
+    display: flex; align-items: center; gap: 8px;
+    border: none; background: transparent;
+    color: var(--color-accent);
+    font: inherit; font-size: 12.5px; font-weight: 500;
+    cursor: pointer; border-radius: 6px;
+  }
+  .c-rail-add:hover { background: var(--color-accent-tint); }
+
+  .c-detail { padding: 20px 22px; display: flex; flex-direction: column; gap: 18px; }
+  .c-detail-head { display: flex; align-items: flex-start; gap: 14px; padding-bottom: 16px; border-bottom: 1px solid var(--color-edge); }
+  .c-detail-head .meta { flex: 1; min-width: 0; }
+  .c-detail-head .label { font-size: 18px; font-weight: 600; letter-spacing: -0.01em; }
+  .c-detail-head .sub { font-size: 12px; color: var(--color-ink-muted); margin-top: 2px; }
+  .c-detail-head .stats { display: flex; gap: 18px; margin-top: 10px; font-size: 11.5px; color: var(--color-ink-muted); }
+  .c-detail-head .stats b { color: var(--color-ink); font-weight: 600; font-variant-numeric: tabular-nums; }
+
+  .c-section { display: flex; flex-direction: column; gap: 10px; }
+  .c-section h4 {
+    margin: 0; font-size: 11px; letter-spacing: 0.08em;
+    text-transform: uppercase; color: var(--color-ink-muted); font-weight: 600;
+  }
+  .c-card {
+    border: 1px solid var(--color-edge); border-radius: var(--radius-card);
+    background: var(--color-surface); padding: 14px;
+  }
+  .c-card .row + .row { margin-top: 10px; }
+  .c-preview-strip {
+    background: var(--color-subtle);
+    border-radius: 8px;
+    padding: 12px 14px;
+  }
+  .c-preview-strip .lbl {
+    font-size: 10.5px; letter-spacing: 0.06em; text-transform: uppercase;
+    color: var(--color-ink-faint); font-weight: 600; margin-bottom: 8px;
+  }
+  .c-foot {
+    display: flex; justify-content: space-between; align-items: center;
+    padding-top: 4px;
+  }
+
+  /* danger row link in C */
+  .c-danger {
+    font-size: 12px; color: var(--color-danger);
+    background: transparent; border: none; cursor: pointer;
+    padding: 4px 0;
+  }
+  .c-danger:hover { text-decoration: underline; }
+
+</style>
+</head>
+<body>
+
+<div class="canvas-header">
+  <h1>Data Points · layout exploration</h1>
+  <p>Three directions for the manage screen. All use the existing token set — no new colours, no new fonts, no icon library. Each artboard shows the list state on top and the editor state below so you can compare them in one glance.</p>
+</div>
+
+<div class="canvas">
+
+  <!-- ════════════════════════════════════════════════════════
+       VARIANT A — Stat cards + side-preview editor
+       ════════════════════════════════════════════════════════ -->
+  <div class="artboard">
+    <div class="artboard-header">
+      <p class="artboard-title">Variant A</p>
+      <h2 class="artboard-name">Tracker cards · two-column grid</h2>
+      <p class="artboard-note">Each tracker becomes a card with a live mini-preview of its field. Hover-revealed actions remove visual noise. Editor opens as a drawer with a real-time preview pane on the right.</p>
+    </div>
+
+    <!-- A · List state -->
+    <div class="frame">
+      <div class="frame-tag">List state</div>
+
+      <div class="a-toolbar">
+        <div class="title-block">
+          <h2 class="h1">Data Points</h2>
+          <div class="meta">5 trackers · 38 days of data</div>
+        </div>
+        <button class="btn btn-primary">+ Add tracker</button>
+      </div>
+
+      <div class="a-filters">
+        <span class="a-filter-chip active">All <span class="count">5</span></span>
+        <span class="a-filter-chip">Range <span class="count">2</span></span>
+        <span class="a-filter-chip">Choice <span class="count">1</span></span>
+        <span class="a-filter-chip">Yes/No <span class="count">1</span></span>
+        <span class="a-filter-chip">Meds <span class="count">1</span></span>
+      </div>
+
+      <div class="a-grid">
+
+        <!-- Card · Mood (range) -->
+        <div class="a-card accent" style="--card-color:#6366f1">
+          <div class="a-card-head">
+            <span class="dp-ic" style="background:#6366f1;color:white">😊</span>
+            <div class="meta">
+              <div class="label">Mood</div>
+              <div class="sub">Range · 0 – 10</div>
+            </div>
+            <div class="a-card-actions">
+              <button class="icon-btn" title="Edit"><svg viewBox="0 0 16 16"><path d="M11.5 2.5l2 2L6 12l-3 1 1-3 7.5-7.5z" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+              <button class="icon-btn danger" title="Delete"><svg viewBox="0 0 16 16"><path d="M3 4h10M6 4V3a1 1 0 011-1h2a1 1 0 011 1v1m1 0v9a1 1 0 01-1 1H6a1 1 0 01-1-1V4h6z" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+            </div>
+          </div>
+          <div class="a-card-preview">
+            <div class="preview-range">
+              <span class="xs faint">0</span>
+              <div class="scale">
+                <div class="fill" style="width:70%"></div>
+                <div class="dot" style="left:70%"></div>
+              </div>
+              <span class="xs faint">10</span>
+              <span class="val">7</span>
+            </div>
+          </div>
+          <div class="a-card-foot">
+            <span class="freq">Logged 32 / 38 days · avg 6.4</span>
+            <span class="spark" aria-hidden="true">
+              <i style="height:50%"></i><i style="height:80%"></i><i style="height:65%"></i>
+              <i style="height:90%"></i><i style="height:75%"></i><i style="height:55%"></i>
+              <i style="height:70%"></i>
+            </span>
+          </div>
+        </div>
+
+        <!-- Card · Sleep (range) -->
+        <div class="a-card accent" style="--card-color:#0d9488">
+          <div class="a-card-head">
+            <span class="dp-ic" style="background:#0d9488;color:white">🛌</span>
+            <div class="meta">
+              <div class="label">Hours of sleep</div>
+              <div class="sub">Range · 0 – 12 · step 0.5</div>
+            </div>
+            <div class="a-card-actions">
+              <button class="icon-btn"><svg viewBox="0 0 16 16"><path d="M11.5 2.5l2 2L6 12l-3 1 1-3 7.5-7.5z" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+              <button class="icon-btn danger"><svg viewBox="0 0 16 16"><path d="M3 4h10M6 4V3a1 1 0 011-1h2a1 1 0 011 1v1m1 0v9a1 1 0 01-1 1H6a1 1 0 01-1-1V4h6z" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+            </div>
+          </div>
+          <div class="a-card-preview">
+            <div class="preview-range">
+              <span class="xs faint">0</span>
+              <div class="scale">
+                <div class="fill" style="width:60%"></div>
+                <div class="dot" style="left:60%"></div>
+              </div>
+              <span class="xs faint">12</span>
+              <span class="val">7.5</span>
+            </div>
+          </div>
+          <div class="a-card-foot">
+            <span class="freq">Logged 28 / 38 days · avg 7.1h</span>
+            <span class="spark" aria-hidden="true">
+              <i style="height:70%"></i><i style="height:60%"></i><i style="height:85%"></i>
+              <i style="height:50%"></i><i style="height:75%"></i><i style="height:80%"></i>
+              <i style="height:65%"></i>
+            </span>
+          </div>
+        </div>
+
+        <!-- Card · Activity (multi) -->
+        <div class="a-card" style="--card-color:#d97706">
+          <div class="a-card-head">
+            <span class="dp-ic" style="background:#d97706;color:white">🏃</span>
+            <div class="meta">
+              <div class="label">Activity</div>
+              <div class="sub">Multiple choice · 5 options</div>
+            </div>
+            <div class="a-card-actions">
+              <button class="icon-btn"><svg viewBox="0 0 16 16"><path d="M11.5 2.5l2 2L6 12l-3 1 1-3 7.5-7.5z" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+              <button class="icon-btn danger"><svg viewBox="0 0 16 16"><path d="M3 4h10M6 4V3a1 1 0 011-1h2a1 1 0 011 1v1m1 0v9a1 1 0 01-1 1H6a1 1 0 01-1-1V4h6z" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+            </div>
+          </div>
+          <div class="a-card-preview">
+            <div class="preview-chips">
+              <span class="preview-chip selected">Walk</span>
+              <span class="preview-chip">Run</span>
+              <span class="preview-chip selected">Yoga</span>
+              <span class="preview-chip">Bike</span>
+              <span class="preview-chip">Swim</span>
+            </div>
+          </div>
+          <div class="a-card-foot">
+            <span class="freq">Logged 19 / 38 days · top: Walk</span>
+          </div>
+        </div>
+
+        <!-- Card · Meditated (boolean) -->
+        <div class="a-card" style="--card-color:#16a34a">
+          <div class="a-card-head">
+            <span class="dp-ic" style="background:#16a34a;color:white">🧘</span>
+            <div class="meta">
+              <div class="label">Meditated today</div>
+              <div class="sub">Yes / No</div>
+            </div>
+            <div class="a-card-actions">
+              <button class="icon-btn"><svg viewBox="0 0 16 16"><path d="M11.5 2.5l2 2L6 12l-3 1 1-3 7.5-7.5z" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+              <button class="icon-btn danger"><svg viewBox="0 0 16 16"><path d="M3 4h10M6 4V3a1 1 0 011-1h2a1 1 0 011 1v1m1 0v9a1 1 0 01-1 1H6a1 1 0 01-1-1V4h6z" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+            </div>
+          </div>
+          <div class="a-card-preview">
+            <div class="preview-bool">
+              <span class="opt on">Yes</span>
+              <span class="opt">No</span>
+            </div>
+          </div>
+          <div class="a-card-foot">
+            <span class="freq">Logged 25 / 38 days · 68% yes</span>
+          </div>
+        </div>
+
+        <!-- Card · Medication -->
+        <div class="a-card" style="--card-color:#e11d48; grid-column: span 2;">
+          <div class="a-card-head">
+            <span class="dp-ic" style="background:#e11d48;color:white">💊</span>
+            <div class="meta">
+              <div class="label">Sertraline</div>
+              <div class="sub">Medication · 3 dosage presets</div>
+            </div>
+            <div class="a-card-actions">
+              <button class="icon-btn"><svg viewBox="0 0 16 16"><path d="M11.5 2.5l2 2L6 12l-3 1 1-3 7.5-7.5z" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+              <button class="icon-btn danger"><svg viewBox="0 0 16 16"><path d="M3 4h10M6 4V3a1 1 0 011-1h2a1 1 0 011 1v1m1 0v9a1 1 0 01-1 1H6a1 1 0 01-1-1V4h6z" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+            </div>
+          </div>
+          <div class="a-card-preview">
+            <div class="preview-med">
+              <span class="dose">25mg</span>
+              <span class="dose">50mg</span>
+              <span class="dose">100mg</span>
+              <span class="xs faint" style="margin-left:auto">+ free amount</span>
+            </div>
+          </div>
+          <div class="a-card-foot">
+            <span class="freq">Logged 36 / 38 days · most common 50mg at 08:00</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- A · Editor state -->
+    <div class="frame" style="background:var(--color-subtle)">
+      <div class="frame-tag">Editor state · live preview</div>
+
+      <div class="a-editor">
+        <div class="a-editor-form">
+          <h3>Edit data point</h3>
+
+          <div class="seg">
+            <button><span class="ic">📊</span>Range</button>
+            <button class="on"><span class="ic">📝</span>Text</button>
+            <button><span class="ic">📋</span>Choice</button>
+            <button><span class="ic">✅</span>Yes/No</button>
+            <button><span class="ic">💊</span>Meds</button>
+          </div>
+
+          <div class="field">
+            <label class="label-xs">Label</label>
+            <input class="input" value="Journal prompt" />
+          </div>
+
+          <div class="grid-2">
+            <div class="field">
+              <label class="label-xs">Icon</label>
+              <div class="row gap-2">
+                <button class="btn" style="font-size:18px;padding:6px 10px">📝</button>
+                <span class="xs faint">tap to change</span>
+              </div>
+            </div>
+            <div class="field">
+              <label class="label-xs">Colour</label>
+              <div class="a-color-row">
+                <span class="swatch" style="background:#4f46e5"></span>
+                <span class="swatch on" style="background:#7c3aed"></span>
+                <span class="swatch" style="background:#0d9488"></span>
+                <span class="swatch" style="background:#d97706"></span>
+                <span class="swatch" style="background:#e11d48"></span>
+                <span class="swatch" style="background:#475569"></span>
+              </div>
+            </div>
+          </div>
+
+          <div class="field">
+            <label class="label-xs">Hint text shown in field</label>
+            <input class="input" placeholder="e.g. what surprised you today?" value="What surprised you today?" />
+          </div>
+
+          <div class="row gap-2" style="justify-content:flex-end;margin-top:18px">
+            <button class="btn">Cancel</button>
+            <button class="btn btn-primary">Save changes</button>
+          </div>
+        </div>
+
+        <div class="a-editor-preview">
+          <div class="preview-tag">Live preview</div>
+
+          <div class="a-preview-card">
+            <div class="row gap-3" style="align-items:flex-start">
+              <span class="dp-ic" style="background:#7c3aed;color:white">📝</span>
+              <div style="flex:1">
+                <div class="label-xs" style="margin-bottom:8px">Journal prompt</div>
+                <input class="input" placeholder="What surprised you today?" disabled />
+              </div>
+            </div>
+          </div>
+
+          <div class="a-context">
+            <strong>Where this shows up:</strong> on each day's diary entry, in the order trackers were added. You can reorder them by dragging cards in the list.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════════
+       VARIANT B — Inline expand rows
+       ════════════════════════════════════════════════════════ -->
+  <div class="artboard">
+    <div class="artboard-header">
+      <p class="artboard-title">Variant B</p>
+      <h2 class="artboard-name">Inline expand · single-pane list</h2>
+      <p class="artboard-note">Compact rows with a small preview slot. Tapping a row expands it in place into the editor; nothing moves. Good if you expect many trackers — list stays scannable.</p>
+    </div>
+
+    <!-- B · List state -->
+    <div class="frame">
+      <div class="frame-tag">List state</div>
+
+      <div class="row between" style="margin-bottom:14px">
+        <div>
+          <h2 class="h1">Data Points</h2>
+          <div class="small muted">Tap a row to edit · drag to reorder</div>
+        </div>
+        <button class="btn btn-primary">+ Add</button>
+      </div>
+
+      <div class="b-list">
+
+        <div class="b-row">
+          <span class="dp-ic" style="background:#6366f1;color:white">😊</span>
+          <div class="meta">
+            <div class="label">Mood</div>
+            <div class="sub">Range · 0–10 · step 1</div>
+          </div>
+          <div class="preview">
+            <div class="preview-range">
+              <span class="xs faint">0</span>
+              <div class="scale" style="--card-color:#6366f1">
+                <div class="fill" style="width:70%;background:#6366f1"></div>
+                <div class="dot" style="left:70%;background:#6366f1;box-shadow:0 0 0 1px #6366f1"></div>
+              </div>
+              <span class="xs faint">10</span>
+            </div>
+          </div>
+          <div class="actions">
+            <button class="icon-btn" title="Drag"><svg viewBox="0 0 16 16"><path d="M5 4h.01M5 8h.01M5 12h.01M11 4h.01M11 8h.01M11 12h.01" stroke-linecap="round" stroke-width="2.5"/></svg></button>
+            <button class="icon-btn danger"><svg viewBox="0 0 16 16"><path d="M3 4h10M6 4V3a1 1 0 011-1h2a1 1 0 011 1v1m1 0v9a1 1 0 01-1 1H6a1 1 0 01-1-1V4h6z" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+          </div>
+        </div>
+
+        <div class="b-row">
+          <span class="dp-ic" style="background:#0d9488;color:white">🛌</span>
+          <div class="meta">
+            <div class="label">Hours of sleep</div>
+            <div class="sub">Range · 0–12 · step 0.5</div>
+          </div>
+          <div class="preview">
+            <div class="preview-range">
+              <span class="xs faint">0</span>
+              <div class="scale">
+                <div class="fill" style="width:62%;background:#0d9488"></div>
+                <div class="dot" style="left:62%;background:#0d9488;box-shadow:0 0 0 1px #0d9488"></div>
+              </div>
+              <span class="xs faint">12</span>
+            </div>
+          </div>
+          <div class="actions">
+            <button class="icon-btn"><svg viewBox="0 0 16 16"><path d="M5 4h.01M5 8h.01M5 12h.01M11 4h.01M11 8h.01M11 12h.01" stroke-linecap="round" stroke-width="2.5"/></svg></button>
+            <button class="icon-btn danger"><svg viewBox="0 0 16 16"><path d="M3 4h10M6 4V3a1 1 0 011-1h2a1 1 0 011 1v1m1 0v9a1 1 0 01-1 1H6a1 1 0 01-1-1V4h6z" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+          </div>
+        </div>
+
+        <!-- Expanded row -->
+        <div class="b-row expanded">
+          <div class="b-expand-head">
+            <span class="dp-ic" style="background:#d97706;color:white">🏃</span>
+            <div>
+              <div class="label">Activity</div>
+              <div class="sub">Multiple choice · 5 options</div>
+            </div>
+            <div class="row gap-2">
+              <span class="b-locked-pill">🔒 Has 19 days of data</span>
+              <button class="icon-btn"><svg viewBox="0 0 16 16"><path d="M4 6l4 4 4-4" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+            </div>
+          </div>
+
+          <div class="b-expand-body">
+            <div class="b-expand-form">
+              <div class="grid-2" style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+                <div class="field">
+                  <label class="label-xs">Label</label>
+                  <input class="input" value="Activity" />
+                </div>
+                <div class="field">
+                  <label class="label-xs">Colour</label>
+                  <div class="a-color-row">
+                    <span class="swatch" style="background:#4f46e5"></span>
+                    <span class="swatch" style="background:#7c3aed"></span>
+                    <span class="swatch" style="background:#0d9488"></span>
+                    <span class="swatch on" style="background:#d97706"></span>
+                    <span class="swatch" style="background:#e11d48"></span>
+                    <span class="swatch" style="background:#475569"></span>
+                  </div>
+                </div>
+              </div>
+              <div class="field">
+                <label class="label-xs">Options <span class="xs faint" style="margin-left:6px">— locked, this tracker already has data</span></label>
+                <div class="row gap-2" style="flex-wrap:wrap">
+                  <span class="preview-chip selected">Walk</span>
+                  <span class="preview-chip selected">Run</span>
+                  <span class="preview-chip selected">Yoga</span>
+                  <span class="preview-chip selected">Bike</span>
+                  <span class="preview-chip selected">Swim</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="b-expand-preview">
+              <div class="label-xs" style="margin-bottom:8px">Preview in your diary</div>
+              <div class="a-preview-card">
+                <div class="row gap-3" style="align-items:flex-start">
+                  <span class="dp-ic" style="background:#d97706;color:white">🏃</span>
+                  <div style="flex:1">
+                    <div class="label-xs" style="margin-bottom:8px">Activity</div>
+                    <div class="preview-chips">
+                      <span class="preview-chip selected">Walk</span>
+                      <span class="preview-chip">Run</span>
+                      <span class="preview-chip selected">Yoga</span>
+                      <span class="preview-chip">Bike</span>
+                      <span class="preview-chip">Swim</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="b-expand-foot">
+            <button class="c-danger">Delete this tracker</button>
+            <div class="row gap-2">
+              <button class="btn">Cancel</button>
+              <button class="btn btn-primary">Save</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="b-row">
+          <span class="dp-ic" style="background:#16a34a;color:white">🧘</span>
+          <div class="meta">
+            <div class="label">Meditated today</div>
+            <div class="sub">Yes / No</div>
+          </div>
+          <div class="preview">
+            <div class="preview-bool" style="--card-color:#16a34a">
+              <span class="opt on">Yes</span>
+              <span class="opt">No</span>
+            </div>
+          </div>
+          <div class="actions">
+            <button class="icon-btn"><svg viewBox="0 0 16 16"><path d="M5 4h.01M5 8h.01M5 12h.01M11 4h.01M11 8h.01M11 12h.01" stroke-linecap="round" stroke-width="2.5"/></svg></button>
+            <button class="icon-btn danger"><svg viewBox="0 0 16 16"><path d="M3 4h10M6 4V3a1 1 0 011-1h2a1 1 0 011 1v1m1 0v9a1 1 0 01-1 1H6a1 1 0 01-1-1V4h6z" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+          </div>
+        </div>
+
+        <div class="b-row">
+          <span class="dp-ic" style="background:#e11d48;color:white">💊</span>
+          <div class="meta">
+            <div class="label">Sertraline</div>
+            <div class="sub">Medication · 25mg, 50mg, 100mg</div>
+          </div>
+          <div class="preview">
+            <div class="preview-med">
+              <span class="dose">25mg</span>
+              <span class="dose">50mg</span>
+              <span class="dose">100mg</span>
+            </div>
+          </div>
+          <div class="actions">
+            <button class="icon-btn"><svg viewBox="0 0 16 16"><path d="M5 4h.01M5 8h.01M5 12h.01M11 4h.01M11 8h.01M11 12h.01" stroke-linecap="round" stroke-width="2.5"/></svg></button>
+            <button class="icon-btn danger"><svg viewBox="0 0 16 16"><path d="M3 4h10M6 4V3a1 1 0 011-1h2a1 1 0 011 1v1m1 0v9a1 1 0 01-1 1H6a1 1 0 01-1-1V4h6z" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+          </div>
+        </div>
+
+        <button class="b-add">+ Add another data point</button>
+      </div>
+    </div>
+
+    <!-- B · Empty state insight -->
+    <div class="frame" style="background:var(--color-subtle)">
+      <div class="frame-tag">Why this works</div>
+      <ul style="margin:0;padding-left:20px;font-size:13px;color:var(--color-ink-muted);line-height:1.7">
+        <li>The list is the editor — no modal switching, the page never "navigates away".</li>
+        <li>Each row carries a real preview of its field, so the type is obvious at a glance.</li>
+        <li>The locked-warning becomes a contextual pill on the row that needs it, instead of a yellow banner above the whole form.</li>
+        <li>Scales to many trackers without becoming a wall of grey rows.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════════
+       VARIANT C — Two-pane manager
+       ════════════════════════════════════════════════════════ -->
+  <div class="artboard">
+    <div class="artboard-header">
+      <p class="artboard-title">Variant C</p>
+      <h2 class="artboard-name">Settings-style · rail + detail pane</h2>
+      <p class="artboard-note">Trackers as a sidebar; selecting one opens an immersive detail panel with usage stats, edit fields, and a live diary-style preview. Closest analogue to settings panels in modern apps.</p>
+    </div>
+
+    <div class="frame">
+      <div class="frame-tag">Manage screen</div>
+
+      <div class="row between" style="margin-bottom:14px">
+        <h2 class="h1">Data Points</h2>
+        <div class="small muted">5 trackers</div>
+      </div>
+
+      <div class="c-frame">
+        <!-- Rail -->
+        <aside class="c-rail">
+          <div class="search">
+            <input placeholder="Search trackers" />
+          </div>
+
+          <div class="c-group">
+            <div class="c-group-title">Wellbeing</div>
+            <div class="c-rail-item">
+              <span class="dp-ic sm" style="background:#6366f1;color:white">😊</span>
+              <div class="text">
+                <div class="label">Mood</div>
+                <div class="sub">Range · 0–10</div>
+              </div>
+            </div>
+            <div class="c-rail-item on">
+              <span class="dp-ic sm" style="background:#0d9488;color:white">🛌</span>
+              <div class="text">
+                <div class="label">Hours of sleep</div>
+                <div class="sub">Range · 0–12</div>
+              </div>
+            </div>
+            <div class="c-rail-item">
+              <span class="dp-ic sm" style="background:#16a34a;color:white">🧘</span>
+              <div class="text">
+                <div class="label">Meditated today</div>
+                <div class="sub">Yes / No</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="c-group">
+            <div class="c-group-title">Activity</div>
+            <div class="c-rail-item">
+              <span class="dp-ic sm" style="background:#d97706;color:white">🏃</span>
+              <div class="text">
+                <div class="label">Activity</div>
+                <div class="sub">Choice · 5 opts</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="c-group">
+            <div class="c-group-title">Medication</div>
+            <div class="c-rail-item">
+              <span class="dp-ic sm" style="background:#e11d48;color:white">💊</span>
+              <div class="text">
+                <div class="label">Sertraline</div>
+                <div class="sub">3 presets</div>
+              </div>
+            </div>
+          </div>
+
+          <button class="c-rail-add">+ New tracker</button>
+        </aside>
+
+        <!-- Detail -->
+        <section class="c-detail">
+          <div class="c-detail-head">
+            <span class="dp-ic lg" style="background:#0d9488;color:white">🛌</span>
+            <div class="meta">
+              <div class="label">Hours of sleep</div>
+              <div class="sub">Range slider · created Apr 8, 2026</div>
+              <div class="stats">
+                <span><b>28</b> / 38 days logged</span>
+                <span>avg <b>7.1 h</b></span>
+                <span>last <b>yesterday</b></span>
+              </div>
+            </div>
+            <button class="icon-btn"><svg viewBox="0 0 16 16"><path d="M4 4l8 8M12 4l-8 8" stroke-linecap="round"/></svg></button>
+          </div>
+
+          <div class="c-section">
+            <h4>Preview in diary</h4>
+            <div class="c-preview-strip">
+              <div class="row gap-3" style="align-items:flex-start">
+                <span class="dp-ic" style="background:#0d9488;color:white">🛌</span>
+                <div style="flex:1">
+                  <div class="label-xs" style="margin-bottom:8px">Hours of sleep</div>
+                  <div class="preview-range">
+                    <span class="xs faint">0</span>
+                    <div class="scale">
+                      <div class="fill" style="width:60%;background:#0d9488"></div>
+                      <div class="dot" style="left:60%;background:#0d9488;box-shadow:0 0 0 1px #0d9488"></div>
+                    </div>
+                    <span class="xs faint">12</span>
+                    <span class="val">7.5</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="c-section">
+            <h4>Configuration</h4>
+            <div class="c-card">
+              <div class="row gap-3" style="align-items:flex-end">
+                <div style="flex:1">
+                  <label class="label-xs">Label</label>
+                  <input class="input" value="Hours of sleep" />
+                </div>
+                <div>
+                  <label class="label-xs">Icon</label>
+                  <button class="btn" style="font-size:18px;padding:6px 10px">🛌</button>
+                </div>
+                <div>
+                  <label class="label-xs">Colour</label>
+                  <div class="a-color-row">
+                    <span class="swatch" style="background:#4f46e5"></span>
+                    <span class="swatch on" style="background:#0d9488"></span>
+                    <span class="swatch" style="background:#d97706"></span>
+                    <span class="swatch" style="background:#e11d48"></span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="row gap-3">
+                <div style="flex:1">
+                  <label class="label-xs">Min</label>
+                  <input class="input" value="0" />
+                </div>
+                <div style="flex:1">
+                  <label class="label-xs">Max</label>
+                  <input class="input" value="12" />
+                </div>
+                <div style="flex:1">
+                  <label class="label-xs">Increment</label>
+                  <input class="input" value="0.5" />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="c-foot">
+            <button class="c-danger">Delete tracker…</button>
+            <div class="row gap-2">
+              <button class="btn">Discard</button>
+              <button class="btn btn-primary">Save changes</button>
+            </div>
+          </div>
+        </section>
+      </div>
+    </div>
+
+    <div class="frame" style="background:var(--color-subtle)">
+      <div class="frame-tag">Trade-offs</div>
+      <ul style="margin:0;padding-left:20px;font-size:13px;color:var(--color-ink-muted);line-height:1.7">
+        <li>Tracker becomes a "thing you visit", not a row you skim. More room for stats, history, presets.</li>
+        <li>Empty state of the detail pane is a natural home for the "+ new tracker" walkthrough.</li>
+        <li>Heavier UI for what is actually a small list — feels right at 5–20 trackers, less right at 2.</li>
+        <li>Doesn't squeeze well on phones; would collapse to a single-column drill-in on mobile.</li>
+      </ul>
+    </div>
+  </div>
+
+</div>
+
+</body>
+</html>

@@ -13,7 +13,8 @@
       "Bash(npm run *)",
       "Bash(dir C:\\\\Users\\\\Anwender\\\\dev\\\\inkvault\\\\docs\\\\screenshots *)",
       "Bash(npx playwright *)",
-      "Bash(Sort-Object Name)"
+      "Bash(Sort-Object Name)",
+      "Bash(curl -s http://localhost:5173/)"
     ]
   }
 }

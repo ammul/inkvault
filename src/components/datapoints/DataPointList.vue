@@ -1,16 +1,84 @@
 <script setup lang="ts">
+import { ref, computed, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import type { DataPointConfig, DataPointType } from '@/types'
 import DataPointIcon from '@/components/ui/DataPointIcon.vue'
+import DataPointPreview from '@/components/datapoints/DataPointPreview.vue'
+import DataPointEditor from '@/components/datapoints/DataPointEditor.vue'
 
 const { t } = useI18n()
 
-defineProps<{ configs: DataPointConfig[] }>()
+const props = defineProps<{
+  configs: DataPointConfig[]
+  storedData: (id: string) => number
+}>()
 
 const emit = defineEmits<{
-  edit: [config: DataPointConfig]
+  save: [data: Omit<DataPointConfig, 'id' | 'createdAt'>, existingId: string | null, locked: boolean]
   delete: [id: string]
 }>()
+
+// ── Expand state ────────────────────────────────────────────────
+
+const DRAFT_ID = '__draft__'
+
+const expandedId = ref<string | null>(null)
+const editorRef = ref<InstanceType<typeof DataPointEditor> | null>(null)
+
+function setEditorRef(el: unknown) {
+  editorRef.value = el as InstanceType<typeof DataPointEditor> | null
+}
+
+const showDraft = computed(() => expandedId.value === DRAFT_ID)
+
+const DRAFT_CONFIG: DataPointConfig = {
+  id: DRAFT_ID,
+  label: '',
+  color: '#4f46e5',
+  icon: '📊',
+  type: 'range',
+  config: { min: 0, max: 10, step: 1 },
+  createdAt: '',
+}
+
+function toggle(id: string) {
+  expandedId.value = expandedId.value === id ? null : id
+}
+
+function openDraft() {
+  expandedId.value = DRAFT_ID
+}
+
+function cancelEdit() {
+  expandedId.value = null
+}
+
+function onEditorSave(data: Omit<DataPointConfig, 'id' | 'createdAt'>) {
+  const existingId = expandedId.value !== DRAFT_ID ? expandedId.value : null
+  const locked = existingId ? props.storedData(existingId) > 0 : false
+  emit('save', data, existingId, locked)
+  expandedId.value = null
+}
+
+function saveCurrentRow() {
+  editorRef.value?.submit()
+}
+
+function onDeleteFromFoot(id: string) {
+  expandedId.value = null
+  emit('delete', id)
+}
+
+// collapse if deleted config was expanded
+watch(() => props.configs, (newConfigs) => {
+  if (expandedId.value && expandedId.value !== DRAFT_ID) {
+    if (!newConfigs.find(c => c.id === expandedId.value)) {
+      expandedId.value = null
+    }
+  }
+})
+
+// ── Sub-line helpers ────────────────────────────────────────────
 
 const TYPE_KEY_MAP: Record<DataPointType, string> = {
   range: 'range',
@@ -23,58 +91,259 @@ const TYPE_KEY_MAP: Record<DataPointType, string> = {
 function typeLabel(type: DataPointType): string {
   return t(`dataPoints.editor.types.${TYPE_KEY_MAP[type]}.label`)
 }
+
+function subLine(config: DataPointConfig): string {
+  const tl = typeLabel(config.type)
+  switch (config.type) {
+    case 'range': {
+      const c = config.config as { min: number; max: number; step: number }
+      return `${tl} · ${c.min}–${c.max} · ${t('dataPoints.sub.rangeStep', { step: c.step })}`
+    }
+    case 'string':
+      return tl
+    case 'multi-string': {
+      const c = config.config as { options: string[] }
+      return `${tl} · ${t('dataPoints.sub.multiOptions', { n: c.options.length })}`
+    }
+    case 'boolean':
+      return tl
+    case 'medication': {
+      const c = config.config as { medication: string; dosagePresets?: string[] }
+      const presets = c.dosagePresets ?? []
+      const shown = presets.slice(0, 3).join(t('dataPoints.sub.medPresetsJoin'))
+      const ellipsis = presets.length > 3 ? '…' : ''
+      return presets.length > 0 ? `${tl} · ${shown}${ellipsis}` : tl
+    }
+  }
+}
 </script>
 
 <template>
   <div>
-    <TransitionGroup name="list" tag="div" class="space-y-2">
-      <div
-        v-for="config in configs"
-        :key="config.id"
-        class="flex items-center gap-3 p-3 bg-raised rounded-card border border-edge"
+
+    <!-- ── Page header ────────────────────────────────────── -->
+    <div class="flex items-center justify-between mb-3.5">
+      <div>
+        <h1 class="text-xl font-semibold text-ink">{{ t('dataPoints.title') }}</h1>
+        <p class="text-xs text-ink-muted mt-0.5">{{ t('dataPoints.helper') }}</p>
+      </div>
+      <button
+        @click="openDraft"
+        class="text-sm bg-accent text-on-accent px-4 py-2 rounded-input hover:bg-accent-dim transition-colors font-medium shrink-0"
       >
-        <DataPointIcon :icon="config.icon" :color="config.color" :label="config.label" />
-        <div class="flex-1 min-w-0">
-          <p class="font-medium text-ink text-sm truncate">{{ config.label }}</p>
-          <p class="text-xs text-ink-faint">{{ typeLabel(config.type) }}</p>
+        {{ t('dataPoints.add') }}
+      </button>
+    </div>
+
+    <!-- ── List ───────────────────────────────────────────── -->
+    <div class="flex flex-col gap-1.5">
+
+      <!-- Draft row (always first when present) -->
+      <div
+        v-if="showDraft"
+        class="border rounded-card overflow-hidden border-accent bg-surface"
+        :style="{ boxShadow: '0 0 0 3px var(--color-accent-tint)' }"
+      >
+        <!-- Draft head -->
+        <div class="grid grid-cols-[auto_1fr_auto] items-center gap-3.5 px-4 py-3.5 border-b border-edge">
+          <DataPointIcon icon="📊" color="#4f46e5" label="New" />
+          <div class="min-w-0">
+            <p class="text-sm font-semibold text-ink-muted">{{ t('dataPoints.editor.newTitle') }}</p>
+          </div>
+          <button
+            type="button"
+            @click="cancelEdit"
+            :aria-label="t('dataPoints.actions.collapse')"
+            class="w-7 h-7 flex items-center justify-center rounded-md hover:bg-subtle text-ink-muted transition-colors"
+          >
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="3,10 8,5 13,10"/>
+            </svg>
+          </button>
         </div>
-        <button
-          @click="emit('edit', config)"
-          class="text-xs text-accent hover:text-accent-dim transition-colors px-2 py-1 rounded-input hover:bg-accent-tint"
+
+        <!-- Draft editor body -->
+        <DataPointEditor
+          :ref="setEditorRef"
+          :compact="true"
+          @save="onEditorSave"
+        />
+
+        <!-- Draft foot -->
+        <div class="flex justify-end items-center gap-2 px-4 py-2.5 border-t border-edge bg-subtle">
+          <button
+            type="button"
+            @click="cancelEdit"
+            class="text-sm px-4 py-2 rounded-input border border-edge text-ink-muted hover:bg-subtle hover:text-ink transition-colors"
+          >
+            {{ t('dataPoints.editor.cancel') }}
+          </button>
+          <button
+            type="button"
+            @click="saveCurrentRow"
+            class="text-sm px-4 py-2 rounded-input bg-accent text-on-accent hover:bg-accent-dim transition-colors font-medium"
+          >
+            {{ t('dataPoints.editor.add') }}
+          </button>
+        </div>
+      </div>
+
+      <!-- Existing config rows -->
+      <template v-for="config in configs" :key="config.id">
+
+        <!-- ── Collapsed row ──────────────────────────────── -->
+        <div
+          v-if="expandedId !== config.id"
+          role="button"
+          tabindex="0"
+          :aria-expanded="false"
+          class="group grid grid-cols-[auto_1fr_auto_auto] items-center gap-3.5 px-3.5 py-3 border border-edge rounded-card bg-raised hover:bg-subtle transition-colors duration-100 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/30"
+          @click="toggle(config.id)"
+          @keydown.enter.prevent="toggle(config.id)"
+          @keydown.space.prevent="toggle(config.id)"
         >
-          {{ t('dataPoints.edit') }}
-        </button>
-        <button
-          @click="emit('delete', config.id)"
-          class="text-xs text-danger hover:text-danger-dim transition-colors px-2 py-1 rounded-input hover:bg-danger-tint"
+          <!-- Icon -->
+          <DataPointIcon :icon="config.icon" :color="config.color" :label="config.label" />
+
+          <!-- Meta -->
+          <div class="min-w-0">
+            <p class="text-sm font-semibold text-ink truncate">{{ config.label }}</p>
+            <p class="text-[11.5px] text-ink-faint">{{ subLine(config) }}</p>
+          </div>
+
+          <!-- Preview slot -->
+          <div class="hidden sm:block min-w-[200px] max-w-[240px]">
+            <DataPointPreview :config="config" />
+          </div>
+
+          <!-- Actions -->
+          <div class="flex gap-0.5 opacity-40 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity duration-100">
+            <!-- Drag handle (DnD is a follow-up) -->
+            <button
+              type="button"
+              :aria-label="t('dataPoints.actions.reorder')"
+              class="w-7 h-7 flex items-center justify-center rounded-md hover:bg-subtle text-ink-muted cursor-grab transition-colors"
+              @click.stop
+            >
+              <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" stroke="none">
+                <circle cx="5.5" cy="4" r="1.1"/><circle cx="10.5" cy="4" r="1.1"/>
+                <circle cx="5.5" cy="8" r="1.1"/><circle cx="10.5" cy="8" r="1.1"/>
+                <circle cx="5.5" cy="12" r="1.1"/><circle cx="10.5" cy="12" r="1.1"/>
+              </svg>
+            </button>
+            <!-- Delete -->
+            <button
+              type="button"
+              :aria-label="t('dataPoints.delete')"
+              class="w-7 h-7 flex items-center justify-center rounded-md hover:bg-danger-tint hover:text-danger text-ink-muted transition-colors"
+              @click.stop="emit('delete', config.id)"
+            >
+              <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="2,4 14,4"/>
+                <path d="M5 4V2h6v2"/>
+                <path d="M3 4l1 10h8l1-10"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- ── Expanded row ───────────────────────────────── -->
+        <div
+          v-else
+          class="border rounded-card overflow-hidden border-accent bg-surface"
+          :style="{ boxShadow: '0 0 0 3px var(--color-accent-tint)' }"
         >
-          {{ t('dataPoints.delete') }}
+          <!-- Expanded head -->
+          <div class="grid grid-cols-[auto_1fr_auto] items-center gap-3.5 px-4 py-3.5 border-b border-edge">
+            <DataPointIcon :icon="config.icon" :color="config.color" :label="config.label" />
+            <div class="min-w-0">
+              <p class="text-sm font-semibold text-ink truncate">{{ config.label }}</p>
+              <p class="text-[11.5px] text-ink-faint">{{ subLine(config) }}</p>
+            </div>
+            <div class="flex items-center gap-2">
+              <!-- Locked pill -->
+              <span
+                v-if="storedData(config.id) > 0"
+                class="inline-flex items-center gap-1.5 text-[11px] text-warn bg-warn-tint border border-warn/30 px-2 py-0.5 rounded-full whitespace-nowrap"
+              >
+                🔒 {{ t('dataPoints.editor.lockedRowPill', { n: storedData(config.id) }) }}
+              </span>
+              <!-- Collapse caret -->
+              <button
+                type="button"
+                :aria-label="t('dataPoints.actions.collapse')"
+                class="w-7 h-7 flex items-center justify-center rounded-md hover:bg-subtle text-ink-muted transition-colors"
+                @click="toggle(config.id)"
+              >
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="3,10 8,5 13,10"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <!-- Expanded editor body -->
+          <DataPointEditor
+            :ref="setEditorRef"
+            :initial="config"
+            :locked="storedData(config.id) > 0"
+            :compact="true"
+            @save="onEditorSave"
+          />
+
+          <!-- Expanded foot -->
+          <div class="flex justify-between items-center px-4 py-2.5 border-t border-edge bg-subtle">
+            <button
+              type="button"
+              class="text-xs text-danger hover:underline transition-colors"
+              @click="onDeleteFromFoot(config.id)"
+            >
+              {{ t('dataPoints.actions.deleteTracker') }}
+            </button>
+            <div class="flex gap-2">
+              <button
+                type="button"
+                @click="cancelEdit"
+                class="text-sm px-4 py-2 rounded-input border border-edge text-ink-muted hover:bg-subtle hover:text-ink transition-colors"
+              >
+                {{ t('dataPoints.editor.cancel') }}
+              </button>
+              <button
+                type="button"
+                @click="saveCurrentRow"
+                class="text-sm px-4 py-2 rounded-input bg-accent text-on-accent hover:bg-accent-dim transition-colors font-medium"
+              >
+                {{ t('dataPoints.editor.save') }}
+              </button>
+            </div>
+          </div>
+        </div>
+
+      </template>
+
+      <!-- ── Add another dashed button ─────────────────────── -->
+      <button
+        v-if="configs.length > 0 && !showDraft"
+        type="button"
+        @click="openDraft"
+        class="w-full mt-1.5 flex items-center justify-center gap-1.5 py-2.5 border border-dashed border-edge-strong rounded-card text-ink-muted text-sm font-medium hover:border-accent hover:bg-accent-tint hover:text-accent-dim transition-colors duration-100"
+      >
+        {{ t('dataPoints.addAnother') }}
+      </button>
+
+      <!-- ── Empty state ─────────────────────────────────── -->
+      <div v-if="configs.length === 0 && !showDraft" class="text-center py-10">
+        <p class="text-ink-faint text-sm mb-4">{{ t('dataPoints.empty') }}</p>
+        <button
+          @click="openDraft"
+          class="text-sm bg-accent text-on-accent px-4 py-2 rounded-input hover:bg-accent-dim transition-colors font-medium"
+        >
+          {{ t('dataPoints.add') }}
         </button>
       </div>
-    </TransitionGroup>
 
-    <p v-if="!configs.length" class="text-center text-ink-faint text-sm py-10">
-      {{ t('dataPoints.empty') }}
-    </p>
+    </div>
+    <!-- end list -->
+
   </div>
 </template>
-
-<style scoped>
-.list-enter-active {
-  transition: opacity 200ms ease, transform 200ms ease;
-}
-.list-leave-active {
-  transition: opacity 150ms ease, transform 150ms ease;
-}
-.list-enter-from {
-  opacity: 0;
-  transform: translateY(6px);
-}
-.list-leave-to {
-  opacity: 0;
-  transform: translateY(-4px);
-}
-.list-move {
-  transition: transform 200ms ease;
-}
-</style>
