@@ -214,10 +214,9 @@ function confirmDeleteEntry() {
 // ─── Data point entries ───────────────────────────────────────────────────────
 
 function openDataPointModal(config: TrackerConfig) {
-  const existing = dataEntries.value.filter(e => e.configId === config.id).at(-1)
   entryModalConfig.value = config
-  entryModalValue.value = existing?.value ?? null
-  entryModalEditId.value = existing?.id ?? null
+  entryModalValue.value = null
+  entryModalEditId.value = null
   closeMenu()
 }
 
