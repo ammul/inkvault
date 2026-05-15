@@ -10,7 +10,10 @@
       "Bash(xxd)",
       "PowerShell(git push *)",
       "PowerShell(git *)",
-      "Bash(npm run *)"
+      "Bash(npm run *)",
+      "Bash(dir C:\\\\Users\\\\Anwender\\\\dev\\\\inkvault\\\\docs\\\\screenshots *)",
+      "Bash(npx playwright *)",
+      "Bash(Sort-Object Name)"
     ]
   }
 }

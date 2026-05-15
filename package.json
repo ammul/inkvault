@@ -12,7 +12,8 @@
     "test:coverage": "vitest run --coverage",
     "test:unit:watch": "vitest",
     "test:e2e": "playwright test",
-    "test:e2e:ui": "playwright test --ui"
+    "test:e2e:ui": "playwright test --ui",
+    "screenshots": "playwright test --config playwright.screenshots.config.ts"
   },
   "dependencies": {
     "pinia": "^2.3.1",
