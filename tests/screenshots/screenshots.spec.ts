@@ -79,7 +79,7 @@ test('generate promotional screenshots', async ({ page }) => {
   // calling closeEditor(). So after clicking "Add Data Point" we must wait for the editor
   // to close (showEditor = false) before proceeding; the "+ Add" button only renders when
   // showEditor = false, making it a reliable signal.
-  await page.goto('/inkvault/#/data')
+  await page.goto('/inkvault/#/trackers')
   await expect(page.getByRole('button', { name: '+ Add' })).toBeVisible()
 
   // Mood — range (default type)

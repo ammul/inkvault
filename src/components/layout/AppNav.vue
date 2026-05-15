@@ -36,11 +36,12 @@ watch(menuOpen, (open) => {
 })
 
 const navLinks = [
-  { to: '/diary', key: 'nav.diary' },
-  { to: '/stats', key: 'nav.stats' },
-  { to: '/data', key: 'nav.trackers' },
-  { to: '/theme', key: 'nav.theme' },
-  { to: '/about', key: 'nav.about' },
+  { to: '/diary',    key: 'nav.diary' },
+  { to: '/stats',    key: 'nav.stats' },
+  { to: '/trackers', key: 'nav.trackers' },
+  { to: '/theme',    key: 'nav.theme' },
+  { to: '/about',    key: 'nav.about' },
+  { to: '/data',     key: 'nav.data' },
   { to: '/settings', key: 'nav.backup' },
 ]
 </script>

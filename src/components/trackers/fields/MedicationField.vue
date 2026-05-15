@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { ref, watch, onMounted } from 'vue'
 import type { MedicationConfig, MedicationValue } from '@/types'
 
 const UNITS = ['mg', 'g', 'µg', 'ml', 'IU', 'tablets', 'capsules', 'drops', 'puffs']
@@ -25,6 +25,10 @@ watch(
     }
   },
 )
+
+onMounted(() => {
+  if (!props.modelValue) emitUpdate()
+})
 
 function autofillTime() {
   if (!time.value) {

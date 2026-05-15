@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { onMounted } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useThemeStore } from '@/stores/theme'
 import { useAppSettingsStore } from '@/stores/appSettings'
+import { rerollTheme } from '@/utils/seedData'
 import type { ColorTheme, ThemeFont, ThemeMood, ThemeFontSize } from '@/types'
 
 const { t } = useI18n()
@@ -44,6 +45,17 @@ async function setAnimations(val: boolean) {
   await appSettings.save()
 }
 
+const randomizing = ref(false)
+
+async function handleRandomize() {
+  randomizing.value = true
+  try {
+    await rerollTheme()
+  } finally {
+    randomizing.value = false
+  }
+}
+
 async function setUseEmojis(val: boolean) {
   appSettings.settings.useEmojis = val
   await appSettings.save()
@@ -80,7 +92,16 @@ const fontSizes: { value: ThemeFontSize }[] = [
 
 <template>
   <div class="max-w-lg mx-auto space-y-8 pb-12">
-    <h1 class="text-xl font-semibold text-ink">{{ t('theme.title') }}</h1>
+    <div class="flex items-center justify-between gap-4">
+      <h1 class="text-xl font-semibold text-ink">{{ t('theme.title') }}</h1>
+      <button
+        @click="handleRandomize"
+        :disabled="randomizing"
+        class="shrink-0 border border-edge text-ink rounded-input px-3 py-1.5 text-sm font-medium hover:bg-subtle disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+      >
+        {{ randomizing ? t('theme.randomizing') : t('theme.randomize') }}
+      </button>
+    </div>
 
     <!-- Mood -->
     <section class="bg-raised border border-edge rounded-card shadow-card p-6 space-y-4">

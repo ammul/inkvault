@@ -48,6 +48,7 @@ export default {
     theme: 'Theme',
     settings: 'Settings',
     backup: 'Backup',
+    data: 'Data',
     about: 'About',
     lock: 'Lock',
     toggleMenu: 'Toggle menu',
@@ -209,6 +210,24 @@ export default {
     },
   },
 
+  data: {
+    title: 'Data',
+  },
+
+  sampleData: {
+    title: 'Sample data',
+    description: 'Load a week of demo entries and tracker data to explore the app.',
+    button: 'Generate',
+    loading: 'Loading…',
+    done: 'Sample data loaded.',
+    hasDataHint: 'Clear existing data first to load the sample.',
+    resetButton: 'Clear',
+    clearing: 'Clearing…',
+    resetDone: 'All data cleared.',
+    noDataHint: 'No data to clear.',
+    rerollButton: 'Reroll Theme',
+  },
+
   backup: {
     title: 'Backup',
     export: {
@@ -250,6 +269,8 @@ export default {
 
   theme: {
     title: 'Theme',
+    randomize: 'Randomize',
+    randomizing: 'Randomizing…',
     mood: {
       title: 'Mood',
       subtitle: 'Controls the overall atmosphere of the app.',
