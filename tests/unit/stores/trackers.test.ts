@@ -36,7 +36,7 @@ describe('trackers store', () => {
   test('configs are stored encrypted (not plaintext)', async () => {
     const trackers = useTrackersStore()
     await trackers.addConfig(makeConfig('SecretMood'))
-    const raw = localStorage.getItem('iv:datapoints')
+    const raw = localStorage.getItem('iv:trackers')
     expect(raw).not.toContain('SecretMood')
     expect(raw).not.toBeNull()
   })

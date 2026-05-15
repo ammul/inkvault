@@ -12,7 +12,7 @@ async function setupVault(page: import('@playwright/test').Page) {
 
 test('creating a tracker appears in the list', async ({ page }) => {
   await setupVault(page)
-  await page.goto('/inkvault/#/data')
+  await page.goto('/inkvault/#/trackers')
   await page.getByRole('button', { name: '+ Add' }).click()
   await page.getByPlaceholder('e.g. Mood').fill('Energy')
   await page.getByRole('button', { name: 'Add tracker' }).click()
@@ -21,7 +21,7 @@ test('creating a tracker appears in the list', async ({ page }) => {
 
 test('editing a tracker updates its label', async ({ page }) => {
   await setupVault(page)
-  await page.goto('/inkvault/#/data')
+  await page.goto('/inkvault/#/trackers')
   await page.getByRole('button', { name: '+ Add' }).click()
   await page.getByPlaceholder('e.g. Mood').fill('Mood')
   await page.getByRole('button', { name: 'Add tracker' }).click()
@@ -36,7 +36,7 @@ test('editing a tracker updates its label', async ({ page }) => {
 
 test('deleting a tracker removes it from the list', async ({ page }) => {
   await setupVault(page)
-  await page.goto('/inkvault/#/data')
+  await page.goto('/inkvault/#/trackers')
   await page.getByRole('button', { name: '+ Add' }).click()
   await page.getByPlaceholder('e.g. Mood').fill('Sleep')
   await page.getByRole('button', { name: 'Add tracker' }).click()
@@ -51,7 +51,7 @@ test('tracker appears as a field in the diary day entry', async ({ page }) => {
   await setupVault(page)
 
   // Create a tracker
-  await page.goto('/inkvault/#/data')
+  await page.goto('/inkvault/#/trackers')
   await page.getByRole('button', { name: '+ Add' }).click()
   await page.getByPlaceholder('e.g. Mood').fill('Mood')
   await page.getByRole('button', { name: 'Add tracker' }).click()
