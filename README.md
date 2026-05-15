@@ -11,9 +11,9 @@ A private diary with no backend, no accounts, and no telemetry. Every entry is e
 
 - **End-to-end client-side encryption.** AES-256-GCM authenticated encryption with PBKDF2-SHA256 key derivation at 600,000 iterations.
 - **No network egress.** The production build enforces a Content Security Policy with `connect-src 'none'`. The browser will refuse to send your data anywhere, even if asked.
-- **Daily diary entries** with free-form text plus per-day structured *data points* (mood ranges, booleans, multi-select tags, medication doses, and more).
-- **Configurable data points.** Define exactly what you want to track. The schema is yours to design.
-- **Statistics view** over your data points across week, month, and year ranges.
+- **Daily diary entries** with free-form text plus per-day structured *trackers* (mood ranges, booleans, multi-select tags, medication doses, and more).
+- **Configurable trackers.** Define exactly what you want to track. The schema is yours to design.
+- **Statistics view** over your trackers across week, month, and year ranges.
 - **Encrypted backup export and import.** Download a self-contained encrypted JSON file protected by a separate backup passphrase.
 - **Passphrase strength enforcement** at vault creation, with a minimum of 12 characters and a live strength meter.
 - **Hard lock.** Locking the vault clears the in-memory key and every decrypted entry from JS memory immediately.
@@ -28,7 +28,7 @@ A private diary with no backend, no accounts, and no telemetry. Every entry is e
 | IV | Fresh 12 random bytes per `encrypt()` call |
 | Key handling | `CryptoKey` is non-extractable, lives only in the Pinia `auth` store |
 | Verification | Encrypted sentinel string; wrong passphrase results in a GCM auth tag failure |
-| Storage | `localStorage`, one encrypted blob per day plus one for data point configs |
+| Storage | `localStorage`, one encrypted blob per day plus one for tracker configs |
 | Plaintext on disk | Only the PBKDF2 salt (salts are not secret) |
 | Network | None. Production CSP enforces no outbound connections |
 | Sourcemaps | Disabled in production |
@@ -110,13 +110,13 @@ src/
   stores/
     auth.ts            # key lifecycle (lock / unlock / reset)
     diary.ts           # diary entries (Map<date, DiaryEntry>)
-    datapoints.ts      # data point configurations
+    trackers.ts        # tracker configurations
   components/
     auth/              # UnlockScreen
-    datapoints/        # field dispatch + concrete field types
+    trackers/          # field dispatch + concrete field types
     layout/            # AppShell, AppNav
     ui/                # Toast
-  views/               # Home, Diary, Statistics, DataPoints, Settings
+  views/               # Home, Diary, Statistics, Trackers, Settings
   router/              # hash-mode router with auth guard
 ```
 

@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
-import type { DataPointConfig, RangeConfig, StringConfig, MultiStringConfig, BooleanConfig, MedicationConfig } from '@/types'
+import type { TrackerConfig, RangeConfig, StringConfig, MultiStringConfig, BooleanConfig, MedicationConfig } from '@/types'
 
 const { t } = useI18n()
 
-const props = defineProps<{ config: DataPointConfig }>()
+const props = defineProps<{ config: TrackerConfig }>()
 
 const rangeConfig = computed(() => props.config.config as RangeConfig)
 const stringConfig = computed(() => props.config.config as StringConfig)
@@ -41,7 +41,7 @@ const SAMPLE_FILL = 70
 
   <!-- string -->
   <p v-else-if="config.type === 'string'" class="text-xs text-ink-faint italic truncate">
-    {{ stringConfig.placeholder || t('dataPoints.preview.stringFallback') }}
+    {{ stringConfig.placeholder || t('trackers.preview.stringFallback') }}
   </p>
 
   <!-- multi-string -->

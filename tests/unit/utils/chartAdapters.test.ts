@@ -1,8 +1,8 @@
 import { toChartResult } from '@/utils/chartAdapters'
-import type { DataPointConfig, DataPointType } from '@/types'
+import type { TrackerConfig, TrackerType } from '@/types'
 
-function makeConfig(type: DataPointType, label = 'Test', color = '#6366f1'): DataPointConfig {
-  const configMap: Record<DataPointType, DataPointConfig['config']> = {
+function makeConfig(type: TrackerType, label = 'Test', color = '#6366f1'): TrackerConfig {
+  const configMap: Record<TrackerType, TrackerConfig['config']> = {
     range: { min: 0, max: 10, step: 1 },
     boolean: { trueLabel: 'Yes', falseLabel: 'No' },
     medication: { medication: 'Aspirin' },
@@ -125,7 +125,7 @@ describe('toChartResult', () => {
   })
 
   test('unsupported config type returns null', () => {
-    const config = { ...makeConfig('range'), type: 'unknown' as DataPointType }
+    const config = { ...makeConfig('range'), type: 'unknown' as TrackerType }
     const result = toChartResult(config, [{ date: '2024-06-01', value: 5 }])
     expect(result).toBeNull()
   })

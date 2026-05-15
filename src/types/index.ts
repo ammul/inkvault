@@ -1,4 +1,4 @@
-export type DataPointType = 'range' | 'string' | 'multi-string' | 'boolean' | 'medication'
+export type TrackerType = 'range' | 'string' | 'multi-string' | 'boolean' | 'medication'
 
 export interface RangeConfig {
   min: number
@@ -31,17 +31,17 @@ export interface MedicationValue {
   time: string
 }
 
-export interface DataPointConfig {
+export interface TrackerConfig {
   id: string
   label: string
   color: string
   icon: string
-  type: DataPointType
+  type: TrackerType
   config: RangeConfig | StringConfig | MultiStringConfig | BooleanConfig | MedicationConfig
   createdAt: string
 }
 
-export type DataPointValue = number | string | string[] | boolean | MedicationValue | null
+export type TrackerValue = number | string | string[] | boolean | MedicationValue | null
 
 export interface DiaryTimelineEntry {
   id: string
@@ -52,7 +52,7 @@ export interface DiaryTimelineEntry {
 export interface DiaryDataEntry {
   id: string
   configId: string
-  value: DataPointValue
+  value: TrackerValue
   createdAt: string
 }
 
@@ -61,7 +61,7 @@ export interface DiaryEntry {
   text: string
   entries: DiaryTimelineEntry[]
   dataEntries?: DiaryDataEntry[]
-  dataValues: Record<string, DataPointValue>
+  dataValues: Record<string, TrackerValue>
   updatedAt: string
 }
 

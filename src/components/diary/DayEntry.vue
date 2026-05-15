@@ -2,20 +2,20 @@
 import { ref, computed, onMounted, watch, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import type { DiaryEntry, DiaryTimelineEntry, DiaryDataEntry, DataPointConfig, DataPointValue, MedicationValue } from '@/types'
+import type { DiaryEntry, DiaryTimelineEntry, DiaryDataEntry, TrackerConfig, TrackerValue, MedicationValue } from '@/types'
 import { useDiaryStore } from '@/stores/diary'
-import { useDataPointsStore } from '@/stores/datapoints'
+import { useTrackersStore } from '@/stores/trackers'
 import { useToastStore } from '@/stores/toast'
 import { useAppSettingsStore } from '@/stores/appSettings'
 import ConfirmModal from '@/components/ui/ConfirmModal.vue'
 import EntryModal from '@/components/diary/EntryModal.vue'
-import DataPointIcon from '@/components/ui/DataPointIcon.vue'
+import TrackerIcon from '@/components/ui/TrackerIcon.vue'
 
 const { t, locale } = useI18n()
 const route = useRoute()
 const router = useRouter()
 const diary = useDiaryStore()
-const datapoints = useDataPointsStore()
+const trackers = useTrackersStore()
 const toast = useToastStore()
 const appSettings = useAppSettingsStore()
 
@@ -31,8 +31,8 @@ const pendingDeleteId = ref<string | null>(null)
 const pendingDeleteDataId = ref<string | null>(null)
 
 // Data point entry modal state
-const entryModalConfig = ref<DataPointConfig | null>(null)
-const entryModalValue = ref<DataPointValue>(null)
+const entryModalConfig = ref<TrackerConfig | null>(null)
+const entryModalValue = ref<TrackerValue>(null)
 const entryModalEditId = ref<string | null>(null)
 
 // ─── Unified timeline ────────────────────────────────────────────────────────
@@ -48,7 +48,7 @@ interface DataTimelineItem {
   type: 'data'
   id: string
   configId: string
-  value: DataPointValue
+  value: TrackerValue
   createdAt: string
 }
 
@@ -177,7 +177,7 @@ function confirmDeleteEntry() {
 
 // ─── Data point entries ───────────────────────────────────────────────────────
 
-function openDataPointModal(config: DataPointConfig) {
+function openDataPointModal(config: TrackerConfig) {
   const existing = dataEntries.value.filter(e => e.configId === config.id).at(-1)
   entryModalConfig.value = config
   entryModalValue.value = existing?.value ?? null
@@ -185,7 +185,7 @@ function openDataPointModal(config: DataPointConfig) {
   showAddMenu.value = false
 }
 
-function saveDataEntry(value: DataPointValue) {
+function saveDataEntry(value: TrackerValue) {
   const config = entryModalConfig.value
   if (!config) return
   const editId = entryModalEditId.value
@@ -212,7 +212,7 @@ function closeDataModal() {
 }
 
 function editDataEntry(item: DataTimelineItem) {
-  const config = datapoints.configs.find(c => c.id === item.configId)
+  const config = trackers.configs.find(c => c.id === item.configId)
   if (!config) return
   entryModalConfig.value = config
   entryModalValue.value = item.value
@@ -240,7 +240,7 @@ const RADIAL_R2 = 150                  // px — outer ring radius
 
 const menuItems = computed(() => [
   { id: '__text__', label: t('diary.addText'), icon: '✎', color: '', action: addEntry },
-  ...datapoints.configs.map(c => ({
+  ...trackers.configs.map(c => ({
     id: c.id,
     label: c.label,
     icon: appSettings.settings.useEmojis ? c.icon : c.label[0].toUpperCase(),
@@ -283,7 +283,7 @@ function radialItemStyle(index: number, bgColor: string): Record<string, string>
 // ─── Value display ────────────────────────────────────────────────────────────
 
 function formatDataValue(item: DataTimelineItem): string {
-  const config = datapoints.configs.find(c => c.id === item.configId)
+  const config = trackers.configs.find(c => c.id === item.configId)
   if (!config || item.value === null) return '—'
   const v = item.value
   switch (config.type) {
@@ -407,10 +407,10 @@ const displayDate = computed(() => {
           <template v-else>
             <div class="relative w-full">
             <div class="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20">
-              <DataPointIcon
-                :icon="datapoints.configs.find(c => c.id === (item as DataTimelineItem).configId)?.icon ?? ''"
-                :color="datapoints.configs.find(c => c.id === (item as DataTimelineItem).configId)?.color ?? 'var(--color-accent)'"
-                :label="datapoints.configs.find(c => c.id === (item as DataTimelineItem).configId)?.label ?? ''"
+              <TrackerIcon
+                :icon="trackers.configs.find(c => c.id === (item as DataTimelineItem).configId)?.icon ?? ''"
+                :color="trackers.configs.find(c => c.id === (item as DataTimelineItem).configId)?.color ?? 'var(--color-accent)'"
+                :label="trackers.configs.find(c => c.id === (item as DataTimelineItem).configId)?.label ?? ''"
                 size="lg"
                 class="shadow-card"
               />
@@ -419,7 +419,7 @@ const displayDate = computed(() => {
             <div class="relative z-10 w-full bg-raised border border-edge-strong rounded-card px-3 pt-8 pb-3">
               <div class="flex items-start justify-between mb-1">
                 <span class="text-sm font-semibold text-ink leading-tight">
-                  {{ datapoints.configs.find(c => c.id === (item as DataTimelineItem).configId)?.label }}
+                  {{ trackers.configs.find(c => c.id === (item as DataTimelineItem).configId)?.label }}
                 </span>
                 <div class="flex items-center gap-2 shrink-0 ml-2">
                   <span class="text-xs text-ink-faint">

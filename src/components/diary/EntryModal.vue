@@ -1,23 +1,23 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import type { DataPointConfig, DataPointValue } from '@/types'
-import DataPointField from '@/components/datapoints/DataPointField.vue'
+import type { TrackerConfig, TrackerValue } from '@/types'
+import TrackerField from '@/components/trackers/TrackerField.vue'
 
 const props = defineProps<{
   open: boolean
-  config: DataPointConfig | null
-  initialValue: DataPointValue
+  config: TrackerConfig | null
+  initialValue: TrackerValue
   isEdit: boolean
 }>()
 
 const emit = defineEmits<{
-  save: [value: DataPointValue]
+  save: [value: TrackerValue]
   close: []
 }>()
 
 const { t } = useI18n()
-const localValue = ref<DataPointValue>(null)
+const localValue = ref<TrackerValue>(null)
 
 watch(() => props.open, (val) => {
   if (val) {
@@ -60,9 +60,9 @@ function onKeyDown(e: KeyboardEvent) {
             aria-modal="true"
           >
             <h3 class="text-sm font-semibold text-ink">
-              {{ isEdit ? t('diary.editDataPoint', { label: config.label }) : t('diary.addDataPoint', { label: config.label }) }}
+              {{ isEdit ? t('diary.editTracker', { label: config.label }) : t('diary.addTracker', { label: config.label }) }}
             </h3>
-            <DataPointField
+            <TrackerField
               :config="config"
               :model-value="localValue"
               @update:model-value="localValue = $event"

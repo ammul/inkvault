@@ -1,11 +1,11 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
-import type { DataPointConfig } from '@/types'
+import type { TrackerConfig } from '@/types'
 import { useAuthStore } from './auth'
 import { KEYS, writeEncrypted, readEncrypted } from '@/utils/storage'
 
-export const useDataPointsStore = defineStore('datapoints', () => {
-  const configs = ref<DataPointConfig[]>([])
+export const useTrackersStore = defineStore('trackers', () => {
+  const configs = ref<TrackerConfig[]>([])
   const loaded = ref(false)
 
   function getKey(): CryptoKey {
@@ -16,22 +16,22 @@ export const useDataPointsStore = defineStore('datapoints', () => {
 
   async function loadConfigs(): Promise<void> {
     const key = getKey()
-    const data = await readEncrypted<DataPointConfig[]>(key, KEYS.DATAPOINTS)
+    const data = await readEncrypted<TrackerConfig[]>(key, KEYS.TRACKERS)
     configs.value = data ?? []
     loaded.value = true
   }
 
   async function saveConfigs(): Promise<void> {
     const key = getKey()
-    await writeEncrypted(key, KEYS.DATAPOINTS, configs.value)
+    await writeEncrypted(key, KEYS.TRACKERS, configs.value)
   }
 
-  async function addConfig(config: DataPointConfig): Promise<void> {
+  async function addConfig(config: TrackerConfig): Promise<void> {
     configs.value.push(config)
     await saveConfigs()
   }
 
-  async function updateConfig(id: string, patch: Partial<DataPointConfig>): Promise<void> {
+  async function updateConfig(id: string, patch: Partial<TrackerConfig>): Promise<void> {
     const idx = configs.value.findIndex((c) => c.id === id)
     if (idx === -1) return
     configs.value[idx] = { ...configs.value[idx], ...patch }
@@ -43,7 +43,7 @@ export const useDataPointsStore = defineStore('datapoints', () => {
     await saveConfigs()
   }
 
-  async function replaceConfigs(newConfigs: DataPointConfig[]): Promise<void> {
+  async function replaceConfigs(newConfigs: TrackerConfig[]): Promise<void> {
     configs.value = newConfigs
     await saveConfigs()
   }

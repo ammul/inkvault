@@ -4,7 +4,7 @@ import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '@/stores/auth'
 import { useDiaryStore } from '@/stores/diary'
-import { useDataPointsStore } from '@/stores/datapoints'
+import { useTrackersStore } from '@/stores/trackers'
 import { useThemeStore } from '@/stores/theme'
 import { restoreBackup } from '@/utils/backup'
 import type { BackupFile } from '@/utils/backup'
@@ -14,7 +14,7 @@ const { t } = useI18n()
 const router = useRouter()
 const auth = useAuthStore()
 const diary = useDiaryStore()
-const datapoints = useDataPointsStore()
+const trackers = useTrackersStore()
 const theme = useThemeStore()
 
 const passphrase = ref('')
@@ -65,7 +65,7 @@ async function submitImport() {
   try {
     const text = await importFile.value.text()
     const backup = JSON.parse(text) as BackupFile
-    const { datapoints: importedConfigs, entries: importedEntries, theme: importedTheme } = await restoreBackup(
+    const { trackers: importedConfigs, entries: importedEntries, theme: importedTheme } = await restoreBackup(
       backup,
       importPassphrase.value,
     )
@@ -80,8 +80,8 @@ async function submitImport() {
     for (const entry of importedEntries) {
       await diary.saveEntry(entry)
     }
-    await datapoints.replaceConfigs(importedConfigs)
-    await datapoints.loadConfigs()
+    await trackers.replaceConfigs(importedConfigs)
+    await trackers.loadConfigs()
     router.push('/home')
   } catch (e) {
     if (vaultCreated) auth.resetVault()

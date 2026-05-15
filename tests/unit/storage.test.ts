@@ -73,10 +73,10 @@ describe('storage', () => {
   test('migrateEncryptedBlobs re-encrypts blobs so the new key can read them', async () => {
     const { key: oldKey } = await initVault('old-vault-migrate')
     const { key: newKey } = await initVault('new-vault-migrate')
-    await writeEncrypted(oldKey, KEYS.DATAPOINTS, { migrated: true })
+    await writeEncrypted(oldKey, KEYS.TRACKERS, { migrated: true })
     await writeEncrypted(oldKey, KEYS.THEME, { colorTheme: 'teal' })
     await migrateEncryptedBlobs(oldKey, newKey)
-    const dp = await readEncrypted<{ migrated: boolean }>(newKey, KEYS.DATAPOINTS)
+    const dp = await readEncrypted<{ migrated: boolean }>(newKey, KEYS.TRACKERS)
     const theme = await readEncrypted<{ colorTheme: string }>(newKey, KEYS.THEME)
     expect(dp).toEqual({ migrated: true })
     expect(theme).toEqual({ colorTheme: 'teal' })
@@ -85,8 +85,8 @@ describe('storage', () => {
   test('old key cannot decrypt blobs after migration', async () => {
     const { key: oldKey } = await initVault('old-vault-stale')
     const { key: newKey } = await initVault('new-vault-stale')
-    await writeEncrypted(oldKey, KEYS.DATAPOINTS, { secret: 'data' })
+    await writeEncrypted(oldKey, KEYS.TRACKERS, { secret: 'data' })
     await migrateEncryptedBlobs(oldKey, newKey)
-    await expect(readEncrypted(oldKey, KEYS.DATAPOINTS)).rejects.toThrow()
+    await expect(readEncrypted(oldKey, KEYS.TRACKERS)).rejects.toThrow()
   })
 })

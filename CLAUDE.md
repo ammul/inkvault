@@ -30,7 +30,7 @@ npm run preview       # Serve dist/ at localhost:4173 (used by E2E tests)
 - **Never store the CryptoKey** anywhere other than the Pinia `auth` store's `key` ref.
 - **`iv:salt` is intentionally stored in plaintext** — this is correct, the salt is not secret.
 - **Never weaken the passphrase strength check.** `MIN_PASSPHRASE_LENGTH` in `src/utils/passphrase.ts` is the floor for any new vault or backup passphrase. Reducing it weakens the entire system, since PBKDF2 cost cannot save a short password.
-- **`lock()` must reset the diary and datapoints stores.** Otherwise decrypted data lingers in JS memory after the user thinks they locked the vault.
+- **`lock()` must reset the diary and trackers stores.** Otherwise decrypted data lingers in JS memory after the user thinks they locked the vault.
 - **`resetVault()` must wipe every `iv:*` key**, not just salt and verify. Orphaned ciphertext is recoverable if the passphrase is later compromised.
 - **Auto-lock is active.** `App.vue` locks the vault on `visibilitychange → hidden` and after 10 minutes of idle (no mouse/keyboard/touch/scroll). Do not remove these listeners.
 - **The production CSP must include `connect-src 'none'`.** Injected by the `inject-csp` plugin in `vite.config.ts`. The app must never need network access — adding `fetch` or any external resource breaks the privacy guarantee.
@@ -65,12 +65,12 @@ npm run preview       # Serve dist/ at localhost:4173 (used by E2E tests)
 | Passphrase strength | `src/utils/passphrase.ts` |
 | Auth store (key lifecycle) | `src/stores/auth.ts` |
 | Diary store | `src/stores/diary.ts` |
-| Data points store | `src/stores/datapoints.ts` |
+| Trackers store | `src/stores/trackers.ts` |
 | Router | `src/router/index.ts` |
 | App entry gating | `src/App.vue` |
 | Unlock screen | `src/components/auth/UnlockScreen.vue` |
 | Settings / backup UI | `src/views/SettingsView.vue` |
-| Field dispatch | `src/components/datapoints/DataPointField.vue` |
+| Field dispatch | `src/components/trackers/TrackerField.vue` |
 | i18n instance | `src/i18n/index.ts` |
 | English locale strings | `src/i18n/locales/en.ts` |
 | Vite config (incl. CSP injection) | `vite.config.ts` |

@@ -4,13 +4,13 @@ import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '@/stores/auth'
 import { useDiaryStore } from '@/stores/diary'
-import { useDataPointsStore } from '@/stores/datapoints'
+import { useTrackersStore } from '@/stores/trackers'
 
 const { t } = useI18n()
 const router = useRouter()
 const auth = useAuthStore()
 const diary = useDiaryStore()
-const datapoints = useDataPointsStore()
+const trackers = useTrackersStore()
 
 const menuOpen = ref(false)
 
@@ -18,7 +18,7 @@ function lock() {
   menuOpen.value = false
   auth.lock()
   diary.reset()
-  datapoints.reset()
+  trackers.reset()
   router.push('/')
 }
 
@@ -38,7 +38,7 @@ watch(menuOpen, (open) => {
 const navLinks = [
   { to: '/diary', key: 'nav.diary' },
   { to: '/stats', key: 'nav.stats' },
-  { to: '/data', key: 'nav.dataPoints' },
+  { to: '/data', key: 'nav.trackers' },
   { to: '/theme', key: 'nav.theme' },
   { to: '/about', key: 'nav.about' },
   { to: '/settings', key: 'nav.backup' },

@@ -14,7 +14,8 @@
       "Bash(dir C:\\\\Users\\\\Anwender\\\\dev\\\\inkvault\\\\docs\\\\screenshots *)",
       "Bash(npx playwright *)",
       "Bash(Sort-Object Name)",
-      "Bash(curl -s http://localhost:5173/)"
+      "Bash(curl -s http://localhost:5173/)",
+      "Bash(grep -E \"\\\\.\\(md|MD\\)$\")"
     ]
   }
 }

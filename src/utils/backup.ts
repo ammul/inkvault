@@ -1,5 +1,5 @@
 import { encrypt, decrypt } from './crypto'
-import type { DataPointConfig, DiaryEntry, ThemeSettings } from '@/types'
+import type { TrackerConfig, DiaryEntry, ThemeSettings } from '@/types'
 
 const BACKUP_SENTINEL = 'inkvault-backup-v1'
 const PBKDF2_ITERATIONS = 600_000
@@ -43,14 +43,14 @@ export interface BackupFile {
 
 export async function createBackup(
   passphrase: string,
-  datapointConfigs: DataPointConfig[],
+  trackerConfigs: TrackerConfig[],
   diaryEntries: DiaryEntry[],
   themeSettings?: ThemeSettings,
 ): Promise<BackupFile> {
   const salt = crypto.getRandomValues(new Uint8Array(16))
   const key = await deriveBackupKey(passphrase, salt)
   const verify = await encrypt(key, BACKUP_SENTINEL)
-  const encDatapoints = await encrypt(key, JSON.stringify(datapointConfigs))
+  const encTrackers = await encrypt(key, JSON.stringify(trackerConfigs))
   const encEntries: Record<string, string> = {}
   for (const entry of diaryEntries) {
     encEntries[entry.date] = await encrypt(key, JSON.stringify(entry))
@@ -60,7 +60,7 @@ export async function createBackup(
     exportedAt: new Date().toISOString(),
     salt: toBase64(salt),
     verify,
-    datapoints: encDatapoints,
+    datapoints: encTrackers,
     entries: encEntries,
   }
   if (themeSettings) {
@@ -72,7 +72,7 @@ export async function createBackup(
 export async function restoreBackup(
   backup: BackupFile,
   passphrase: string,
-): Promise<{ datapoints: DataPointConfig[]; entries: DiaryEntry[]; theme: ThemeSettings | null }> {
+): Promise<{ trackers: TrackerConfig[]; entries: DiaryEntry[]; theme: ThemeSettings | null }> {
   if (backup.version !== 1) throw new Error('Unsupported backup version')
   const salt = fromBase64(backup.salt)
   const key = await deriveBackupKey(passphrase, salt)
@@ -83,7 +83,7 @@ export async function restoreBackup(
     throw new Error('Wrong backup passphrase')
   }
   if (sentinel !== BACKUP_SENTINEL) throw new Error('Wrong backup passphrase')
-  const datapoints = JSON.parse(await decrypt(key, backup.datapoints)) as DataPointConfig[]
+  const trackers = JSON.parse(await decrypt(key, backup.datapoints)) as TrackerConfig[]
   const entries = await Promise.all(
     Object.values(backup.entries).map(
       async (blob) => JSON.parse(await decrypt(key, blob)) as DiaryEntry,
@@ -97,5 +97,5 @@ export async function restoreBackup(
       // old backup without theme — ignore
     }
   }
-  return { datapoints, entries, theme }
+  return { trackers, entries, theme }
 }

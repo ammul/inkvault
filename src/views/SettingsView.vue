@@ -2,21 +2,21 @@
 import { ref, computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useDiaryStore } from '@/stores/diary'
-import { useDataPointsStore } from '@/stores/datapoints'
+import { useTrackersStore } from '@/stores/trackers'
 import { useThemeStore } from '@/stores/theme'
 import { createBackup, restoreBackup } from '@/utils/backup'
 import type { BackupFile } from '@/utils/backup'
-import type { DataPointConfig, DiaryEntry, ThemeSettings } from '@/types'
+import type { TrackerConfig, DiaryEntry, ThemeSettings } from '@/types'
 import { scorePassphrase, MIN_PASSPHRASE_LENGTH } from '@/utils/passphrase'
 
 const { t } = useI18n()
 const diary = useDiaryStore()
-const datapoints = useDataPointsStore()
+const trackers = useTrackersStore()
 const theme = useThemeStore()
 
 onMounted(async () => {
   if (!diary.loaded) await diary.loadAllEntries()
-  if (!datapoints.loaded) await datapoints.loadConfigs()
+  if (!trackers.loaded) await trackers.loadConfigs()
 })
 
 // --- Export ---
@@ -45,7 +45,7 @@ async function handleExport() {
   exportLoading.value = true
   try {
     const entries = [...diary.entries.values()]
-    const backup = await createBackup(exportPassphrase.value, datapoints.configs, entries, theme.settings)
+    const backup = await createBackup(exportPassphrase.value, trackers.configs, entries, theme.settings)
     const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' })
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
@@ -69,7 +69,7 @@ const importPassphrase = ref('')
 const importError = ref('')
 const importLoading = ref(false)
 const importDone = ref(false)
-const importPreview = ref<{ entries: DiaryEntry[]; datapoints: DataPointConfig[]; theme: ThemeSettings | null } | null>(null)
+const importPreview = ref<{ entries: DiaryEntry[]; trackers: TrackerConfig[]; theme: ThemeSettings | null } | null>(null)
 
 function handleFileSelect(e: Event) {
   const input = e.target as HTMLInputElement
@@ -117,7 +117,7 @@ async function handleImport() {
     for (const entry of importPreview.value.entries) {
       await diary.saveEntry(entry)
     }
-    await datapoints.replaceConfigs(importPreview.value.datapoints)
+    await trackers.replaceConfigs(importPreview.value.trackers)
     if (importPreview.value.theme) {
       Object.assign(theme.settings, importPreview.value.theme)
       await theme.save()
@@ -216,7 +216,7 @@ async function handleImport() {
         >
           <p class="font-medium">{{ t('backup.import.previewTitle') }}</p>
           <p>{{ t('backup.import.previewEntries', importPreview.entries.length) }}</p>
-          <p>{{ t('backup.import.previewDatapoints', importPreview.datapoints.length) }}</p>
+          <p>{{ t('backup.import.previewTrackers', importPreview.trackers.length) }}</p>
         </div>
         <p v-if="importDone" class="text-sm text-ok">{{ t('backup.import.done') }}</p>
         <button

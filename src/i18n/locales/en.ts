@@ -44,7 +44,7 @@ export default {
   nav: {
     diary: 'Diary',
     stats: 'Stats',
-    dataPoints: 'Data Points',
+    trackers: 'Trackers',
     theme: 'Theme',
     settings: 'Settings',
     backup: 'Backup',
@@ -59,7 +59,7 @@ export default {
     animations: 'Animations',
     animationsDescription: 'Enable transitions and motion effects throughout the app.',
     useEmojis: 'Use emojis',
-    useEmojisDescription: 'Show emoji icons for data points. When off, displays the first letter of the label instead.',
+    useEmojisDescription: 'Show emoji icons for trackers. When off, displays the first letter of the label instead.',
     on: 'On',
     off: 'Off',
   },
@@ -75,8 +75,8 @@ export default {
         title: 'Statistics',
         description: 'Visualize your tracked data over time — spot trends and patterns.',
       },
-      dataPoints: {
-        title: 'Data Points',
+      trackers: {
+        title: 'Trackers',
         description: 'Configure what you track: mood, medication, habits, and more.',
       },
     },
@@ -84,7 +84,7 @@ export default {
 
   diary: {
     title: 'Diary',
-    dataPointsSection: 'Data Points',
+    trackersSection: 'Trackers',
     entrySaved: 'Entry saved',
     back: '← Back',
     weekdays: ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'],
@@ -92,7 +92,7 @@ export default {
     addEntry: 'Add entry',
     addText: 'Add text entry',
     closeAddMenu: 'Close',
-    toggleDataPoint: 'Toggle {label}',
+    toggleTracker: 'Toggle {label}',
     editEntry: 'Edit',
     deleteEntry: 'Delete',
     done: 'Done',
@@ -101,19 +101,19 @@ export default {
     deleteConfirm: 'Delete this entry? This cannot be undone.',
     confirm: 'Delete',
     cancel: 'Cancel',
-    addDataPoint: 'Log {label}',
-    editDataPoint: 'Edit {label}',
+    addTracker: 'Log {label}',
+    editTracker: 'Edit {label}',
   },
 
-  dataPoints: {
-    title: 'Data Points',
+  trackers: {
+    title: 'Trackers',
     add: '+ Add',
     helper: 'Tap a row to edit · drag to reorder',
-    addAnother: '+ Add another data point',
-    deleteConfirm: 'Delete this data point? This cannot be undone.',
+    addAnother: '+ Add another tracker',
+    deleteConfirm: 'Delete this tracker? This cannot be undone.',
     edit: 'Edit',
     delete: 'Delete',
-    empty: 'No data points yet. Add one to start tracking.',
+    empty: 'No trackers yet. Add one to start tracking.',
     sub: {
       rangeStep: 'step {step}',
       multiOptions: '{n} options',
@@ -129,8 +129,8 @@ export default {
       deleteTracker: 'Delete this tracker',
     },
     editor: {
-      newTitle: 'New Data Point',
-      editTitle: 'Edit Data Point',
+      newTitle: 'New Tracker',
+      editTitle: 'Edit Tracker',
       label: 'Label',
       labelPlaceholder: 'e.g. Mood',
       icon: 'Icon',
@@ -140,7 +140,7 @@ export default {
       type: 'Type',
       cancel: 'Cancel',
       save: 'Save changes',
-      add: 'Add data point',
+      add: 'Add tracker',
       lockedRowPill: 'Has {n} days of data',
       lockedFieldHint: 'Locked — this tracker already has data.',
       types: {
@@ -169,8 +169,8 @@ export default {
 
   statistics: {
     title: 'Statistics',
-    noDataPointsPrefix: 'No data points yet. Add some in',
-    noDataPointsLink: 'Data Points',
+    noTrackersPrefix: 'No trackers yet. Add some in',
+    noTrackersLink: 'Trackers',
     noData: 'No data in this range.',
     avg: 'avg',
     range: {
@@ -182,7 +182,7 @@ export default {
     chart: 'Chart',
     filter: {
       label: 'Filters',
-      dataPoints: 'Data points',
+      trackers: 'Trackers',
       clear: 'Clear filters',
       activeHint: 'Filtered',
       min: 'Min',
@@ -197,7 +197,7 @@ export default {
     export: {
       title: 'Export',
       description:
-        'Download an encrypted backup of all diary entries and data point configs. The file is protected with a separate backup passphrase.',
+        'Download an encrypted backup of all diary entries and tracker configs. The file is protected with a separate backup passphrase.',
       passphrase: 'Backup passphrase',
       confirmPassphrase: 'Confirm passphrase',
       download: 'Download Backup',
@@ -211,7 +211,7 @@ export default {
     import: {
       title: 'Import',
       description:
-        'Restore from a backup file. Diary entries will be merged; existing entries are overwritten if dates match. Data point configs will be fully replaced.',
+        'Restore from a backup file. Diary entries will be merged; existing entries are overwritten if dates match. Tracker configs will be fully replaced.',
       passphrase: 'Backup passphrase',
       decrypt: 'Decrypt & Preview',
       decrypting: 'Decrypting…',
@@ -227,7 +227,7 @@ export default {
       errFailed: 'Import failed.',
       previewTitle: 'Ready to import:',
       previewEntries: 'no diary entries | {n} diary entry | {n} diary entries',
-      previewDatapoints: 'no data point configs | {n} data point config | {n} data point configs',
+      previewTrackers: 'no tracker configs | {n} tracker config | {n} tracker configs',
     },
   },
 

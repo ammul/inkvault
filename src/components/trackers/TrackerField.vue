@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import type { DataPointConfig, DataPointValue, RangeConfig, StringConfig, MultiStringConfig, BooleanConfig, MedicationConfig, MedicationValue } from '@/types'
-import DataPointIcon from '@/components/ui/DataPointIcon.vue'
+import type { TrackerConfig, TrackerValue, RangeConfig, StringConfig, MultiStringConfig, BooleanConfig, MedicationConfig, MedicationValue } from '@/types'
+import TrackerIcon from '@/components/ui/TrackerIcon.vue'
 import RangeField from './fields/RangeField.vue'
 import StringField from './fields/StringField.vue'
 import MultiStringField from './fields/MultiStringField.vue'
@@ -8,19 +8,19 @@ import BooleanField from './fields/BooleanField.vue'
 import MedicationField from './fields/MedicationField.vue'
 
 defineProps<{
-  config: DataPointConfig
-  modelValue: DataPointValue
+  config: TrackerConfig
+  modelValue: TrackerValue
 }>()
 
 const emit = defineEmits<{
-  'update:modelValue': [value: DataPointValue]
+  'update:modelValue': [value: TrackerValue]
 }>()
 
 </script>
 
 <template>
   <div class="flex items-start gap-3 p-3 bg-raised rounded-card border border-edge">
-    <DataPointIcon :icon="config.icon" :color="config.color" :label="config.label" class="mt-0.5" />
+    <TrackerIcon :icon="config.icon" :color="config.color" :label="config.label" class="mt-0.5" />
     <div class="flex-1 min-w-0">
       <p class="text-xs font-medium text-ink-muted mb-2">{{ config.label }}</p>
       <RangeField

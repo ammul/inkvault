@@ -33,8 +33,8 @@ const router = useRouter()
       @click="router.push('/data')"
       class="w-full p-5 bg-raised rounded-card border-2 border-accent/30 hover:border-accent/60 active:scale-[0.99] transition-all text-left"
     >
-      <p class="font-semibold text-ink text-base">{{ t('home.cards.dataPoints.title') }}</p>
-      <p class="text-sm text-ink-muted mt-0.5">{{ t('home.cards.dataPoints.description') }}</p>
+      <p class="font-semibold text-ink text-base">{{ t('home.cards.trackers.title') }}</p>
+      <p class="text-sm text-ink-muted mt-0.5">{{ t('home.cards.trackers.description') }}</p>
     </button>
   </div>
 </template>

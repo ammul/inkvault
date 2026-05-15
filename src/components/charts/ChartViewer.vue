@@ -1,13 +1,13 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import type { DataPointConfig, DataPointValue } from '@/types'
+import type { TrackerConfig, TrackerValue } from '@/types'
 import { toChartResult } from '@/utils/chartAdapters'
 import LineChart from './LineChart.vue'
 import FrequencyChart from './FrequencyChart.vue'
 
 const props = defineProps<{
-  config: DataPointConfig
-  values: { date: string; value: DataPointValue }[]
+  config: TrackerConfig
+  values: { date: string; value: TrackerValue }[]
 }>()
 
 const result = computed(() => toChartResult(props.config, props.values))

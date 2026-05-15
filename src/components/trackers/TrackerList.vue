@@ -1,20 +1,20 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import type { DataPointConfig, DataPointType } from '@/types'
-import DataPointIcon from '@/components/ui/DataPointIcon.vue'
-import DataPointPreview from '@/components/datapoints/DataPointPreview.vue'
-import DataPointEditor from '@/components/datapoints/DataPointEditor.vue'
+import type { TrackerConfig, TrackerType } from '@/types'
+import TrackerIcon from '@/components/ui/TrackerIcon.vue'
+import TrackerPreview from '@/components/trackers/TrackerPreview.vue'
+import TrackerEditor from '@/components/trackers/TrackerEditor.vue'
 
 const { t } = useI18n()
 
 const props = defineProps<{
-  configs: DataPointConfig[]
+  configs: TrackerConfig[]
   storedData: (id: string) => number
 }>()
 
 const emit = defineEmits<{
-  save: [data: Omit<DataPointConfig, 'id' | 'createdAt'>, existingId: string | null, locked: boolean]
+  save: [data: Omit<TrackerConfig, 'id' | 'createdAt'>, existingId: string | null, locked: boolean]
   delete: [id: string]
 }>()
 
@@ -23,15 +23,15 @@ const emit = defineEmits<{
 const DRAFT_ID = '__draft__'
 
 const expandedId = ref<string | null>(null)
-const editorRef = ref<InstanceType<typeof DataPointEditor> | null>(null)
+const editorRef = ref<InstanceType<typeof TrackerEditor> | null>(null)
 
 function setEditorRef(el: unknown) {
-  editorRef.value = el as InstanceType<typeof DataPointEditor> | null
+  editorRef.value = el as InstanceType<typeof TrackerEditor> | null
 }
 
 const showDraft = computed(() => expandedId.value === DRAFT_ID)
 
-const DRAFT_CONFIG: DataPointConfig = {
+const DRAFT_CONFIG: TrackerConfig = {
   id: DRAFT_ID,
   label: '',
   color: '#4f46e5',
@@ -53,7 +53,7 @@ function cancelEdit() {
   expandedId.value = null
 }
 
-function onEditorSave(data: Omit<DataPointConfig, 'id' | 'createdAt'>) {
+function onEditorSave(data: Omit<TrackerConfig, 'id' | 'createdAt'>) {
   const existingId = expandedId.value !== DRAFT_ID ? expandedId.value : null
   const locked = existingId ? props.storedData(existingId) > 0 : false
   emit('save', data, existingId, locked)
@@ -80,7 +80,7 @@ watch(() => props.configs, (newConfigs) => {
 
 // ── Sub-line helpers ────────────────────────────────────────────
 
-const TYPE_KEY_MAP: Record<DataPointType, string> = {
+const TYPE_KEY_MAP: Record<TrackerType, string> = {
   range: 'range',
   string: 'string',
   'multi-string': 'multiString',
@@ -88,29 +88,29 @@ const TYPE_KEY_MAP: Record<DataPointType, string> = {
   medication: 'medication',
 }
 
-function typeLabel(type: DataPointType): string {
+function typeLabel(type: TrackerType): string {
   return t(`dataPoints.editor.types.${TYPE_KEY_MAP[type]}.label`)
 }
 
-function subLine(config: DataPointConfig): string {
+function subLine(config: TrackerConfig): string {
   const tl = typeLabel(config.type)
   switch (config.type) {
     case 'range': {
       const c = config.config as { min: number; max: number; step: number }
-      return `${tl} · ${c.min}–${c.max} · ${t('dataPoints.sub.rangeStep', { step: c.step })}`
+      return `${tl} · ${c.min}–${c.max} · ${t('trackers.sub.rangeStep', { step: c.step })}`
     }
     case 'string':
       return tl
     case 'multi-string': {
       const c = config.config as { options: string[] }
-      return `${tl} · ${t('dataPoints.sub.multiOptions', { n: c.options.length })}`
+      return `${tl} · ${t('trackers.sub.multiOptions', { n: c.options.length })}`
     }
     case 'boolean':
       return tl
     case 'medication': {
       const c = config.config as { medication: string; dosagePresets?: string[] }
       const presets = c.dosagePresets ?? []
-      const shown = presets.slice(0, 3).join(t('dataPoints.sub.medPresetsJoin'))
+      const shown = presets.slice(0, 3).join(t('trackers.sub.medPresetsJoin'))
       const ellipsis = presets.length > 3 ? '…' : ''
       return presets.length > 0 ? `${tl} · ${shown}${ellipsis}` : tl
     }
@@ -124,14 +124,14 @@ function subLine(config: DataPointConfig): string {
     <!-- ── Page header ────────────────────────────────────── -->
     <div class="flex items-center justify-between mb-3.5">
       <div>
-        <h1 class="text-xl font-semibold text-ink">{{ t('dataPoints.title') }}</h1>
-        <p class="text-xs text-ink-muted mt-0.5">{{ t('dataPoints.helper') }}</p>
+        <h1 class="text-xl font-semibold text-ink">{{ t('trackers.title') }}</h1>
+        <p class="text-xs text-ink-muted mt-0.5">{{ t('trackers.helper') }}</p>
       </div>
       <button
         @click="openDraft"
         class="text-sm bg-accent text-on-accent px-4 py-2 rounded-input hover:bg-accent-dim transition-colors font-medium shrink-0"
       >
-        {{ t('dataPoints.add') }}
+        {{ t('trackers.add') }}
       </button>
     </div>
 
@@ -146,14 +146,14 @@ function subLine(config: DataPointConfig): string {
       >
         <!-- Draft head -->
         <div class="grid grid-cols-[auto_1fr_auto] items-center gap-3.5 px-4 py-3.5 border-b border-edge">
-          <DataPointIcon icon="📊" color="#4f46e5" label="New" />
+          <TrackerIcon icon="📊" color="#4f46e5" label="New" />
           <div class="min-w-0">
-            <p class="text-sm font-semibold text-ink-muted">{{ t('dataPoints.editor.newTitle') }}</p>
+            <p class="text-sm font-semibold text-ink-muted">{{ t('trackers.editor.newTitle') }}</p>
           </div>
           <button
             type="button"
             @click="cancelEdit"
-            :aria-label="t('dataPoints.actions.collapse')"
+            :aria-label="t('trackers.actions.collapse')"
             class="w-7 h-7 flex items-center justify-center rounded-md hover:bg-subtle text-ink-muted transition-colors"
           >
             <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
@@ -163,7 +163,7 @@ function subLine(config: DataPointConfig): string {
         </div>
 
         <!-- Draft editor body -->
-        <DataPointEditor
+        <TrackerEditor
           :ref="setEditorRef"
           :compact="true"
           @save="onEditorSave"
@@ -176,14 +176,14 @@ function subLine(config: DataPointConfig): string {
             @click="cancelEdit"
             class="text-sm px-4 py-2 rounded-input border border-edge text-ink-muted hover:bg-subtle hover:text-ink transition-colors"
           >
-            {{ t('dataPoints.editor.cancel') }}
+            {{ t('trackers.editor.cancel') }}
           </button>
           <button
             type="button"
             @click="saveCurrentRow"
             class="text-sm px-4 py-2 rounded-input bg-accent text-on-accent hover:bg-accent-dim transition-colors font-medium"
           >
-            {{ t('dataPoints.editor.add') }}
+            {{ t('trackers.editor.add') }}
           </button>
         </div>
       </div>
@@ -203,7 +203,7 @@ function subLine(config: DataPointConfig): string {
           @keydown.space.prevent="toggle(config.id)"
         >
           <!-- Icon -->
-          <DataPointIcon :icon="config.icon" :color="config.color" :label="config.label" />
+          <TrackerIcon :icon="config.icon" :color="config.color" :label="config.label" />
 
           <!-- Meta -->
           <div class="min-w-0">
@@ -213,7 +213,7 @@ function subLine(config: DataPointConfig): string {
 
           <!-- Preview slot -->
           <div class="hidden sm:block min-w-[200px] max-w-[240px]">
-            <DataPointPreview :config="config" />
+            <TrackerPreview :config="config" />
           </div>
 
           <!-- Actions -->
@@ -221,7 +221,7 @@ function subLine(config: DataPointConfig): string {
             <!-- Drag handle (DnD is a follow-up) -->
             <button
               type="button"
-              :aria-label="t('dataPoints.actions.reorder')"
+              :aria-label="t('trackers.actions.reorder')"
               class="w-7 h-7 flex items-center justify-center rounded-md hover:bg-subtle text-ink-muted cursor-grab transition-colors"
               @click.stop
             >
@@ -234,7 +234,7 @@ function subLine(config: DataPointConfig): string {
             <!-- Delete -->
             <button
               type="button"
-              :aria-label="t('dataPoints.delete')"
+              :aria-label="t('trackers.delete')"
               class="w-7 h-7 flex items-center justify-center rounded-md hover:bg-danger-tint hover:text-danger text-ink-muted transition-colors"
               @click.stop="emit('delete', config.id)"
             >
@@ -255,7 +255,7 @@ function subLine(config: DataPointConfig): string {
         >
           <!-- Expanded head -->
           <div class="grid grid-cols-[auto_1fr_auto] items-center gap-3.5 px-4 py-3.5 border-b border-edge">
-            <DataPointIcon :icon="config.icon" :color="config.color" :label="config.label" />
+            <TrackerIcon :icon="config.icon" :color="config.color" :label="config.label" />
             <div class="min-w-0">
               <p class="text-sm font-semibold text-ink truncate">{{ config.label }}</p>
               <p class="text-[11.5px] text-ink-faint">{{ subLine(config) }}</p>
@@ -266,12 +266,12 @@ function subLine(config: DataPointConfig): string {
                 v-if="storedData(config.id) > 0"
                 class="inline-flex items-center gap-1.5 text-[11px] text-warn bg-warn-tint border border-warn/30 px-2 py-0.5 rounded-full whitespace-nowrap"
               >
-                🔒 {{ t('dataPoints.editor.lockedRowPill', { n: storedData(config.id) }) }}
+                🔒 {{ t('trackers.editor.lockedRowPill', { n: storedData(config.id) }) }}
               </span>
               <!-- Collapse caret -->
               <button
                 type="button"
-                :aria-label="t('dataPoints.actions.collapse')"
+                :aria-label="t('trackers.actions.collapse')"
                 class="w-7 h-7 flex items-center justify-center rounded-md hover:bg-subtle text-ink-muted transition-colors"
                 @click="toggle(config.id)"
               >
@@ -283,7 +283,7 @@ function subLine(config: DataPointConfig): string {
           </div>
 
           <!-- Expanded editor body -->
-          <DataPointEditor
+          <TrackerEditor
             :ref="setEditorRef"
             :initial="config"
             :locked="storedData(config.id) > 0"
@@ -298,7 +298,7 @@ function subLine(config: DataPointConfig): string {
               class="text-xs text-danger hover:underline transition-colors"
               @click="onDeleteFromFoot(config.id)"
             >
-              {{ t('dataPoints.actions.deleteTracker') }}
+              {{ t('trackers.actions.deleteTracker') }}
             </button>
             <div class="flex gap-2">
               <button
@@ -306,14 +306,14 @@ function subLine(config: DataPointConfig): string {
                 @click="cancelEdit"
                 class="text-sm px-4 py-2 rounded-input border border-edge text-ink-muted hover:bg-subtle hover:text-ink transition-colors"
               >
-                {{ t('dataPoints.editor.cancel') }}
+                {{ t('trackers.editor.cancel') }}
               </button>
               <button
                 type="button"
                 @click="saveCurrentRow"
                 class="text-sm px-4 py-2 rounded-input bg-accent text-on-accent hover:bg-accent-dim transition-colors font-medium"
               >
-                {{ t('dataPoints.editor.save') }}
+                {{ t('trackers.editor.save') }}
               </button>
             </div>
           </div>
@@ -328,17 +328,17 @@ function subLine(config: DataPointConfig): string {
         @click="openDraft"
         class="w-full mt-1.5 flex items-center justify-center gap-1.5 py-2.5 border border-dashed border-edge-strong rounded-card text-ink-muted text-sm font-medium hover:border-accent hover:bg-accent-tint hover:text-accent-dim transition-colors duration-100"
       >
-        {{ t('dataPoints.addAnother') }}
+        {{ t('trackers.addAnother') }}
       </button>
 
       <!-- ── Empty state ─────────────────────────────────── -->
       <div v-if="configs.length === 0 && !showDraft" class="text-center py-10">
-        <p class="text-ink-faint text-sm mb-4">{{ t('dataPoints.empty') }}</p>
+        <p class="text-ink-faint text-sm mb-4">{{ t('trackers.empty') }}</p>
         <button
           @click="openDraft"
           class="text-sm bg-accent text-on-accent px-4 py-2 rounded-input hover:bg-accent-dim transition-colors font-medium"
         >
-          {{ t('dataPoints.add') }}
+          {{ t('trackers.add') }}
         </button>
       </div>
 

@@ -1,17 +1,17 @@
 <script setup lang="ts">
 import { onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
-import type { DataPointConfig } from '@/types'
-import { useDataPointsStore } from '@/stores/datapoints'
+import type { TrackerConfig } from '@/types'
+import { useTrackersStore } from '@/stores/trackers'
 import { useDiaryStore } from '@/stores/diary'
-import DataPointList from '@/components/datapoints/DataPointList.vue'
+import TrackerList from '@/components/trackers/TrackerList.vue'
 
 const { t } = useI18n()
-const datapoints = useDataPointsStore()
+const trackers = useTrackersStore()
 const diary = useDiaryStore()
 
 onMounted(async () => {
-  if (!datapoints.loaded) await datapoints.loadConfigs()
+  if (!trackers.loaded) await trackers.loadConfigs()
   if (!diary.loaded) await diary.loadAllEntries()
 })
 
@@ -20,15 +20,15 @@ function storedData(id: string): number {
 }
 
 async function handleSave(
-  data: Omit<DataPointConfig, 'id' | 'createdAt'>,
+  data: Omit<TrackerConfig, 'id' | 'createdAt'>,
   existingId: string | null,
   locked: boolean,
 ) {
   if (existingId) {
     const patch = locked ? { label: data.label, color: data.color, icon: data.icon } : data
-    await datapoints.updateConfig(existingId, patch)
+    await trackers.updateConfig(existingId, patch)
   } else {
-    await datapoints.addConfig({
+    await trackers.addConfig({
       ...data,
       id: crypto.randomUUID(),
       createdAt: new Date().toISOString(),
@@ -37,14 +37,14 @@ async function handleSave(
 }
 
 async function handleDelete(id: string) {
-  if (!confirm(t('dataPoints.deleteConfirm'))) return
-  await datapoints.deleteConfig(id)
+  if (!confirm(t('trackers.deleteConfirm'))) return
+  await trackers.deleteConfig(id)
 }
 </script>
 
 <template>
-  <DataPointList
-    :configs="datapoints.configs"
+  <TrackerList
+    :configs="trackers.configs"
     :stored-data="storedData"
     @save="handleSave"
     @delete="handleDelete"

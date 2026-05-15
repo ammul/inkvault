@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import type { DataPointConfig, DataPointValue } from '@/types'
+import type { TrackerConfig, TrackerValue } from '@/types'
 import BaseModal from '@/components/ui/BaseModal.vue'
 import ChartViewer from '@/components/charts/ChartViewer.vue'
 
 defineProps<{
-  config: DataPointConfig
-  values: { date: string; value: DataPointValue }[]
+  config: TrackerConfig
+  values: { date: string; value: TrackerValue }[]
 }>()
 
 const emit = defineEmits<{ close: [] }>()

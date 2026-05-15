@@ -87,7 +87,7 @@ All keys owned by InkVault use the `iv:` prefix:
 | `iv:salt` | 16-byte PBKDF2 salt, base64 | Plaintext (by design) |
 | `iv:kdf` | PBKDF2 iteration count (e.g. `"600000"`) | Plaintext (by design) |
 | `iv:verify` | Encrypted sentinel string | Encrypted |
-| `iv:datapoints` | JSON array of `DataPointConfig[]` | Encrypted |
+| `iv:datapoints` | JSON array of `TrackerConfig[]` | Encrypted |
 | `iv:entry:YYYY-MM-DD` | JSON `DiaryEntry` object | Encrypted (one key per day) |
 
 `iv:kdf` is absent on vaults created before the 600k migration. On unlock, the absence is treated as 310,000 (the old default). After successful unlock the vault is transparently re-encrypted at 600k and `iv:kdf` is written.
@@ -97,10 +97,10 @@ All keys owned by InkVault use the `iv:` prefix:
 `src/utils/backup.ts` defines the portable backup format and its own KDF call path:
 
 - **Independent passphrase + salt.** A backup uses its own 16-byte random salt and PBKDF2 derivation (310k / SHA-256). The backup passphrase is *not* the vault passphrase; the user picks a new one at export time.
-- **Format:** JSON file with `version`, `exportedAt`, `salt`, `verify` (encrypted sentinel `inkvault-backup-v1`), `datapoints` (encrypted config array), and `entries` (date → encrypted `DiaryEntry` blob).
+- **Format:** JSON file with `version`, `exportedAt`, `salt`, `verify` (encrypted sentinel `inkvault-backup-v1`), `datapoints` (encrypted tracker config array), and `entries` (date → encrypted `DiaryEntry` blob).
 - **Every blob has its own random IV** — same construction as on-disk storage.
 - **Wrong-passphrase detection** uses the backup sentinel's AES-GCM auth tag.
-- **Restore via unlock screen** (`UnlockScreen.vue`): the backup passphrase becomes the new vault passphrase. **Restore via settings** (`SettingsView.vue`): entries are merged into the currently-unlocked vault; data point configs are fully replaced.
+- **Restore via unlock screen** (`UnlockScreen.vue`): the backup passphrase becomes the new vault passphrase. **Restore via settings** (`SettingsView.vue`): entries are merged into the currently-unlocked vault; tracker configs are fully replaced.
 
 ---
 
@@ -109,14 +109,14 @@ All keys owned by InkVault use the `iv:` prefix:
 Source: `src/types/index.ts`
 
 ```typescript
-type DataPointType = 'range' | 'string' | 'multi-string' | 'boolean'
+type TrackerType = 'range' | 'string' | 'multi-string' | 'boolean'
 
-interface DataPointConfig {
+interface TrackerConfig {
   id: string           // crypto.randomUUID()
   label: string
   color: string        // CSS hex e.g. '#6366f1'
   icon: string         // emoji string
-  type: DataPointType
+  type: TrackerType
   config: RangeConfig | StringConfig | MultiStringConfig | BooleanConfig
   createdAt: string    // ISO datetime
 }
@@ -126,12 +126,12 @@ type StringConfig     = { placeholder?: string }
 type MultiStringConfig = { options: string[] }
 type BooleanConfig    = { trueLabel: string; falseLabel: string }
 
-type DataPointValue = number | string | string[] | boolean | null
+type TrackerValue = number | string | string[] | boolean | null
 
 interface DiaryEntry {
   date: string         // YYYY-MM-DD
   text: string         // free-form journal text
-  dataValues: Record<string, DataPointValue>  // dataPointConfig.id → value
+  dataValues: Record<string, TrackerValue>  // trackerConfig.id → value
   updatedAt: string    // ISO datetime
 }
 ```
@@ -187,7 +187,7 @@ Manages the encryption key lifecycle. The `key` ref is the only place the `Crypt
 | `checkInitialized()` | Reads localStorage; call on app mount |
 | `initializeVault(passphrase)` | First-time setup: derives key, writes salt + verify + kdf |
 | `unlock(passphrase)` | Unlocks vault; transparently migrates to 600k PBKDF2 if vault was created with 310k |
-| `lock()` | Clears `key` **and** calls `diary.reset()` + `datapoints.reset()` so decrypted data does not survive in memory |
+| `lock()` | Clears `key` **and** calls `diary.reset()` + `trackers.reset()` so decrypted data does not survive in memory |
 | `resetVault()` | Destructive wipe: removes every `iv:entry:*`, `iv:datapoints`, `iv:salt`, `iv:verify`, `iv:kdf` and resets both stores |
 
 ### `src/stores/diary.ts`
@@ -202,11 +202,11 @@ Manages the encryption key lifecycle. The `key` ref is the only place the `Crypt
 | `getEntry(date)` | Returns entry or null |
 | `reset()` | Clears in-memory state (called on lock) |
 
-### `src/stores/datapoints.ts`
+### `src/stores/trackers.ts`
 
 | Item | Detail |
 |---|---|
-| `configs: Ref<DataPointConfig[]>` | All data point configurations |
+| `configs: Ref<TrackerConfig[]>` | All tracker configurations |
 | `loaded: Ref<boolean>` | Set true after `loadConfigs()` |
 | `loadConfigs()` | Reads and decrypts `iv:datapoints` |
 | `saveConfigs()` | Encrypts and writes entire `configs` array |
@@ -228,26 +228,26 @@ App.vue
         ├── HomeView.vue          /home  (3 navigation cards)
         ├── DiaryView.vue         /diary, /diary/:date
         │   ├── CalendarView.vue  (month grid)
-        │   └── DayEntry.vue      (journal + data point fields)
-        │       └── DataPointField.vue  (dispatch component)
+        │   └── DayEntry.vue      (journal + tracker fields)
+        │       └── TrackerField.vue  (dispatch component)
         │           ├── RangeField.vue
         │           ├── StringField.vue
         │           ├── MultiStringField.vue
         │           └── BooleanField.vue
         ├── StatisticsView.vue    /stats
-        │   └── StatsPanel.vue    (one per trackable data point)
-        └── DataPointsView.vue    /data
-            ├── DataPointList.vue
-            └── DataPointEditor.vue
+        │   └── StatsPanel.vue    (one per tracker)
+        └── TrackersView.vue      /data
+            ├── TrackerList.vue
+            └── TrackerEditor.vue
 ```
 
-### DataPointField dispatch pattern
+### TrackerField dispatch pattern
 
-`DataPointField.vue` receives a `DataPointConfig` and the current value, and renders the correct field component via `component :is`. Adding a new field type requires:
-1. Adding the type to `DataPointType` in `types/index.ts`
+`TrackerField.vue` receives a `TrackerConfig` and the current value, and renders the correct field component via `component :is`. Adding a new field type requires:
+1. Adding the type to `TrackerType` in `types/index.ts`
 2. Adding its config interface in `types/index.ts`
-3. Creating `src/components/datapoints/fields/NewTypeField.vue`
-4. Adding the entry to `fieldMap` in `DataPointField.vue`
+3. Creating `src/components/trackers/fields/NewTypeField.vue`
+4. Adding the entry to `fieldMap` in `TrackerField.vue`
 
 ---
 
@@ -265,7 +265,7 @@ Routes:
 | `/diary` | `diary` | `DiaryView` (calendar) |
 | `/diary/:date` | `diary-day` | `DiaryView` (day entry) |
 | `/stats` | `stats` | `StatisticsView` |
-| `/data` | `datapoints` | `DataPointsView` |
+| `/data` | `trackers` | `TrackersView` |
 | `/settings` | `settings` | `SettingsView` (backup export/import) |
 
 ---
@@ -344,7 +344,7 @@ These must hold at all times. Before any change, verify none of these are violat
 3. **The `CryptoKey` never leaves Pinia** — not serialized, not passed to `localStorage`, not logged
 4. **PBKDF2 iterations stay ≥ 600,000** — reducing this weakens brute-force resistance
 5. **`MIN_PASSPHRASE_LENGTH` stays ≥ 12** — short passphrases defeat the KDF entirely
-6. **`lock()` resets the diary and datapoints stores** — otherwise plaintext lingers in JS memory after lock
+6. **`lock()` resets the diary and trackers stores** — otherwise plaintext lingers in JS memory after lock
 7. **`resetVault()` wipes every `iv:*` key** — leaving orphaned ciphertext defeats the user's intent
 8. **`sourcemap: false` in production build** — source maps reveal code structure
 9. **Production CSP includes `connect-src 'none'`** — no network egress, ever; XSS cannot exfiltrate

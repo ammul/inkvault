@@ -3,17 +3,17 @@ import { ref, computed, reactive, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import type { TimeRange, ConfigFilter, MultiStringConfig, BooleanConfig } from '@/types'
 import { useDiaryStore } from '@/stores/diary'
-import { useDataPointsStore } from '@/stores/datapoints'
+import { useTrackersStore } from '@/stores/trackers'
 import StatsPanel from '@/components/stats/StatsPanel.vue'
-import DataPointIcon from '@/components/ui/DataPointIcon.vue'
+import TrackerIcon from '@/components/ui/TrackerIcon.vue'
 
 const { t } = useI18n()
 const diary = useDiaryStore()
-const datapoints = useDataPointsStore()
+const trackers = useTrackersStore()
 
 onMounted(async () => {
   if (!diary.loaded) await diary.loadAllEntries()
-  if (!datapoints.loaded) await datapoints.loadConfigs()
+  if (!trackers.loaded) await trackers.loadConfigs()
 })
 
 const rangeLabel = ref<'week' | 'month' | 'year' | 'all'>('month')
@@ -92,15 +92,15 @@ function clearAllFilters() {
   }
 }
 
-const hasActiveFilter = computed(() => datapoints.configs.some((c) => isFilterActive(c.id)))
+const hasActiveFilter = computed(() => trackers.configs.some((c) => isFilterActive(c.id)))
 
 const visibleConfigs = computed(() => {
-  if (!hasActiveFilter.value) return datapoints.configs
-  return datapoints.configs.filter((c) => isFilterActive(c.id))
+  if (!hasActiveFilter.value) return trackers.configs
+  return trackers.configs.filter((c) => isFilterActive(c.id))
 })
 
 const expandedFilterConfigs = computed(() =>
-  datapoints.configs.filter((c) => expandedFilterIds.value.includes(c.id)),
+  trackers.configs.filter((c) => expandedFilterIds.value.includes(c.id)),
 )
 
 function parseNullableNumber(val: string): number | null {
@@ -163,11 +163,11 @@ function parseNullableNumber(val: string): number | null {
       <!-- Pill buttons — one per data point -->
       <div>
         <p class="text-xs font-medium text-ink-muted mb-2">
-          {{ t('statistics.filter.dataPoints') }}
+          {{ t('statistics.filter.trackers') }}
         </p>
         <div class="flex flex-wrap gap-2">
           <button
-            v-for="config in datapoints.configs"
+            v-for="config in trackers.configs"
             :key="config.id"
             @click="togglePill(config.id)"
             class="relative inline-flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-full border transition-colors"
@@ -177,7 +177,7 @@ function parseNullableNumber(val: string): number | null {
                 : 'border-edge text-ink hover:border-ink-muted'
             "
           >
-            <DataPointIcon :icon="config.icon" :color="config.color" :label="config.label" size="sm" />
+            <TrackerIcon :icon="config.icon" :color="config.color" :label="config.label" size="sm" />
             <span>{{ config.label }}</span>
             <span
               v-if="isFilterActive(config.id)"
@@ -192,7 +192,7 @@ function parseNullableNumber(val: string): number | null {
         <div class="border-t border-edge pt-3">
           <div class="flex items-center justify-between mb-2">
             <span class="text-xs font-medium text-ink flex items-center gap-1.5">
-              <DataPointIcon :icon="config.icon" :color="config.color" :label="config.label" size="sm" />
+              <TrackerIcon :icon="config.icon" :color="config.color" :label="config.label" size="sm" />
               <span>{{ config.label }}</span>
             </span>
             <button
@@ -323,7 +323,7 @@ function parseNullableNumber(val: string): number | null {
       </div>
     </div>
 
-    <div v-if="datapoints.configs.length" class="space-y-4">
+    <div v-if="trackers.configs.length" class="space-y-4">
       <StatsPanel
         v-for="config in visibleConfigs"
         :key="config.id"
@@ -333,9 +333,9 @@ function parseNullableNumber(val: string): number | null {
       />
     </div>
     <p v-else class="text-center text-ink-faint text-sm py-16">
-      {{ t('statistics.noDataPointsPrefix') }}
+      {{ t('statistics.noTrackersPrefix') }}
       <router-link to="/data" class="text-accent hover:text-accent-dim transition-colors">{{
-        t('statistics.noDataPointsLink')
+        t('statistics.noTrackersLink')
       }}</router-link>.
     </p>
   </div>

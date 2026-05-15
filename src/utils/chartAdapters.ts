@@ -1,4 +1,4 @@
-import type { DataPointConfig, DataPointType, DataPointValue, MedicationValue } from '@/types'
+import type { TrackerConfig, TrackerType, TrackerValue, MedicationValue } from '@/types'
 
 export interface ChartPoint {
   date: string
@@ -26,17 +26,17 @@ export interface FrequencySeries {
   label: string
 }
 
-type ValueEntry = { date: string; value: DataPointValue }
+type ValueEntry = { date: string; value: TrackerValue }
 
-type LineAdapterFn = (config: DataPointConfig, values: ValueEntry[]) => ChartSeries | null
-type FreqAdapterFn = (config: DataPointConfig, values: ValueEntry[]) => FrequencySeries | null
+type LineAdapterFn = (config: TrackerConfig, values: ValueEntry[]) => ChartSeries | null
+type FreqAdapterFn = (config: TrackerConfig, values: ValueEntry[]) => FrequencySeries | null
 
 export type ChartResult =
   | { kind: 'line'; series: ChartSeries }
   | { kind: 'frequency'; series: FrequencySeries }
   | null
 
-function rangeAdapter(config: DataPointConfig, values: ValueEntry[]): ChartSeries | null {
+function rangeAdapter(config: TrackerConfig, values: ValueEntry[]): ChartSeries | null {
   const points = values
     .filter((v) => typeof v.value === 'number')
     .map((v) => ({ date: v.date, y: v.value as number, tooltip: String(v.value) }))
@@ -45,7 +45,7 @@ function rangeAdapter(config: DataPointConfig, values: ValueEntry[]): ChartSerie
   return { points, yMin: Math.min(...ys), yMax: Math.max(...ys), color: config.color, label: config.label }
 }
 
-function booleanAdapter(config: DataPointConfig, values: ValueEntry[]): ChartSeries | null {
+function booleanAdapter(config: TrackerConfig, values: ValueEntry[]): ChartSeries | null {
   const points = values
     .filter((v) => typeof v.value === 'boolean')
     .map((v) => {
@@ -63,7 +63,7 @@ function booleanAdapter(config: DataPointConfig, values: ValueEntry[]): ChartSer
   }
 }
 
-function medicationAdapter(config: DataPointConfig, values: ValueEntry[]): ChartSeries | null {
+function medicationAdapter(config: TrackerConfig, values: ValueEntry[]): ChartSeries | null {
   const points = values
     .filter((v) => v.value !== null && typeof v.value === 'object' && !Array.isArray(v.value))
     .map((v) => {
@@ -75,7 +75,7 @@ function medicationAdapter(config: DataPointConfig, values: ValueEntry[]): Chart
   return { points, yMin: Math.min(...ys), yMax: Math.max(...ys), color: config.color, label: config.label }
 }
 
-function stringFreqAdapter(config: DataPointConfig, values: ValueEntry[]): FrequencySeries | null {
+function stringFreqAdapter(config: TrackerConfig, values: ValueEntry[]): FrequencySeries | null {
   const counts = new Map<string, number>()
   for (const v of values) {
     if (typeof v.value === 'string' && v.value.trim()) {
@@ -89,7 +89,7 @@ function stringFreqAdapter(config: DataPointConfig, values: ValueEntry[]): Frequ
   return { bars, color: config.color, label: config.label }
 }
 
-function multiStringFreqAdapter(config: DataPointConfig, values: ValueEntry[]): FrequencySeries | null {
+function multiStringFreqAdapter(config: TrackerConfig, values: ValueEntry[]): FrequencySeries | null {
   const counts = new Map<string, number>()
   for (const v of values) {
     if (Array.isArray(v.value)) {
@@ -105,18 +105,18 @@ function multiStringFreqAdapter(config: DataPointConfig, values: ValueEntry[]): 
   return { bars, color: config.color, label: config.label }
 }
 
-const lineAdapters: Partial<Record<DataPointType, LineAdapterFn>> = {
+const lineAdapters: Partial<Record<TrackerType, LineAdapterFn>> = {
   range: rangeAdapter,
   boolean: booleanAdapter,
   medication: medicationAdapter,
 }
 
-const freqAdapters: Partial<Record<DataPointType, FreqAdapterFn>> = {
+const freqAdapters: Partial<Record<TrackerType, FreqAdapterFn>> = {
   string: stringFreqAdapter,
   'multi-string': multiStringFreqAdapter,
 }
 
-export function toChartResult(config: DataPointConfig, values: ValueEntry[]): ChartResult {
+export function toChartResult(config: TrackerConfig, values: ValueEntry[]): ChartResult {
   const lineAdapter = lineAdapters[config.type]
   if (lineAdapter) {
     const series = lineAdapter(config, values)

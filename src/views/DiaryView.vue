@@ -3,14 +3,14 @@ import { computed, onMounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useDiaryStore } from '@/stores/diary'
-import { useDataPointsStore } from '@/stores/datapoints'
+import { useTrackersStore } from '@/stores/trackers'
 import CalendarView from '@/components/diary/CalendarView.vue'
 import DayEntry from '@/components/diary/DayEntry.vue'
 
 const { t } = useI18n()
 const route = useRoute()
 const diary = useDiaryStore()
-const datapoints = useDataPointsStore()
+const trackers = useTrackersStore()
 
 const selectedDate = computed(() => route.params.date as string | undefined)
 
@@ -20,7 +20,7 @@ onMounted(async () => {
   } else {
     if (!diary.datesLoaded) diary.getAvailableDates()
   }
-  if (!datapoints.loaded) await datapoints.loadConfigs()
+  if (!trackers.loaded) await trackers.loadConfigs()
 })
 
 watch(selectedDate, async (date) => {

@@ -1,9 +1,9 @@
 import { createBackup, restoreBackup } from '@/utils/backup'
-import type { DataPointConfig, DiaryEntry, ThemeSettings } from '@/types'
+import type { TrackerConfig, DiaryEntry, ThemeSettings } from '@/types'
 
 const PASSPHRASE = 'backup-test-passphrase-long-enough'
 
-function makeConfig(): DataPointConfig {
+function makeConfig(): TrackerConfig {
   return {
     id: crypto.randomUUID(),
     label: 'Mood',
@@ -20,13 +20,13 @@ function makeEntry(date: string, text = 'Entry text'): DiaryEntry {
 }
 
 describe('backup utils', () => {
-  test('createBackup + restoreBackup round-trips datapoints and entries', async () => {
+  test('createBackup + restoreBackup round-trips trackers and entries', async () => {
     const configs = [makeConfig()]
     const entries = [makeEntry('2024-06-01'), makeEntry('2024-06-02')]
     const backup = await createBackup(PASSPHRASE, configs, entries)
     const result = await restoreBackup(backup, PASSPHRASE)
-    expect(result.datapoints).toHaveLength(1)
-    expect(result.datapoints[0].id).toBe(configs[0].id)
+    expect(result.trackers).toHaveLength(1)
+    expect(result.trackers[0].id).toBe(configs[0].id)
     expect(result.entries).toHaveLength(2)
     expect(result.entries.map((e) => e.date).sort()).toEqual(['2024-06-01', '2024-06-02'])
   })

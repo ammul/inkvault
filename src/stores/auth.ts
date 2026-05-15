@@ -4,7 +4,7 @@ import { initVault, unlockVault, deriveVaultKey, PBKDF2_ITERATIONS, PBKDF2_ITERA
 import { KEYS, writePlain, readPlain, remove, listEntryKeys, migrateEncryptedBlobs } from '@/utils/storage'
 import { runMigrations, CURRENT_SCHEMA_VERSION } from '@/utils/migrations'
 import { useDiaryStore } from './diary'
-import { useDataPointsStore } from './datapoints'
+import { useTrackersStore } from './trackers'
 import { useThemeStore } from './theme'
 import { useAppSettingsStore } from './appSettings'
 
@@ -54,14 +54,14 @@ export const useAuthStore = defineStore('auth', () => {
   function lock(): void {
     key.value = null
     useDiaryStore().reset()
-    useDataPointsStore().reset()
+    useTrackersStore().reset()
     useThemeStore().reset()
     useAppSettingsStore().reset()
   }
 
   function resetVault(): void {
     for (const entryKey of listEntryKeys()) remove(entryKey)
-    remove(KEYS.DATAPOINTS)
+    remove(KEYS.TRACKERS)
     remove(KEYS.SALT)
     remove(KEYS.VERIFY)
     remove(KEYS.KDF)
@@ -69,7 +69,7 @@ export const useAuthStore = defineStore('auth', () => {
     remove(KEYS.THEME)
     remove(KEYS.APP_SETTINGS)
     useDiaryStore().reset()
-    useDataPointsStore().reset()
+    useTrackersStore().reset()
     useThemeStore().reset()
     useAppSettingsStore().reset()
     key.value = null

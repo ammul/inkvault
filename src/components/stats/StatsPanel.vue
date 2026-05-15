@@ -1,15 +1,15 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
-import type { DataPointConfig, TimeRange, DataPointValue, ConfigFilter, MedicationValue } from '@/types'
+import type { TrackerConfig, TimeRange, TrackerValue, ConfigFilter, MedicationValue } from '@/types'
 import { useDiaryStore } from '@/stores/diary'
-import DataPointIcon from '@/components/ui/DataPointIcon.vue'
+import TrackerIcon from '@/components/ui/TrackerIcon.vue'
 import ChartModal from '@/components/stats/ChartModal.vue'
 
 const { t } = useI18n()
 
 const props = defineProps<{
-  config: DataPointConfig
+  config: TrackerConfig
   timeRange: TimeRange
   filter: ConfigFilter | null
 }>()
@@ -68,7 +68,7 @@ const average = computed(() => {
 
 const showChart = ref(false)
 
-function formatValue(v: DataPointValue): string {
+function formatValue(v: TrackerValue): string {
   if (v === null) return '—'
   if (Array.isArray(v)) return v.join(', ')
   if (typeof v === 'object') return `${v.amount} ${v.unit}${v.time ? ' at ' + v.time : ''}`
@@ -79,7 +79,7 @@ function formatValue(v: DataPointValue): string {
 <template>
   <div class="bg-raised rounded-card border border-edge shadow-card p-4">
     <div class="flex items-center gap-2 mb-3">
-      <DataPointIcon :icon="config.icon" :color="config.color" :label="config.label" />
+      <TrackerIcon :icon="config.icon" :color="config.color" :label="config.label" />
       <h3 class="font-semibold text-ink">{{ config.label }}</h3>
       <span v-if="average !== null" class="text-sm text-ink-muted">
         {{ t('statistics.avg') }} <span class="font-medium text-ink">{{ average }}</span>

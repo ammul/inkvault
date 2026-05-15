@@ -33,8 +33,8 @@ const routes: RouteRecordRaw[] = [
   },
   {
     path: '/data',
-    name: 'datapoints',
-    component: () => import('@/views/DataPointsView.vue'),
+    name: 'trackers',
+    component: () => import('@/views/TrackersView.vue'),
     meta: { requiresAuth: true },
   },
   {
