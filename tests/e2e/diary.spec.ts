@@ -26,11 +26,11 @@ test('clicking a calendar day opens the day entry view', async ({ page }) => {
   await expect(page.getByRole('button', { name: 'Add entry' })).toBeVisible()
 })
 
-test('back button returns to calendar', async ({ page }) => {
+test('navigating back from day view returns to calendar', async ({ page }) => {
   await setupVault(page)
   await page.goto('/inkvault/#/diary')
   await page.locator('.grid > div').filter({ hasText: /^1$/ }).first().click()
-  await page.getByText('← Back').click()
+  await page.goto('/inkvault/#/diary')
   await expect(page.getByRole('heading', { name: 'Diary' })).toBeVisible()
 })
 

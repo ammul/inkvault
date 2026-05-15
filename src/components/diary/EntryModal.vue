@@ -14,6 +14,7 @@ const props = defineProps<{
 const emit = defineEmits<{
   save: [value: TrackerValue]
   close: []
+  delete: []
 }>()
 
 const { t } = useI18n()
@@ -67,15 +68,22 @@ function onKeyDown(e: KeyboardEvent) {
               :model-value="localValue"
               @update:model-value="localValue = $event"
             />
-            <div class="flex gap-2 justify-end">
+            <div class="flex gap-2 items-center">
               <button
-                @click="emit('close')"
-                class="text-sm px-3 py-1.5 rounded-input text-ink-muted hover:text-ink hover:bg-subtle transition-colors"
-              >{{ t('diary.cancel') }}</button>
-              <button
-                @click="emit('save', localValue)"
-                class="text-sm px-3 py-1.5 rounded-input bg-accent text-on-accent hover:bg-accent-dim transition-colors"
-              >{{ t('diary.done') }}</button>
+                v-if="isEdit"
+                @click="emit('delete')"
+                class="text-sm px-3 py-1.5 rounded-input text-danger hover:bg-subtle transition-colors"
+              >{{ t('diary.deleteEntry') }}</button>
+              <div class="flex gap-2 ml-auto">
+                <button
+                  @click="emit('close')"
+                  class="text-sm px-3 py-1.5 rounded-input text-ink-muted hover:text-ink hover:bg-subtle transition-colors"
+                >{{ t('diary.cancel') }}</button>
+                <button
+                  @click="emit('save', localValue)"
+                  class="text-sm px-3 py-1.5 rounded-input bg-accent text-on-accent hover:bg-accent-dim transition-colors"
+                >{{ t('diary.done') }}</button>
+              </div>
             </div>
           </div>
         </Transition>

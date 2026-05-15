@@ -25,6 +25,8 @@ const dataEntries = ref<DiaryDataEntry[]>([])
 const saving = ref(false)
 const editingId = ref<string | null>(null)
 const showAddMenu = ref(false)
+const menuAnimated = ref(false)
+let closeTimer: ReturnType<typeof setTimeout> | null = null
 
 // Deletion confirmation state
 const pendingDeleteId = ref<string | null>(null)
@@ -175,7 +177,7 @@ function addEntry() {
   }
   timelineEntries.value = [...timelineEntries.value, newEntry]
   editingId.value = newEntry.id
-  showAddMenu.value = false
+  closeMenu()
   autoSave(true)
 }
 
@@ -216,7 +218,7 @@ function openDataPointModal(config: TrackerConfig) {
   entryModalConfig.value = config
   entryModalValue.value = existing?.value ?? null
   entryModalEditId.value = existing?.id ?? null
-  showAddMenu.value = false
+  closeMenu()
 }
 
 function saveDataEntry(value: TrackerValue) {
@@ -246,6 +248,7 @@ function closeDataModal() {
 }
 
 function editDataEntry(item: DataTimelineItem) {
+  editingId.value = null
   const config = trackers.configs.find(c => c.id === item.configId)
   if (!config) return
   entryModalConfig.value = config
@@ -272,17 +275,41 @@ function handleEdit(item: TimelineItem) {
   else editDataEntry(item as DataTimelineItem)
 }
 
-function handleDelete(item: TimelineItem) {
-  if (item.type === 'text') requestDeleteEntry(item.id)
-  else requestDeleteDataEntry(item.id)
+function handleRowClick(item: TimelineItem) {
+  if (item.type === 'text' && editingId.value === item.id) return
+  handleEdit(item)
+}
+
+function handleDeleteFromModal() {
+  const id = entryModalEditId.value
+  if (!id) return
+  closeDataModal()
+  pendingDeleteDataId.value = id
 }
 
 // ─── Radial add menu ──────────────────────────────────────────────────────────
 
-const RADIAL_STEP = Math.PI / 5
-const RADIAL_MAX_ROW1 = 6
-const RADIAL_R1 = 88
-const RADIAL_R2 = 150
+function openMenu() {
+  if (closeTimer) { clearTimeout(closeTimer); closeTimer = null }
+  showAddMenu.value = true
+  // One rAF delay so the container renders with the closed state first, enabling CSS transitions
+  requestAnimationFrame(() => { menuAnimated.value = true })
+}
+
+function closeMenu() {
+  menuAnimated.value = false
+  // item 0 is last to close: (n-1)*18ms stagger + 160ms transition
+  const totalMs = (menuItems.value.length - 1) * 18 + 180
+  closeTimer = setTimeout(() => {
+    showAddMenu.value = false
+    closeTimer = null
+  }, totalMs)
+}
+
+const RADIAL_CIRCLE_MAX = 10
+const RADIAL_R = 96
+const OVERFLOW_ROW_Y = 148
+const OVERFLOW_ROW_STEP = 56
 
 const menuItems = computed(() => [
   { id: '__text__', label: t('diary.addText'), icon: '✎', color: '', action: addEntry },
@@ -296,13 +323,24 @@ const menuItems = computed(() => [
 ])
 
 function radialItemStyle(index: number, bgColor: string): Record<string, string> {
-  const row = index < RADIAL_MAX_ROW1 ? 0 : 1
-  const indexInRow = index % RADIAL_MAX_ROW1
-  const radius = row === 0 ? RADIAL_R1 : RADIAL_R2
-  const angle = -Math.PI / 2 + indexInRow * RADIAL_STEP
-  const dx = Math.round(Math.cos(angle) * radius)
-  const dy = Math.round(Math.sin(angle) * radius)
-  const open = showAddMenu.value
+  const open = menuAnimated.value
+  const totalInCircle = Math.min(menuItems.value.length, RADIAL_CIRCLE_MAX)
+  let dx: number, dy: number
+
+  if (index < RADIAL_CIRCLE_MAX) {
+    const step = (2 * Math.PI) / totalInCircle
+    const angle = -Math.PI / 2 + index * step
+    dx = Math.round(Math.cos(angle) * RADIAL_R)
+    dy = Math.round(Math.sin(angle) * RADIAL_R)
+  } else {
+    const rowIndex = index - RADIAL_CIRCLE_MAX
+    const rowCount = menuItems.value.length - RADIAL_CIRCLE_MAX
+    const totalWidth = (rowCount - 1) * OVERFLOW_ROW_STEP
+    dx = Math.round(-totalWidth / 2 + rowIndex * OVERFLOW_ROW_STEP)
+    dy = OVERFLOW_ROW_Y
+  }
+
+  const n = menuItems.value.length
   const style: Record<string, string> = {
     position: 'absolute',
     top: '50%',
@@ -311,8 +349,10 @@ function radialItemStyle(index: number, bgColor: string): Record<string, string>
       ? `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px)) scale(1)`
       : `translate(-50%, -50%) scale(0.3)`,
     opacity: open ? '1' : '0',
-    transition: 'transform 240ms cubic-bezier(0.34, 1.56, 0.64, 1), opacity 200ms ease',
-    transitionDelay: open ? `${index * 30}ms` : '0ms',
+    transition: open
+      ? 'transform 240ms cubic-bezier(0.34, 1.56, 0.64, 1), opacity 200ms ease'
+      : 'transform 160ms ease-in, opacity 120ms ease',
+    transitionDelay: open ? `${index * 30}ms` : `${(n - 1 - index) * 18}ms`,
     pointerEvents: open ? 'auto' : 'none',
     zIndex: '10',
   }
@@ -367,19 +407,7 @@ const is24Hour = computed(() => {
 
 // ─── Summary chips ────────────────────────────────────────────────────────────
 
-const noteCount = computed(() => timelineEntries.value.length)
-const trackerCount = computed(() => new Set(dataEntries.value.map(e => e.configId)).size)
-const moodValue = computed<TrackerValue>(() => {
-  const latest = [...dataEntries.value]
-    .filter(e => trackers.configs.find(c => c.id === e.configId)?.type === 'range')
-    .sort((a, b) => b.createdAt.localeCompare(a.createdAt))[0]
-  return latest?.value ?? null
-})
 const hasSummary = computed(() => allTimelineItems.value.length > 0)
-
-// ─── Quick-add chips ──────────────────────────────────────────────────────────
-
-const quickAddChips = computed(() => trackers.configs.slice(0, 4))
 
 // ─── Time formatting helpers ──────────────────────────────────────────────────
 
@@ -466,20 +494,8 @@ function asDataItem(item: DisplayItem): DataTimelineItem {
       <div class="text-center">
         <div class="text-[11px] font-semibold uppercase tracking-[0.12em] text-ink-muted">{{ headerWeekday }}</div>
         <div class="text-[24px] font-semibold leading-[1.1] tracking-[-0.02em] text-ink">{{ headerDate }}</div>
-        <div v-if="hasSummary" class="inline-flex items-center justify-center gap-2 flex-wrap text-[11.5px] text-ink-muted mt-1">
-          <span v-if="noteCount > 0">
-            <b class="text-ink">{{ noteCount }}</b> {{ noteCount === 1 ? 'note' : 'notes' }}
-          </span>
-          <template v-if="noteCount > 0 && moodValue !== null">
-            <span class="w-[3px] h-[3px] rounded-full bg-ink-muted inline-block" />
-          </template>
-          <span v-if="moodValue !== null">mood <b class="text-ink">{{ moodValue }}</b></span>
-          <template v-if="trackerCount > 0 && (noteCount > 0 || moodValue !== null)">
-            <span class="w-[3px] h-[3px] rounded-full bg-ink-muted inline-block" />
-          </template>
-          <span v-if="trackerCount > 0">
-            <b class="text-ink">{{ trackerCount }}</b> {{ trackerCount === 1 ? 'tracker' : 'trackers' }}
-          </span>
+        <div v-if="hasSummary" class="text-[11.5px] text-ink-muted mt-1">
+          <b class="text-ink">{{ allTimelineItems.length }}</b> {{ allTimelineItems.length === 1 ? 'entry' : 'entries' }}
         </div>
       </div>
 
@@ -526,7 +542,8 @@ function asDataItem(item: DisplayItem): DataTimelineItem {
           <!-- Entry row -->
           <div
             v-else
-            class="grid grid-cols-[52px_1fr] gap-3 mb-5"
+            class="grid grid-cols-[52px_1fr] gap-3 mb-5 cursor-pointer"
+            @click="handleRowClick(item as TimelineItem)"
           >
             <!-- Gutter: bubble + time chip -->
             <div class="flex flex-col items-center">
@@ -562,41 +579,19 @@ function asDataItem(item: DisplayItem): DataTimelineItem {
                   class="text-[10.5px] font-semibold uppercase tracking-[0.08em]"
                   :style="eyebrowStyle(item as TimelineItem)"
                 >{{ eyebrowLabel(item as TimelineItem) }}</span>
-                <div class="inline-flex gap-0.5 ml-auto shrink-0">
-                  <!-- Edit button -->
-                  <button
-                    @click="handleEdit(item as TimelineItem)"
-                    :aria-label="t('diary.editEntry')"
-                    class="w-9 h-9 flex items-center justify-center rounded-md opacity-60 hover:opacity-100 hover:bg-subtle transition-all"
-                  >
-                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                      <path d="M9.5 2.5l2 2-7 7H2.5v-2l7-7z"/>
-                    </svg>
-                  </button>
-                  <!-- Delete button -->
-                  <button
-                    @click="handleDelete(item as TimelineItem)"
-                    :aria-label="t('diary.deleteEntry')"
-                    class="w-9 h-9 flex items-center justify-center rounded-md opacity-60 hover:opacity-100 hover:bg-danger-tint hover:text-danger transition-all"
-                  >
-                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                      <path d="M2 3.5h10M5 3.5V2h4v1.5M5.5 6v4M8.5 6v4M3 3.5l.75 7.5h6.5L11 3.5"/>
-                    </svg>
-                  </button>
-                </div>
               </div>
 
               <!-- Text entry content -->
               <template v-if="(item as TimelineItem).type === 'text'">
                 <p
                   v-if="editingId !== (item as TextTimelineItem).id"
-                  @dblclick="startEdit((item as TextTimelineItem).id)"
-                  class="text-[14.5px] leading-[1.6] text-ink whitespace-pre-wrap break-words cursor-text min-h-5"
+                  class="text-[14.5px] leading-[1.6] text-ink whitespace-pre-wrap break-words min-h-5"
                 >{{ (item as TextTimelineItem).text || '…' }}</p>
                 <textarea
                   v-else
                   :ref="(el: unknown) => el && nextTick(() => (el as HTMLTextAreaElement).focus())"
                   :value="(item as TextTimelineItem).text"
+                  @click.stop
                   @input="updateEntryText((item as TextTimelineItem).id, ($event.target as HTMLTextAreaElement).value)"
                   @blur="confirmEdit"
                   @keydown.escape="confirmEdit"
@@ -604,6 +599,20 @@ function asDataItem(item: DisplayItem): DataTimelineItem {
                   :placeholder="t('diary.newEntryPlaceholder')"
                   class="w-full text-[14.5px] leading-[1.6] text-ink bg-transparent placeholder:text-ink-faint resize-none focus:outline-none focus:ring-2 focus:ring-accent/25 rounded-sm"
                 />
+                <div
+                  v-if="editingId === (item as TextTimelineItem).id"
+                  class="flex gap-1.5 mt-1.5 justify-end"
+                  @click.stop
+                >
+                  <button
+                    @click.stop="requestDeleteEntry((item as TextTimelineItem).id)"
+                    class="text-xs text-danger px-2 py-1 rounded-input hover:bg-subtle transition-colors"
+                  >{{ t('diary.deleteEntry') }}</button>
+                  <button
+                    @click.stop="confirmEdit()"
+                    class="text-xs text-accent px-2 py-1 rounded-input hover:bg-accent-tint transition-colors"
+                  >{{ t('diary.done') }}</button>
+                </div>
               </template>
 
               <!-- Data entry value -->
@@ -625,38 +634,19 @@ function asDataItem(item: DisplayItem): DataTimelineItem {
       </p>
 
       <!-- Add zone -->
-      <div v-if="!showAddMenu" class="grid grid-cols-[52px_1fr] gap-3 mt-1">
-        <!-- FAB -->
-        <div class="flex justify-center">
-          <button
-            @click="showAddMenu = true"
-            :disabled="saving"
-            :aria-label="t('diary.addEntry')"
-            class="w-10 h-10 rounded-full bg-accent text-on-accent flex items-center justify-center text-[22px] leading-none hover:bg-accent-dim disabled:opacity-50 transition-colors"
-            style="box-shadow: 0 6px 16px rgba(79,70,229,.35), 0 0 0 5px var(--color-surface)"
-          >+</button>
-        </div>
-        <!-- Quick-add text and chips -->
-        <div class="flex flex-col gap-2 text-[12.5px] text-ink-muted">
-          <span>{{ t('diary.addToToday') }}</span>
-          <div class="flex flex-wrap gap-1.5">
-            <button
-              @click="addEntry()"
-              class="inline-flex items-center gap-1 bg-surface border border-edge text-ink-muted text-[11px] px-2.5 py-1 rounded-full whitespace-nowrap hover:bg-subtle transition-colors"
-            >
-              <span class="leading-none">✎</span> {{ t('diary.quickAdd.note') }}
-            </button>
-            <button
-              v-for="c in quickAddChips"
-              :key="c.id"
-              @click="openDataPointModal(c)"
-              class="inline-flex items-center gap-1 bg-surface border border-edge text-ink-muted text-[11px] px-2.5 py-1 rounded-full whitespace-nowrap hover:bg-subtle transition-colors"
-            >
-              <span class="leading-none">{{ appSettings.settings.useEmojis ? c.icon : c.label[0].toUpperCase() }}</span>
-              {{ c.label }}
-            </button>
-          </div>
-        </div>
+      <div v-if="!showAddMenu" class="mt-1 w-[52px] flex justify-center">
+        <button
+          @click="openMenu()"
+          :disabled="saving"
+          :aria-label="t('diary.addEntry')"
+          class="w-10 h-10 rounded-full bg-accent text-on-accent flex items-center justify-center hover:bg-accent-dim disabled:opacity-50 transition-colors"
+          style="box-shadow: 0 6px 16px rgba(79,70,229,.35), 0 0 0 5px var(--color-surface)"
+        >
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+            <line x1="9" y1="2" x2="9" y2="16"/>
+            <line x1="2" y1="9" x2="16" y2="9"/>
+          </svg>
+        </button>
       </div>
     </div>
 
@@ -664,14 +654,15 @@ function asDataItem(item: DisplayItem): DataTimelineItem {
     <div
       v-if="showAddMenu"
       class="fixed inset-0 z-[9]"
-      @click="showAddMenu = false"
+      @click="closeMenu()"
       aria-hidden="true"
     />
 
     <!-- Radial menu (fixed, centered in viewport) -->
     <div
       v-if="showAddMenu"
-      class="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-10 w-0 h-0"
+      class="fixed z-10 w-0 h-0"
+      style="left: 50%; top: 50%; transform: translate(-50%, -50%)"
     >
       <!-- Radial items -->
       <button
@@ -692,11 +683,16 @@ function asDataItem(item: DisplayItem): DataTimelineItem {
 
       <!-- Close button at center -->
       <button
-        @click="showAddMenu = false"
+        @click="closeMenu()"
         :aria-label="t('diary.closeAddMenu')"
-        class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-14 h-14 rounded-full bg-accent text-on-accent flex items-center justify-center text-3xl leading-none hover:bg-accent-dim shadow-card z-20 transition-transform"
-        style="transform: translate(-50%, -50%) rotate(45deg)"
-      >+</button>
+        class="w-14 h-14 rounded-full bg-accent text-on-accent flex items-center justify-center hover:bg-accent-dim shadow-card z-20 radial-x-btn"
+        style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%)"
+      >
+        <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+          <line x1="3" y1="3" x2="15" y2="15"/>
+          <line x1="15" y1="3" x2="3" y2="15"/>
+        </svg>
+      </button>
     </div>
 
     <!-- Confirm delete: text entry -->
@@ -723,12 +719,17 @@ function asDataItem(item: DisplayItem): DataTimelineItem {
       :is-edit="entryModalEditId !== null"
       @save="saveDataEntry"
       @close="closeDataModal"
+      @delete="handleDeleteFromModal"
     />
   </div>
 </template>
 
 <style scoped>
 /* Rope: left rail at x=25px, fades at both ends */
+.timeline {
+  isolation: isolate;
+}
+
 .timeline::before {
   content: "";
   position: absolute;
@@ -744,6 +745,7 @@ function asDataItem(item: DisplayItem): DataTimelineItem {
     transparent 100%
   );
   pointer-events: none;
+  z-index: -1;
 }
 
 /* Dim timeline when radial menu is open */
@@ -765,5 +767,21 @@ function asDataItem(item: DisplayItem): DataTimelineItem {
 .timeline-leave-to {
   opacity: 0;
   transform: translateY(-4px);
+}
+
+/* Close button: spin + scale in */
+@keyframes radial-x-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -50%) rotate(-120deg) scale(0.2);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%) rotate(0deg) scale(1);
+  }
+}
+
+.radial-x-btn {
+  animation: radial-x-in 320ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
 }
 </style>
