@@ -103,6 +103,23 @@ export default {
     cancel: 'Cancel',
     addTracker: 'Log {label}',
     editTracker: 'Edit {label}',
+    period: {
+      lateNight: 'Late night',
+      morning: 'Morning',
+      afternoon: 'Afternoon',
+      evening: 'Evening',
+    },
+    summary: {
+      notes: 'no notes | {n} note | {n} notes',
+      mood: 'mood {v}',
+      trackers: 'no trackers | {n} tracker | {n} trackers',
+    },
+    addToToday: 'Add to today',
+    quickAdd: {
+      note: 'Note',
+    },
+    prevDay: 'Previous day',
+    nextDay: 'Next day',
   },
 
   trackers: {

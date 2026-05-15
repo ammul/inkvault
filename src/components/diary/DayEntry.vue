@@ -2,14 +2,14 @@
 import { ref, computed, onMounted, watch, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import type { DiaryEntry, DiaryTimelineEntry, DiaryDataEntry, TrackerConfig, TrackerValue, MedicationValue } from '@/types'
+import type { DiaryEntry, DiaryTimelineEntry, DiaryDataEntry, TrackerConfig, TrackerValue } from '@/types'
 import { useDiaryStore } from '@/stores/diary'
 import { useTrackersStore } from '@/stores/trackers'
 import { useToastStore } from '@/stores/toast'
 import { useAppSettingsStore } from '@/stores/appSettings'
 import ConfirmModal from '@/components/ui/ConfirmModal.vue'
 import EntryModal from '@/components/diary/EntryModal.vue'
-import TrackerIcon from '@/components/ui/TrackerIcon.vue'
+import EntryValue from '@/components/diary/EntryValue.vue'
 
 const { t, locale } = useI18n()
 const route = useRoute()
@@ -69,6 +69,40 @@ const allTimelineItems = computed<TimelineItem[]>(() => {
     createdAt: e.createdAt,
   }))
   return [...textItems, ...dataItems].sort((a, b) => a.createdAt.localeCompare(b.createdAt))
+})
+
+// ─── Period dividers ──────────────────────────────────────────────────────────
+
+type Period = 'lateNight' | 'morning' | 'afternoon' | 'evening'
+
+interface PeriodDivider {
+  type: 'divider'
+  period: Period
+  id: string
+}
+
+type DisplayItem = TimelineItem | PeriodDivider
+
+function getPeriod(iso: string): Period {
+  const h = new Date(iso).getHours()
+  if (h < 5) return 'lateNight'
+  if (h < 12) return 'morning'
+  if (h < 18) return 'afternoon'
+  return 'evening'
+}
+
+const timelineWithDividers = computed<DisplayItem[]>(() => {
+  const result: DisplayItem[] = []
+  const seen = new Set<Period>()
+  for (const item of allTimelineItems.value) {
+    const p = getPeriod(item.createdAt)
+    if (!seen.has(p)) {
+      seen.add(p)
+      result.push({ type: 'divider', period: p, id: `divider-${p}` })
+    }
+    result.push(item)
+  }
+  return result
 })
 
 // ─── Load / migrate ──────────────────────────────────────────────────────────
@@ -231,12 +265,24 @@ function confirmDeleteDataEntry() {
   autoSave()
 }
 
+// ─── Unified edit/delete dispatch ────────────────────────────────────────────
+
+function handleEdit(item: TimelineItem) {
+  if (item.type === 'text') startEdit(item.id)
+  else editDataEntry(item as DataTimelineItem)
+}
+
+function handleDelete(item: TimelineItem) {
+  if (item.type === 'text') requestDeleteEntry(item.id)
+  else requestDeleteDataEntry(item.id)
+}
+
 // ─── Radial add menu ──────────────────────────────────────────────────────────
 
-const RADIAL_STEP = Math.PI / 5        // 36° between items
-const RADIAL_MAX_ROW1 = 6              // items before second ring kicks in
-const RADIAL_R1 = 88                   // px — inner ring radius
-const RADIAL_R2 = 150                  // px — outer ring radius
+const RADIAL_STEP = Math.PI / 5
+const RADIAL_MAX_ROW1 = 6
+const RADIAL_R1 = 88
+const RADIAL_R2 = 150
 
 const menuItems = computed(() => [
   { id: '__text__', label: t('diary.addText'), icon: '✎', color: '', action: addEntry },
@@ -252,14 +298,8 @@ const menuItems = computed(() => [
 function radialItemStyle(index: number, bgColor: string): Record<string, string> {
   const row = index < RADIAL_MAX_ROW1 ? 0 : 1
   const indexInRow = index % RADIAL_MAX_ROW1
-  const countInRow = row === 0
-    ? Math.min(menuItems.value.length, RADIAL_MAX_ROW1)
-    : menuItems.value.length - RADIAL_MAX_ROW1
   const radius = row === 0 ? RADIAL_R1 : RADIAL_R2
-
-  // Start at 12 o'clock (−π/2), fan clockwise (right side only)
   const angle = -Math.PI / 2 + indexInRow * RADIAL_STEP
-
   const dx = Math.round(Math.cos(angle) * radius)
   const dy = Math.round(Math.sin(angle) * radius)
   const open = showAddMenu.value
@@ -280,203 +320,383 @@ function radialItemStyle(index: number, bgColor: string): Record<string, string>
   return style
 }
 
-// ─── Value display ────────────────────────────────────────────────────────────
+// ─── Navigation ───────────────────────────────────────────────────────────────
 
-function formatDataValue(item: DataTimelineItem): string {
-  const config = trackers.configs.find(c => c.id === item.configId)
-  if (!config || item.value === null) return '—'
-  const v = item.value
-  switch (config.type) {
-    case 'range': return String(v)
-    case 'string': return typeof v === 'string' ? v : '—'
-    case 'multi-string': return Array.isArray(v) ? (v as string[]).join(', ') : '—'
-    case 'boolean': {
-      const bc = config.config as { trueLabel: string; falseLabel: string }
-      return v === true ? bc.trueLabel : bc.falseLabel
-    }
-    case 'medication': {
-      if (v !== null && typeof v === 'object' && !Array.isArray(v)) {
-        const mv = v as MedicationValue
-        return `${mv.amount} ${mv.unit} · ${mv.time}`
-      }
-      return '—'
-    }
-    default: return '—'
-  }
+const today = computed(() => new Date().toISOString().slice(0, 10))
+
+function offsetDate(base: string, days: number): string {
+  const [y, m, d] = base.split('-').map(Number)
+  return new Date(y, m - 1, d + days).toISOString().slice(0, 10)
 }
 
-// ─── Display helpers ──────────────────────────────────────────────────────────
+const prevDate = computed(() => offsetDate(date.value, -1))
+const nextDate = computed(() => offsetDate(date.value, +1))
+const isNextDisabled = computed(() => date.value >= today.value)
+const isPrevDisabled = computed(() => {
+  const dates = [...diary.availableDates].sort()
+  return dates.length > 0 && date.value <= dates[0]
+})
 
-const displayDate = computed(() => {
+function navigateDay(dir: 'prev' | 'next') {
+  router.push(`/diary/${dir === 'prev' ? prevDate.value : nextDate.value}`)
+}
+
+// ─── Header date formatting ───────────────────────────────────────────────────
+
+const headerWeekday = computed(() => {
   if (!date.value) return ''
   const [y, m, d] = date.value.split('-').map(Number)
-  return new Date(y, m - 1, d).toLocaleDateString(locale.value, {
-    weekday: 'long',
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-  })
+  return new Date(y, m - 1, d).toLocaleDateString(locale.value, { weekday: 'long' })
 })
+
+const headerDate = computed(() => {
+  if (!date.value) return ''
+  const [y, m, d] = date.value.split('-').map(Number)
+  const opts: Intl.DateTimeFormatOptions = y === new Date().getFullYear()
+    ? { month: 'long', day: 'numeric' }
+    : { month: 'long', day: 'numeric', year: 'numeric' }
+  return new Date(y, m - 1, d).toLocaleDateString(locale.value, opts)
+})
+
+// ─── 24-hour detection ────────────────────────────────────────────────────────
+
+const is24Hour = computed(() => {
+  const f = new Intl.DateTimeFormat(locale.value, { hour: 'numeric' }).format(new Date(2000, 0, 1, 13))
+  return !/[ap]m/i.test(f)
+})
+
+// ─── Summary chips ────────────────────────────────────────────────────────────
+
+const noteCount = computed(() => timelineEntries.value.length)
+const trackerCount = computed(() => new Set(dataEntries.value.map(e => e.configId)).size)
+const moodValue = computed<TrackerValue>(() => {
+  const latest = [...dataEntries.value]
+    .filter(e => trackers.configs.find(c => c.id === e.configId)?.type === 'range')
+    .sort((a, b) => b.createdAt.localeCompare(a.createdAt))[0]
+  return latest?.value ?? null
+})
+const hasSummary = computed(() => allTimelineItems.value.length > 0)
+
+// ─── Quick-add chips ──────────────────────────────────────────────────────────
+
+const quickAddChips = computed(() => trackers.configs.slice(0, 4))
+
+// ─── Time formatting helpers ──────────────────────────────────────────────────
+
+function formatHourMin(iso: string): string {
+  return new Date(iso).toLocaleTimeString(locale.value, {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: !is24Hour.value,
+  }).replace(/ ?[AP]M$/i, '')
+}
+
+function formatAmPm(iso: string): string {
+  return new Date(iso).getHours() < 12 ? 'am' : 'pm'
+}
+
+// ─── Bubble helpers ───────────────────────────────────────────────────────────
+
+function bubbleStyle(item: TimelineItem): Record<string, string> {
+  if (item.type === 'text') return {}
+  const config = trackers.configs.find(c => c.id === (item as DataTimelineItem).configId)
+  if (!config) return {}
+  return { backgroundColor: config.color, color: 'white' }
+}
+
+function bubbleContent(item: TimelineItem): string {
+  if (item.type === 'text') return '✎'
+  const config = trackers.configs.find(c => c.id === (item as DataTimelineItem).configId)
+  if (!config) return '?'
+  return appSettings.settings.useEmojis ? config.icon : config.label[0].toUpperCase()
+}
+
+function eyebrowLabel(item: TimelineItem): string {
+  if (item.type === 'text') return t('diary.noteLabel')
+  return trackers.configs.find(c => c.id === (item as DataTimelineItem).configId)?.label ?? ''
+}
+
+function eyebrowStyle(item: TimelineItem): Record<string, string> {
+  if (item.type === 'text') return { color: 'var(--color-ink-muted)' }
+  const config = trackers.configs.find(c => c.id === (item as DataTimelineItem).configId)
+  return config ? { color: config.color } : {}
+}
+
+function periodLabel(period: string): string {
+  const key = `diary.period.${period}`
+  return t(key)
+}
+
+function asDivider(item: DisplayItem): PeriodDivider {
+  return item as PeriodDivider
+}
+
+function asTimelineItem(item: DisplayItem): TimelineItem {
+  return item as TimelineItem
+}
+
+function asTextItem(item: DisplayItem): TextTimelineItem {
+  return item as TextTimelineItem
+}
+
+function asDataItem(item: DisplayItem): DataTimelineItem {
+  return item as DataTimelineItem
+}
 </script>
 
 <template>
-  <div class="space-y-5">
-    <!-- Header -->
-    <div class="flex items-center justify-between">
-      <h2 class="text-lg font-semibold text-ink">{{ displayDate }}</h2>
+  <div>
+    <!-- Day header -->
+    <div class="grid grid-cols-[32px_1fr_32px] gap-2.5 items-center pb-4 border-b border-edge">
+      <!-- Prev day -->
       <button
-        @click="router.push('/diary')"
-        class="text-sm text-ink-muted hover:text-ink transition-colors px-2 py-1 rounded-input hover:bg-subtle"
+        @click="navigateDay('prev')"
+        :disabled="isPrevDisabled"
+        :aria-label="t('diary.prevDay')"
+        :aria-disabled="isPrevDisabled"
+        :tabindex="isPrevDisabled ? -1 : 0"
+        class="w-8 h-8 rounded-full flex items-center justify-center text-ink-muted hover:bg-subtle hover:text-ink transition-colors disabled:opacity-30 disabled:cursor-default"
       >
-        {{ t('diary.back') }}
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M10 12L6 8l4-4"/>
+        </svg>
+      </button>
+
+      <!-- Date center block -->
+      <div class="text-center">
+        <div class="text-[11px] font-semibold uppercase tracking-[0.12em] text-ink-muted">{{ headerWeekday }}</div>
+        <div class="text-[24px] font-semibold leading-[1.1] tracking-[-0.02em] text-ink">{{ headerDate }}</div>
+        <div v-if="hasSummary" class="inline-flex items-center justify-center gap-2 flex-wrap text-[11.5px] text-ink-muted mt-1">
+          <span v-if="noteCount > 0">
+            <b class="text-ink">{{ noteCount }}</b> {{ noteCount === 1 ? 'note' : 'notes' }}
+          </span>
+          <template v-if="noteCount > 0 && moodValue !== null">
+            <span class="w-[3px] h-[3px] rounded-full bg-ink-muted inline-block" />
+          </template>
+          <span v-if="moodValue !== null">mood <b class="text-ink">{{ moodValue }}</b></span>
+          <template v-if="trackerCount > 0 && (noteCount > 0 || moodValue !== null)">
+            <span class="w-[3px] h-[3px] rounded-full bg-ink-muted inline-block" />
+          </template>
+          <span v-if="trackerCount > 0">
+            <b class="text-ink">{{ trackerCount }}</b> {{ trackerCount === 1 ? 'tracker' : 'trackers' }}
+          </span>
+        </div>
+      </div>
+
+      <!-- Next day -->
+      <button
+        @click="navigateDay('next')"
+        :disabled="isNextDisabled"
+        :aria-label="t('diary.nextDay')"
+        :aria-disabled="isNextDisabled"
+        :tabindex="isNextDisabled ? -1 : 0"
+        class="w-8 h-8 rounded-full flex items-center justify-center text-ink-muted hover:bg-subtle hover:text-ink transition-colors disabled:opacity-30 disabled:cursor-default"
+      >
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M6 4l4 4-4 4"/>
+        </svg>
       </button>
     </div>
 
-    <!-- Timeline: centered beads on a continuous rope -->
-    <div class="relative flex flex-col items-center pt-6">
-      <!-- Continuous rope line — spans from center of first bead to center of + button,
-           sits behind everything (z-index below z-10 elements) -->
-      <div
-        v-if="allTimelineItems.length > 0"
-        class="absolute left-1/2 -translate-x-px w-0.5 bg-edge-strong pointer-events-none"
-        style="top: 24px; bottom: 28px"
-      />
+    <!-- Timeline -->
+    <div
+      class="timeline relative pt-6"
+      :class="{ 'timeline--dimmed': showAddMenu }"
+    >
+      <TransitionGroup name="timeline" tag="div">
+        <template v-for="item in timelineWithDividers" :key="item.id">
 
-      <TransitionGroup name="timeline" tag="div" class="w-full flex flex-col items-center">
-        <div
-          v-for="(item, index) in allTimelineItems"
-          :key="item.id"
-          class="w-full flex flex-col items-center"
-        >
-          <!-- Gap between beads — rope is visible through here -->
-          <div v-if="index > 0" class="h-10" />
-
-          <!-- Text entry -->
-          <template v-if="item.type === 'text'">
-            <div class="relative w-full">
-            <div
-              class="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20 w-12 h-12 rounded-full bg-accent text-on-accent flex items-center justify-center shadow-card select-none"
-              :class="appSettings.settings.useEmojis ? 'text-2xl' : 'text-sm font-bold'"
-            >{{ appSettings.settings.useEmojis ? '✎' : 'T' }}</div>
-            <!-- Entry box — bubble overlaps top border -->
-            <div class="relative z-10 w-full bg-raised border border-edge-strong rounded-card px-3 pt-8 pb-3">
-              <div class="flex items-start justify-between mb-2">
-                <span class="text-sm font-semibold text-ink leading-tight">{{ t('diary.noteLabel') }}</span>
-                <div class="flex items-center gap-2 shrink-0 ml-2">
-                  <span class="text-xs text-ink-faint">
-                    {{ new Date(item.createdAt).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' }) }}
-                  </span>
-                  <div v-if="editingId !== item.id" class="flex gap-1">
-                    <button
-                      @click="startEdit(item.id)"
-                      class="text-xs text-ink-muted hover:text-ink px-1.5 py-0.5 rounded-input hover:bg-subtle transition-colors"
-                    >{{ t('diary.editEntry') }}</button>
-                    <button
-                      @click="requestDeleteEntry(item.id)"
-                      class="text-xs text-danger px-1.5 py-0.5 rounded-input hover:bg-subtle transition-colors"
-                    >{{ t('diary.deleteEntry') }}</button>
-                  </div>
-                  <button
-                    v-else
-                    @click="confirmEdit"
-                    class="text-xs text-accent px-1.5 py-0.5 rounded-input hover:bg-accent-tint transition-colors"
-                  >{{ t('diary.done') }}</button>
-                </div>
-              </div>
-              <p
-                v-if="editingId !== item.id"
-                @dblclick="startEdit(item.id)"
-                class="text-sm text-ink whitespace-pre-wrap cursor-text min-h-5"
-              >{{ (item as TextTimelineItem).text || '…' }}</p>
-              <textarea
-                v-else
-                :ref="(el: any) => el && nextTick(() => (el as HTMLTextAreaElement).focus())"
-                :value="(item as TextTimelineItem).text"
-                @input="updateEntryText(item.id, ($event.target as HTMLTextAreaElement).value)"
-                @blur="confirmEdit"
-                @keydown.escape="confirmEdit"
-                rows="3"
-                :placeholder="t('diary.newEntryPlaceholder')"
-                class="w-full border border-edge rounded-card px-3 py-2 text-sm text-ink bg-raised placeholder:text-ink-faint resize-none focus:outline-none focus:ring-2 focus:ring-accent/25 focus:border-accent transition-colors"
+          <!-- Period divider -->
+          <div
+            v-if="asDivider(item).type === 'divider'"
+            role="presentation"
+            class="grid grid-cols-[52px_1fr] gap-3 items-center mb-3 mt-0.5"
+          >
+            <span class="flex justify-center">
+              <span
+                class="block w-1.5 h-1.5 rounded-full bg-edge-strong"
+                style="box-shadow: 0 0 0 4px var(--color-surface)"
               />
-            </div>
-            </div>
-          </template>
+            </span>
+            <span class="text-[10px] uppercase tracking-[0.16em] font-semibold text-ink-faint">
+              {{ periodLabel(asDivider(item).period) }}
+            </span>
+          </div>
 
-          <!-- Data point entry -->
-          <template v-else>
-            <div class="relative w-full">
-            <div class="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20">
-              <TrackerIcon
-                :icon="trackers.configs.find(c => c.id === (item as DataTimelineItem).configId)?.icon ?? ''"
-                :color="trackers.configs.find(c => c.id === (item as DataTimelineItem).configId)?.color ?? 'var(--color-accent)'"
-                :label="trackers.configs.find(c => c.id === (item as DataTimelineItem).configId)?.label ?? ''"
-                size="lg"
-                class="shadow-card"
-              />
-            </div>
-            <!-- Entry box — bubble overlaps top border -->
-            <div class="relative z-10 w-full bg-raised border border-edge-strong rounded-card px-3 pt-8 pb-3">
-              <div class="flex items-start justify-between mb-1">
-                <span class="text-sm font-semibold text-ink leading-tight">
-                  {{ trackers.configs.find(c => c.id === (item as DataTimelineItem).configId)?.label }}
+          <!-- Entry row -->
+          <div
+            v-else
+            class="grid grid-cols-[52px_1fr] gap-3 mb-5"
+          >
+            <!-- Gutter: bubble + time chip -->
+            <div class="flex flex-col items-center">
+              <div
+                aria-hidden="true"
+                class="w-9 h-9 rounded-full inline-flex items-center justify-center leading-none select-none"
+                :class="[
+                  (item as TimelineItem).type === 'text'
+                    ? 'bg-surface text-ink-muted border-[1.5px] border-edge-strong text-[14px]'
+                    : (appSettings.settings.useEmojis ? 'text-xl' : 'text-[12px] font-bold')
+                ]"
+                :style="[
+                  { boxShadow: '0 0 0 4px var(--color-surface), 0 1px 3px rgba(0,0,0,.06)' },
+                  bubbleStyle(item as TimelineItem)
+                ]"
+              >{{ bubbleContent(item as TimelineItem) }}</div>
+              <time
+                :datetime="(item as TimelineItem).createdAt"
+                class="mt-1.5 text-center text-[10.5px] leading-[1.15] tabular-nums bg-surface px-[3px] rounded-[4px]"
+              >
+                <span class="block text-ink-muted font-semibold">{{ formatHourMin((item as TimelineItem).createdAt) }}</span>
+                <span v-if="!is24Hour" class="block text-[9px] uppercase tracking-[0.08em] text-ink-faint">
+                  {{ formatAmPm((item as TimelineItem).createdAt) }}
                 </span>
-                <div class="flex items-center gap-2 shrink-0 ml-2">
-                  <span class="text-xs text-ink-faint">
-                    {{ new Date(item.createdAt).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' }) }}
-                  </span>
-                  <div class="flex gap-1">
-                    <button
-                      @click="editDataEntry(item as DataTimelineItem)"
-                      class="text-xs text-ink-muted hover:text-ink px-1.5 py-0.5 rounded-input hover:bg-subtle transition-colors"
-                    >{{ t('diary.editEntry') }}</button>
-                    <button
-                      @click="requestDeleteDataEntry(item.id)"
-                      class="text-xs text-danger px-1.5 py-0.5 rounded-input hover:bg-subtle transition-colors"
-                    >{{ t('diary.deleteEntry') }}</button>
-                  </div>
+              </time>
+            </div>
+
+            <!-- Card: no border, no background -->
+            <div class="pt-1 min-w-0">
+              <!-- Eyebrow row -->
+              <div class="flex items-center gap-2 mb-1">
+                <span
+                  class="text-[10.5px] font-semibold uppercase tracking-[0.08em]"
+                  :style="eyebrowStyle(item as TimelineItem)"
+                >{{ eyebrowLabel(item as TimelineItem) }}</span>
+                <div class="inline-flex gap-0.5 ml-auto shrink-0">
+                  <!-- Edit button -->
+                  <button
+                    @click="handleEdit(item as TimelineItem)"
+                    :aria-label="t('diary.editEntry')"
+                    class="w-9 h-9 flex items-center justify-center rounded-md opacity-60 hover:opacity-100 hover:bg-subtle transition-all"
+                  >
+                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M9.5 2.5l2 2-7 7H2.5v-2l7-7z"/>
+                    </svg>
+                  </button>
+                  <!-- Delete button -->
+                  <button
+                    @click="handleDelete(item as TimelineItem)"
+                    :aria-label="t('diary.deleteEntry')"
+                    class="w-9 h-9 flex items-center justify-center rounded-md opacity-60 hover:opacity-100 hover:bg-danger-tint hover:text-danger transition-all"
+                  >
+                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M2 3.5h10M5 3.5V2h4v1.5M5.5 6v4M8.5 6v4M3 3.5l.75 7.5h6.5L11 3.5"/>
+                    </svg>
+                  </button>
                 </div>
               </div>
-              <span class="text-sm text-ink">{{ formatDataValue(item as DataTimelineItem) }}</span>
+
+              <!-- Text entry content -->
+              <template v-if="(item as TimelineItem).type === 'text'">
+                <p
+                  v-if="editingId !== (item as TextTimelineItem).id"
+                  @dblclick="startEdit((item as TextTimelineItem).id)"
+                  class="text-[14.5px] leading-[1.6] text-ink whitespace-pre-wrap break-words cursor-text min-h-5"
+                >{{ (item as TextTimelineItem).text || '…' }}</p>
+                <textarea
+                  v-else
+                  :ref="(el: unknown) => el && nextTick(() => (el as HTMLTextAreaElement).focus())"
+                  :value="(item as TextTimelineItem).text"
+                  @input="updateEntryText((item as TextTimelineItem).id, ($event.target as HTMLTextAreaElement).value)"
+                  @blur="confirmEdit"
+                  @keydown.escape="confirmEdit"
+                  rows="3"
+                  :placeholder="t('diary.newEntryPlaceholder')"
+                  class="w-full text-[14.5px] leading-[1.6] text-ink bg-transparent placeholder:text-ink-faint resize-none focus:outline-none focus:ring-2 focus:ring-accent/25 rounded-sm"
+                />
+              </template>
+
+              <!-- Data entry value -->
+              <EntryValue
+                v-else
+                :config="trackers.configs.find(c => c.id === (item as DataTimelineItem).configId)"
+                :value="(item as DataTimelineItem).value"
+                :use-emojis="appSettings.settings.useEmojis"
+              />
             </div>
-            </div>
-          </template>
-        </div>
+          </div>
+
+        </template>
       </TransitionGroup>
 
-      <!-- Gap before + button — rope visible here -->
-      <div v-if="allTimelineItems.length > 0" class="h-10" />
-
-      <!-- + button bead -->
-      <div class="relative z-10 w-14 h-14">
-        <button
-          @click="showAddMenu = !showAddMenu"
-          :disabled="saving"
-          :aria-label="showAddMenu ? t('diary.closeAddMenu') : t('diary.addEntry')"
-          class="w-14 h-14 rounded-full bg-accent text-on-accent flex items-center justify-center text-3xl leading-none hover:bg-accent-dim disabled:opacity-50 shadow-card"
-          :style="{ transform: showAddMenu ? 'rotate(45deg)' : 'rotate(0deg)', transition: 'transform 240ms cubic-bezier(0.34, 1.56, 0.64, 1)' }"
-        >+</button>
-
-        <!-- Radial items -->
-        <button
-          v-for="(menuItem, i) in menuItems"
-          :key="menuItem.id"
-          :disabled="saving"
-          :aria-label="menuItem.label"
-          :style="[
-            radialItemStyle(i, menuItem.id === '__text__' ? '' : menuItem.color),
-            menuItem.id !== '__text__' && !appSettings.settings.useEmojis ? { color: 'white', fontSize: '0.75rem', fontWeight: '700' } : {},
-          ]"
-          @click="menuItem.action()"
-          class="w-12 h-12 rounded-full flex items-center justify-center text-xl leading-none shadow-card disabled:opacity-50"
-          :class="menuItem.id === '__text__' ? 'bg-accent text-on-accent hover:bg-accent-dim' : 'hover:opacity-80'"
-        >{{ menuItem.icon }}</button>
-      </div>
-
-      <!-- Empty-state hint -->
+      <!-- Empty state -->
       <p v-if="!allTimelineItems.length" class="mt-4 text-sm text-ink-faint text-center">
         {{ t('diary.noEntries') }}
       </p>
+
+      <!-- Add zone -->
+      <div v-if="!showAddMenu" class="grid grid-cols-[52px_1fr] gap-3 mt-1">
+        <!-- FAB -->
+        <div class="flex justify-center">
+          <button
+            @click="showAddMenu = true"
+            :disabled="saving"
+            :aria-label="t('diary.addEntry')"
+            class="w-10 h-10 rounded-full bg-accent text-on-accent flex items-center justify-center text-[22px] leading-none hover:bg-accent-dim disabled:opacity-50 transition-colors"
+            style="box-shadow: 0 6px 16px rgba(79,70,229,.35), 0 0 0 5px var(--color-surface)"
+          >+</button>
+        </div>
+        <!-- Quick-add text and chips -->
+        <div class="flex flex-col gap-2 text-[12.5px] text-ink-muted">
+          <span>{{ t('diary.addToToday') }}</span>
+          <div class="flex flex-wrap gap-1.5">
+            <button
+              @click="addEntry()"
+              class="inline-flex items-center gap-1 bg-surface border border-edge text-ink-muted text-[11px] px-2.5 py-1 rounded-full whitespace-nowrap hover:bg-subtle transition-colors"
+            >
+              <span class="leading-none">✎</span> {{ t('diary.quickAdd.note') }}
+            </button>
+            <button
+              v-for="c in quickAddChips"
+              :key="c.id"
+              @click="openDataPointModal(c)"
+              class="inline-flex items-center gap-1 bg-surface border border-edge text-ink-muted text-[11px] px-2.5 py-1 rounded-full whitespace-nowrap hover:bg-subtle transition-colors"
+            >
+              <span class="leading-none">{{ appSettings.settings.useEmojis ? c.icon : c.label[0].toUpperCase() }}</span>
+              {{ c.label }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Radial backdrop (full-viewport click catcher) -->
+    <div
+      v-if="showAddMenu"
+      class="fixed inset-0 z-[9]"
+      @click="showAddMenu = false"
+      aria-hidden="true"
+    />
+
+    <!-- Radial menu (fixed, centered in viewport) -->
+    <div
+      v-if="showAddMenu"
+      class="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-10 w-0 h-0"
+    >
+      <!-- Radial items -->
+      <button
+        v-for="(menuItem, i) in menuItems"
+        :key="menuItem.id"
+        :disabled="saving"
+        :aria-label="menuItem.label"
+        :style="[
+          radialItemStyle(i, menuItem.id === '__text__' ? '' : menuItem.color),
+          menuItem.id !== '__text__' && !appSettings.settings.useEmojis
+            ? { color: 'white', fontSize: '0.75rem', fontWeight: '700' }
+            : {},
+        ]"
+        @click="menuItem.action()"
+        class="w-12 h-12 rounded-full flex items-center justify-center text-xl leading-none shadow-card disabled:opacity-50"
+        :class="menuItem.id === '__text__' ? 'bg-accent text-on-accent hover:bg-accent-dim' : 'hover:opacity-80'"
+      >{{ menuItem.icon }}</button>
+
+      <!-- Close button at center -->
+      <button
+        @click="showAddMenu = false"
+        :aria-label="t('diary.closeAddMenu')"
+        class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-14 h-14 rounded-full bg-accent text-on-accent flex items-center justify-center text-3xl leading-none hover:bg-accent-dim shadow-card z-20 transition-transform"
+        style="transform: translate(-50%, -50%) rotate(45deg)"
+      >+</button>
     </div>
 
     <!-- Confirm delete: text entry -->
@@ -508,6 +728,30 @@ const displayDate = computed(() => {
 </template>
 
 <style scoped>
+/* Rope: left rail at x=25px, fades at both ends */
+.timeline::before {
+  content: "";
+  position: absolute;
+  left: 25px;
+  top: 30px;
+  bottom: 56px;
+  width: 2px;
+  background: linear-gradient(
+    180deg,
+    transparent 0,
+    var(--color-edge) 12px,
+    var(--color-edge) calc(100% - 14px),
+    transparent 100%
+  );
+  pointer-events: none;
+}
+
+/* Dim timeline when radial menu is open */
+.timeline--dimmed {
+  opacity: 0.35;
+  pointer-events: none;
+}
+
 .timeline-enter-active {
   transition: opacity 200ms ease, transform 200ms ease;
 }
