@@ -5,6 +5,7 @@ import { useAppSettingsStore } from '@/stores/appSettings'
 import { useDiaryStore } from '@/stores/diary'
 import { useTrackersStore } from '@/stores/trackers'
 import { seedDemoData, clearData, rerollTheme } from '@/utils/seedData'
+import SettingRow from '@/components/ui/SettingRow.vue'
 
 const { t } = useI18n()
 const appSettings = useAppSettingsStore()
@@ -96,97 +97,73 @@ async function handleClear() {
         {{ t('appSettings.preferences') }}
       </h2>
 
-      <div class="bg-raised border border-edge rounded-card p-4 flex items-start justify-between gap-4">
-        <div>
-          <p class="text-sm font-medium text-ink">{{ t('appSettings.clockDisplay') }}</p>
-          <p class="text-xs text-ink-muted mt-0.5">{{ t('appSettings.clockDisplayDescription') }}</p>
-        </div>
-        <div class="flex gap-1 shrink-0">
-          <button
-            @click="setClockDisplay('24h')"
-            :class="appSettings.settings.clockDisplay === '24h'
-              ? 'bg-accent text-on-accent'
-              : 'bg-subtle text-ink-muted hover:bg-edge'"
-            class="text-sm px-3 py-1.5 rounded-input transition-colors font-medium"
-          >{{ t('appSettings.clockDisplay24h') }}</button>
-          <button
-            @click="setClockDisplay('ampm')"
-            :class="appSettings.settings.clockDisplay === 'ampm'
-              ? 'bg-accent text-on-accent'
-              : 'bg-subtle text-ink-muted hover:bg-edge'"
-            class="text-sm px-3 py-1.5 rounded-input transition-colors font-medium"
-          >{{ t('appSettings.clockDisplayAmpm') }}</button>
-        </div>
-      </div>
+      <SettingRow :title="t('appSettings.clockDisplay')" :description="t('appSettings.clockDisplayDescription')">
+        <button
+          @click="setClockDisplay('24h')"
+          :class="appSettings.settings.clockDisplay === '24h'
+            ? 'bg-accent text-on-accent'
+            : 'bg-subtle text-ink-muted hover:bg-edge'"
+          class="text-sm px-3 py-1.5 rounded-input transition-colors font-medium"
+        >{{ t('appSettings.clockDisplay24h') }}</button>
+        <button
+          @click="setClockDisplay('ampm')"
+          :class="appSettings.settings.clockDisplay === 'ampm'
+            ? 'bg-accent text-on-accent'
+            : 'bg-subtle text-ink-muted hover:bg-edge'"
+          class="text-sm px-3 py-1.5 rounded-input transition-colors font-medium"
+        >{{ t('appSettings.clockDisplayAmpm') }}</button>
+      </SettingRow>
 
-      <div class="bg-raised border border-edge rounded-card p-4 flex items-start justify-between gap-4">
-        <div>
-          <p class="text-sm font-medium text-ink">{{ t('appSettings.diaryView') }}</p>
-          <p class="text-xs text-ink-muted mt-0.5">{{ t('appSettings.diaryViewDescription') }}</p>
-        </div>
-        <div class="flex gap-1 shrink-0">
-          <button
-            @click="setDiaryView('timeline')"
-            :class="appSettings.settings.diaryView === 'timeline'
-              ? 'bg-accent text-on-accent'
-              : 'bg-subtle text-ink-muted hover:bg-edge'"
-            class="text-sm px-3 py-1.5 rounded-input transition-colors font-medium"
-          >{{ t('appSettings.diaryViewTimeline') }}</button>
-          <button
-            @click="setDiaryView('day')"
-            :class="appSettings.settings.diaryView === 'day'
-              ? 'bg-accent text-on-accent'
-              : 'bg-subtle text-ink-muted hover:bg-edge'"
-            class="text-sm px-3 py-1.5 rounded-input transition-colors font-medium"
-          >{{ t('appSettings.diaryViewDay') }}</button>
-        </div>
-      </div>
+      <SettingRow :title="t('appSettings.diaryView')" :description="t('appSettings.diaryViewDescription')">
+        <button
+          @click="setDiaryView('timeline')"
+          :class="appSettings.settings.diaryView === 'timeline'
+            ? 'bg-accent text-on-accent'
+            : 'bg-subtle text-ink-muted hover:bg-edge'"
+          class="text-sm px-3 py-1.5 rounded-input transition-colors font-medium"
+        >{{ t('appSettings.diaryViewTimeline') }}</button>
+        <button
+          @click="setDiaryView('day')"
+          :class="appSettings.settings.diaryView === 'day'
+            ? 'bg-accent text-on-accent'
+            : 'bg-subtle text-ink-muted hover:bg-edge'"
+          class="text-sm px-3 py-1.5 rounded-input transition-colors font-medium"
+        >{{ t('appSettings.diaryViewDay') }}</button>
+      </SettingRow>
 
-      <div class="bg-raised border border-edge rounded-card p-4 flex items-start justify-between gap-4">
-        <div>
-          <p class="text-sm font-medium text-ink">{{ t('appSettings.animations') }}</p>
-          <p class="text-xs text-ink-muted mt-0.5">{{ t('appSettings.animationsDescription') }}</p>
-        </div>
-        <div class="flex gap-1 shrink-0">
-          <button
-            @click="setAnimations(true)"
-            :class="appSettings.settings.animations
-              ? 'bg-accent text-on-accent'
-              : 'bg-subtle text-ink-muted hover:bg-edge'"
-            class="text-sm px-3 py-1.5 rounded-input transition-colors font-medium"
-          >{{ t('appSettings.on') }}</button>
-          <button
-            @click="setAnimations(false)"
-            :class="!appSettings.settings.animations
-              ? 'bg-accent text-on-accent'
-              : 'bg-subtle text-ink-muted hover:bg-edge'"
-            class="text-sm px-3 py-1.5 rounded-input transition-colors font-medium"
-          >{{ t('appSettings.off') }}</button>
-        </div>
-      </div>
+      <SettingRow :title="t('appSettings.animations')" :description="t('appSettings.animationsDescription')">
+        <button
+          @click="setAnimations(true)"
+          :class="appSettings.settings.animations
+            ? 'bg-accent text-on-accent'
+            : 'bg-subtle text-ink-muted hover:bg-edge'"
+          class="text-sm px-3 py-1.5 rounded-input transition-colors font-medium"
+        >{{ t('appSettings.on') }}</button>
+        <button
+          @click="setAnimations(false)"
+          :class="!appSettings.settings.animations
+            ? 'bg-accent text-on-accent'
+            : 'bg-subtle text-ink-muted hover:bg-edge'"
+          class="text-sm px-3 py-1.5 rounded-input transition-colors font-medium"
+        >{{ t('appSettings.off') }}</button>
+      </SettingRow>
 
-      <div class="bg-raised border border-edge rounded-card p-4 flex items-start justify-between gap-4">
-        <div>
-          <p class="text-sm font-medium text-ink">{{ t('appSettings.useEmojis') }}</p>
-          <p class="text-xs text-ink-muted mt-0.5">{{ t('appSettings.useEmojisDescription') }}</p>
-        </div>
-        <div class="flex gap-1 shrink-0">
-          <button
-            @click="setUseEmojis(true)"
-            :class="appSettings.settings.useEmojis
-              ? 'bg-accent text-on-accent'
-              : 'bg-subtle text-ink-muted hover:bg-edge'"
-            class="text-sm px-3 py-1.5 rounded-input transition-colors font-medium"
-          >{{ t('appSettings.on') }}</button>
-          <button
-            @click="setUseEmojis(false)"
-            :class="!appSettings.settings.useEmojis
-              ? 'bg-accent text-on-accent'
-              : 'bg-subtle text-ink-muted hover:bg-edge'"
-            class="text-sm px-3 py-1.5 rounded-input transition-colors font-medium"
-          >{{ t('appSettings.off') }}</button>
-        </div>
-      </div>
+      <SettingRow :title="t('appSettings.useEmojis')" :description="t('appSettings.useEmojisDescription')">
+        <button
+          @click="setUseEmojis(true)"
+          :class="appSettings.settings.useEmojis
+            ? 'bg-accent text-on-accent'
+            : 'bg-subtle text-ink-muted hover:bg-edge'"
+          class="text-sm px-3 py-1.5 rounded-input transition-colors font-medium"
+        >{{ t('appSettings.on') }}</button>
+        <button
+          @click="setUseEmojis(false)"
+          :class="!appSettings.settings.useEmojis
+            ? 'bg-accent text-on-accent'
+            : 'bg-subtle text-ink-muted hover:bg-edge'"
+          class="text-sm px-3 py-1.5 rounded-input transition-colors font-medium"
+        >{{ t('appSettings.off') }}</button>
+      </SettingRow>
     </section>
 
     <section class="space-y-3">

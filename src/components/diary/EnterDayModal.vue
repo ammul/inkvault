@@ -35,11 +35,6 @@ const pendingRows = ref<PendingRow[]>([])
 const innerModalConfig = ref<TrackerConfig | null>(null)
 const showTrackerPicker = ref(false)
 
-function currentHHMM(): string {
-  const d = new Date()
-  return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
-}
-
 function resetState() {
   text.value = ''
   textTime.value = null

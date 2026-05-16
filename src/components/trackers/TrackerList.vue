@@ -5,6 +5,7 @@ import type { TrackerConfig, TrackerType } from '@/types'
 import TrackerIcon from '@/components/ui/TrackerIcon.vue'
 import TrackerPreview from '@/components/trackers/TrackerPreview.vue'
 import TrackerEditor from '@/components/trackers/TrackerEditor.vue'
+import TrackerCardShell from '@/components/trackers/TrackerCardShell.vue'
 
 const { t } = useI18n()
 
@@ -139,13 +140,8 @@ function subLine(config: TrackerConfig): string {
     <div class="flex flex-col gap-1.5">
 
       <!-- Draft row (always first when present) -->
-      <div
-        v-if="showDraft"
-        class="border rounded-card overflow-hidden border-accent bg-surface"
-        :style="{ boxShadow: '0 0 0 3px var(--color-accent-tint)' }"
-      >
-        <!-- Draft head -->
-        <div class="grid grid-cols-[auto_1fr_auto] items-center gap-3.5 px-4 py-3.5 border-b border-edge">
+      <TrackerCardShell v-if="showDraft">
+        <template #head>
           <TrackerIcon icon="📊" color="#4f46e5" label="New" />
           <div class="min-w-0">
             <p class="text-sm font-semibold text-ink-muted">{{ t('trackers.editor.newTitle') }}</p>
@@ -160,17 +156,15 @@ function subLine(config: TrackerConfig): string {
               <polyline points="3,10 8,5 13,10"/>
             </svg>
           </button>
-        </div>
+        </template>
 
-        <!-- Draft editor body -->
         <TrackerEditor
           :ref="setEditorRef"
           :compact="true"
           @save="onEditorSave"
         />
 
-        <!-- Draft foot -->
-        <div class="flex justify-end items-center gap-2 px-4 py-2.5 border-t border-edge bg-subtle">
+        <template #foot>
           <button
             type="button"
             @click="cancelEdit"
@@ -185,8 +179,8 @@ function subLine(config: TrackerConfig): string {
           >
             {{ t('trackers.editor.add') }}
           </button>
-        </div>
-      </div>
+        </template>
+      </TrackerCardShell>
 
       <!-- Existing config rows -->
       <template v-for="config in configs" :key="config.id">
@@ -248,13 +242,8 @@ function subLine(config: TrackerConfig): string {
         </div>
 
         <!-- ── Expanded row ───────────────────────────────── -->
-        <div
-          v-else
-          class="border rounded-card overflow-hidden border-accent bg-surface"
-          :style="{ boxShadow: '0 0 0 3px var(--color-accent-tint)' }"
-        >
-          <!-- Expanded head -->
-          <div class="grid grid-cols-[auto_1fr_auto] items-center gap-3.5 px-4 py-3.5 border-b border-edge">
+        <TrackerCardShell v-else foot-class="justify-between">
+          <template #head>
             <TrackerIcon :icon="config.icon" :color="config.color" :label="config.label" />
             <div class="min-w-0">
               <p class="text-sm font-semibold text-ink truncate">{{ config.label }}</p>
@@ -280,9 +269,8 @@ function subLine(config: TrackerConfig): string {
                 </svg>
               </button>
             </div>
-          </div>
+          </template>
 
-          <!-- Expanded editor body -->
           <TrackerEditor
             :ref="setEditorRef"
             :initial="config"
@@ -291,8 +279,7 @@ function subLine(config: TrackerConfig): string {
             @save="onEditorSave"
           />
 
-          <!-- Expanded foot -->
-          <div class="flex justify-between items-center px-4 py-2.5 border-t border-edge bg-subtle">
+          <template #foot>
             <button
               type="button"
               class="text-xs text-danger hover:underline transition-colors"
@@ -316,8 +303,8 @@ function subLine(config: TrackerConfig): string {
                 {{ t('trackers.editor.save') }}
               </button>
             </div>
-          </div>
-        </div>
+          </template>
+        </TrackerCardShell>
 
       </template>
 
