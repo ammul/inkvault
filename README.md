@@ -7,6 +7,31 @@ A private diary with no backend, no accounts, and no telemetry. Every entry is e
 
 > **Status:** active development. The security model has been reviewed, but this is a personal project, not an audited product. See [Threat model](#threat-model) for what InkVault does and does not defend against.
 
+## Screenshots
+
+<table>
+<tr>
+<td align="center" width="50%">
+<img src="docs/screenshots/06-diary-day.png" alt="Diary timeline view">
+<br><sub><b>Timeline diary</b> — timestamped notes and tracker readings in a single chronological view</sub>
+</td>
+<td align="center" width="50%">
+<img src="docs/screenshots/03-trackers-list.png" alt="Trackers list">
+<br><sub><b>Configurable trackers</b> — sliders, yes/no, multiple choice, medication doses, and more</sub>
+</td>
+</tr>
+<tr>
+<td align="center" width="50%">
+<img src="docs/screenshots/07-stats.png" alt="Statistics view">
+<br><sub><b>Statistics</b> — weekly, monthly, or all-time history for every tracker</sub>
+</td>
+<td align="center" width="50%">
+<img src="docs/screenshots/01-lock-create.png" alt="Vault creation screen">
+<br><sub><b>Private by design</b> — AES-256-GCM encryption in the browser; your passphrase never leaves your device</sub>
+</td>
+</tr>
+</table>
+
 ## Features
 
 - **End-to-end client-side encryption.** AES-256-GCM authenticated encryption with PBKDF2-SHA256 key derivation at 600,000 iterations.

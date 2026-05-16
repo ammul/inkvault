@@ -5,6 +5,8 @@ import { join } from 'node:path'
 const PASSPHRASE = 'InkVault-Demo-2024!'
 const OUT = join(process.cwd(), 'docs', 'screenshots')
 
+test.setTimeout(300_000)
+
 async function shot(page: Page, name: string): Promise<void> {
   await page.screenshot({ path: join(OUT, name), fullPage: false })
 }
@@ -20,8 +22,6 @@ async function openRadialMenu(page: Page): Promise<void> {
   await page.waitForTimeout(500) // radial animation (max ~350ms)
 }
 
-// Wait for encrypted save to complete — AES is fast but we need reactivity to settle.
-// 500ms is conservative; the actual crypto+localStorage write is <10ms.
 async function afterSave(page: Page): Promise<void> {
   await page.waitForTimeout(500)
 }
@@ -57,6 +57,21 @@ const ENTRIES = [
   },
 ]
 
+async function addTracker(
+  page: Page,
+  label: string,
+  type?: string,
+  extras?: (page: Page) => Promise<void>,
+) {
+  await page.getByRole('button', { name: '+ Add', exact: true }).click()
+  await page.getByPlaceholder('e.g. Mood').fill(label)
+  if (type) await page.getByRole('button', { name: type }).click()
+  if (extras) await extras(page)
+  await page.getByRole('button', { name: 'Add tracker' }).click()
+  // Wait for draft to close — "+ Add another tracker" only appears when configs.length > 0 && !showDraft
+  await expect(page.getByText('+ Add another tracker')).toBeVisible({ timeout: 10_000 })
+}
+
 test('generate promotional screenshots', async ({ page }) => {
   await mkdir(OUT, { recursive: true })
 
@@ -74,56 +89,29 @@ test('generate promotional screenshots', async ({ page }) => {
   await expect(page.getByText('Welcome back')).toBeVisible()
   await shot(page, '02-home.png')
 
-  // ── Data points ───────────────────────────────────────────────────────────
-  // handleSave() in DataPointsView is async — it awaits the encrypted store write before
-  // calling closeEditor(). So after clicking "Add Data Point" we must wait for the editor
-  // to close (showEditor = false) before proceeding; the "+ Add" button only renders when
-  // showEditor = false, making it a reliable signal.
+  // ── Trackers ──────────────────────────────────────────────────────────────
   await page.goto('/inkvault/#/trackers')
   await expect(page.getByRole('button', { name: '+ Add' })).toBeVisible()
 
-  // Mood — range (default type)
-  await page.getByRole('button', { name: '+ Add' }).click()
-  await page.getByPlaceholder('e.g. Mood').fill('Mood')
-  await page.getByRole('button', { name: 'Add Data Point' }).click()
-  await expect(page.getByRole('button', { name: '+ Add' })).toBeVisible({ timeout: 10_000 })
+  await addTracker(page, 'Mood')
+  await addTracker(page, 'Energy')
+  await addTracker(page, 'Exercise', 'Yes / No')
+  await addTracker(page, 'How I felt', 'Multiple choice', async (p) => {
+    await p.getByPlaceholder('Good, Neutral, Bad').fill('Joyful, Calm, Anxious, Excited, Grateful')
+  })
+  await addTracker(page, 'Vitamin D', 'Medication', async (p) => {
+    await p.getByPlaceholder('e.g. Ibuprofen').fill('Vitamin D3')
+    await p.getByPlaceholder('e.g. 10mg, 40mg, 100mg').fill('1000 IU, 2000 IU')
+  })
 
-  // Energy — range
-  await page.getByRole('button', { name: '+ Add' }).click()
-  await page.getByPlaceholder('e.g. Mood').fill('Energy')
-  await page.getByRole('button', { name: 'Add Data Point' }).click()
-  await expect(page.getByRole('button', { name: '+ Add' })).toBeVisible({ timeout: 10_000 })
+  await page.waitForTimeout(300) // let list-enter animation finish
+  await shot(page, '03-trackers-list.png')
 
-  // Exercise — boolean (Yes / No type)
-  await page.getByRole('button', { name: '+ Add' }).click()
-  await page.getByPlaceholder('e.g. Mood').fill('Exercise')
-  await page.getByRole('button', { name: 'Yes / No' }).click()
-  await page.getByRole('button', { name: 'Add Data Point' }).click()
-  await expect(page.getByRole('button', { name: '+ Add' })).toBeVisible({ timeout: 10_000 })
-
-  // How I felt — multi-string
-  await page.getByRole('button', { name: '+ Add' }).click()
-  await page.getByPlaceholder('e.g. Mood').fill('How I felt')
-  await page.getByRole('button', { name: 'Multiple choice' }).click()
-  await page.getByPlaceholder('Good, Neutral, Bad').fill('Joyful, Calm, Anxious, Excited, Grateful')
-  await page.getByRole('button', { name: 'Add Data Point' }).click()
-  await expect(page.getByRole('button', { name: '+ Add' })).toBeVisible({ timeout: 10_000 })
-
-  // Vitamin D — medication
-  await page.getByRole('button', { name: '+ Add' }).click()
-  await page.getByPlaceholder('e.g. Mood').fill('Vitamin D')
-  await page.getByRole('button', { name: 'Medication' }).click()
-  await page.getByPlaceholder('e.g. Ibuprofen').fill('Vitamin D3')
-  await page.getByPlaceholder('e.g. 10mg, 40mg, 100mg').fill('1000 IU, 2000 IU')
-  await page.getByRole('button', { name: 'Add Data Point' }).click()
-  await expect(page.getByRole('button', { name: '+ Add' })).toBeVisible({ timeout: 10_000 })
-  await page.waitForTimeout(300) // let the Vitamin D list-enter animation finish (200ms)
-
-  await shot(page, '03-datapoints-list.png')
-
-  // Open Mood editor to show range config
-  await page.getByRole('button', { name: 'Edit' }).first().click()
-  await shot(page, '04-datapoints-editor.png')
+  // Expand Mood row to show editor
+  await page.locator('[role="button"]').filter({ hasText: 'Mood' }).click()
+  await page.waitForTimeout(200)
+  await shot(page, '04-trackers-editor.png')
+  // Cancel button is in the TrackerCardShell footer
   await page.getByRole('button', { name: 'Cancel' }).click()
 
   // ── Seed diary entries ────────────────────────────────────────────────────
@@ -131,35 +119,30 @@ test('generate promotional screenshots', async ({ page }) => {
     const entry = ENTRIES[i]
     await page.goto(`/inkvault/#/diary/${dateISO(i)}`)
 
-    // Text entry
     await openRadialMenu(page)
     await page.getByRole('button', { name: 'Add text entry' }).click()
     await page.getByPlaceholder('What happened?').fill(entry.text)
     await page.getByRole('button', { name: 'Done' }).click()
     await afterSave(page)
 
-    // Mood
     await openRadialMenu(page)
     await page.getByRole('button', { name: 'Mood' }).click()
     await page.locator('input[type="range"]').fill(String(entry.mood))
     await page.getByRole('button', { name: 'Done' }).click()
     await afterSave(page)
 
-    // Energy
     await openRadialMenu(page)
     await page.getByRole('button', { name: 'Energy' }).click()
     await page.locator('input[type="range"]').fill(String(entry.energy))
     await page.getByRole('button', { name: 'Done' }).click()
     await afterSave(page)
 
-    // Exercise
     await openRadialMenu(page)
     await page.getByRole('button', { name: 'Exercise' }).click()
     await page.getByRole('button', { name: entry.exercised ? 'Yes' : 'No' }).click()
     await page.getByRole('button', { name: 'Done' }).click()
     await afterSave(page)
 
-    // How I felt
     await openRadialMenu(page)
     await page.getByRole('button', { name: 'How I felt' }).click()
     for (const emotion of entry.emotions) {
@@ -174,24 +157,22 @@ test('generate promotional screenshots', async ({ page }) => {
   await expect(page.locator('main')).toContainText(
     /January|February|March|April|May|June|July|August|September|October|November|December/,
   )
-  await page.waitForTimeout(500) // let calendar render and any Teleport from prev page clear
+  await page.waitForTimeout(500)
   await shot(page, '05-diary-calendar.png')
 
   // ── Diary day (today) ─────────────────────────────────────────────────────
   await page.goto(`/inkvault/#/diary/${dateISO(0)}`)
   await expect(page.getByText(ENTRIES[0].text)).toBeVisible()
-  await page.waitForTimeout(400) // let timeline fade-in animation complete (200ms)
+  await page.waitForTimeout(400)
   await shot(page, '06-diary-day.png')
 
   // ── Statistics ────────────────────────────────────────────────────────────
   await page.goto('/inkvault/#/stats')
   await expect(page.getByText('Statistics')).toBeVisible()
-  await page.waitForTimeout(800) // chart render
+  await page.waitForTimeout(800)
   await shot(page, '07-stats.png')
 
   // ── Theme variations ──────────────────────────────────────────────────────
-  // Apply theme directly via dataset attributes (same as ThemeStore.apply())
-  // Must run before lock so we're still authenticated and stores are loaded.
   type Mood = 'minimal' | 'cozy' | 'dark'
   type Color = 'indigo' | 'violet' | 'teal' | 'rose' | 'amber' | 'slate'
 
@@ -217,14 +198,12 @@ test('generate promotional screenshots', async ({ page }) => {
   ]
 
   for (const { mood, color, label } of THEME_SHOTS) {
-    // Diary day — most content-rich view
     await page.goto(`/inkvault/#/diary/${dateISO(0)}`)
     await expect(page.getByText(ENTRIES[0].text)).toBeVisible()
     await applyTheme(mood, color)
     await page.waitForTimeout(200)
     await shot(page, `theme-${label}-diary.png`)
 
-    // Calendar — shows month grid with color accents
     await page.goto('/inkvault/#/diary')
     await expect(page.locator('main')).toContainText(
       /January|February|March|April|May|June|July|August|September|October|November|December/,
@@ -234,7 +213,6 @@ test('generate promotional screenshots', async ({ page }) => {
     await shot(page, `theme-${label}-calendar.png`)
   }
 
-  // Reset to default theme before remaining shots
   await applyTheme('minimal', 'indigo')
 
   // ── Theme view ────────────────────────────────────────────────────────────
@@ -242,14 +220,13 @@ test('generate promotional screenshots', async ({ page }) => {
   await expect(page.getByRole('heading', { name: 'Theme' })).toBeVisible()
   await shot(page, '08-theme.png')
 
-  // ── Settings (backup) ─────────────────────────────────────────────────────
-  await page.goto('/inkvault/#/settings')
+  // ── Backup settings ───────────────────────────────────────────────────────
+  await page.goto('/inkvault/#/backup')
   await expect(page.getByRole('heading', { name: 'Backup' })).toBeVisible()
-  await shot(page, '09-settings.png')
+  await shot(page, '09-backup.png')
 
   // ── Lock screen ───────────────────────────────────────────────────────────
-  await page.getByRole('button', { name: 'Toggle menu' }).click()
-  await page.waitForTimeout(250) // drawer slide-in animation (200ms)
+  // On desktop the Lock button is in the top nav bar directly
   await page.getByRole('button', { name: 'Lock' }).click()
   await expect(page.getByPlaceholder('Enter passphrase')).toBeVisible()
   await shot(page, '10-lock-unlock.png')
