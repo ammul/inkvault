@@ -2,6 +2,8 @@
 import { ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import type { TrackerConfig, TrackerValue } from '@/types'
+import { currentHHMM } from '@/utils/time'
+import SlideModal from '@/components/ui/SlideModal.vue'
 import TrackerField from '@/components/trackers/TrackerField.vue'
 
 const props = defineProps<{
@@ -25,85 +27,45 @@ const entryTime = ref('')
 watch(() => props.open, (val) => {
   if (val) {
     localValue.value = props.initialValue
-    if (props.initialTime) {
-      entryTime.value = props.initialTime
-    } else {
-      const d = new Date()
-      entryTime.value = `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
-    }
-    document.addEventListener('keydown', onKeyDown)
-  } else {
-    document.removeEventListener('keydown', onKeyDown)
+    entryTime.value = props.initialTime ?? currentHHMM()
   }
 })
-
-function onKeyDown(e: KeyboardEvent) {
-  if (e.key === 'Escape') emit('close')
-}
 </script>
 
 <template>
-  <Teleport to="body">
-    <Transition
-      enter-active-class="transition-opacity duration-200"
-      leave-active-class="transition-opacity duration-200"
-      enter-from-class="opacity-0"
-      leave-to-class="opacity-0"
-    >
-      <div
-        v-if="open && config"
-        class="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4"
-        @click.self="emit('close')"
-      >
-        <Transition
-          enter-active-class="transition-all duration-200"
-          leave-active-class="transition-all duration-150"
-          enter-from-class="opacity-0 scale-95"
-          leave-to-class="opacity-0 scale-95"
-          appear
-        >
-          <div
-            v-if="open && config"
-            class="bg-raised border border-edge rounded-card shadow-elevated w-full max-w-sm p-5 space-y-4"
-            role="dialog"
-            aria-modal="true"
-          >
-            <h3 class="text-sm font-semibold text-ink">
-              {{ isEdit ? t('diary.editTracker', { label: config.label }) : t('diary.addTracker', { label: config.label }) }}
-            </h3>
-            <TrackerField
-              :config="config"
-              :model-value="localValue"
-              @update:model-value="localValue = $event"
-            />
-            <div class="flex items-center gap-2">
-              <label class="text-xs text-ink-muted shrink-0">{{ t('diary.timeLabel') }}</label>
-              <input
-                type="time"
-                v-model="entryTime"
-                class="text-sm text-ink bg-subtle border border-edge rounded-input px-2 py-1 focus:outline-none focus:ring-2 focus:ring-accent/25"
-              />
-            </div>
-            <div class="flex gap-2 items-center">
-              <button
-                v-if="isEdit"
-                @click="emit('delete')"
-                class="text-sm px-3 py-1.5 rounded-input text-danger hover:bg-subtle transition-colors"
-              >{{ t('diary.deleteEntry') }}</button>
-              <div class="flex gap-2 ml-auto">
-                <button
-                  @click="emit('close')"
-                  class="text-sm px-3 py-1.5 rounded-input text-ink-muted hover:text-ink hover:bg-subtle transition-colors"
-                >{{ t('diary.cancel') }}</button>
-                <button
-                  @click="emit('save', localValue, entryTime)"
-                  class="text-sm px-3 py-1.5 rounded-input bg-accent text-on-accent hover:bg-accent-dim transition-colors"
-                >{{ t('diary.done') }}</button>
-              </div>
-            </div>
-          </div>
-        </Transition>
+  <SlideModal :open="open && config !== null" @close="emit('close')">
+    <h3 class="text-sm font-semibold text-ink">
+      {{ isEdit ? t('diary.editTracker', { label: config!.label }) : t('diary.addTracker', { label: config!.label }) }}
+    </h3>
+    <TrackerField
+      :config="config!"
+      :model-value="localValue"
+      @update:model-value="localValue = $event"
+    />
+    <div class="flex items-center gap-2">
+      <label class="text-xs text-ink-muted shrink-0">{{ t('diary.timeLabel') }}</label>
+      <input
+        type="time"
+        v-model="entryTime"
+        class="text-sm text-ink bg-subtle border border-edge rounded-input px-2 py-1 focus:outline-none focus:ring-2 focus:ring-accent/25"
+      />
+    </div>
+    <div class="flex gap-2 items-center">
+      <button
+        v-if="isEdit"
+        @click="emit('delete')"
+        class="text-sm px-3 py-1.5 rounded-input text-danger hover:bg-subtle transition-colors"
+      >{{ t('diary.deleteEntry') }}</button>
+      <div class="flex gap-2 ml-auto">
+        <button
+          @click="emit('close')"
+          class="text-sm px-3 py-1.5 rounded-input text-ink-muted hover:text-ink hover:bg-subtle transition-colors"
+        >{{ t('diary.cancel') }}</button>
+        <button
+          @click="emit('save', localValue, entryTime)"
+          class="text-sm px-3 py-1.5 rounded-input bg-accent text-on-accent hover:bg-accent-dim transition-colors"
+        >{{ t('diary.done') }}</button>
       </div>
-    </Transition>
-  </Teleport>
+    </div>
+  </SlideModal>
 </template>

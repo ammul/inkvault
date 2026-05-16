@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useAppSettingsStore } from '@/stores/appSettings'
 import { useDiaryStore } from '@/stores/diary'
 import { useTrackersStore } from '@/stores/trackers'
 import { seedDemoData, clearData, rerollTheme } from '@/utils/seedData'
 import SettingRow from '@/components/ui/SettingRow.vue'
+import BinaryToggle from '@/components/ui/BinaryToggle.vue'
 
 const { t } = useI18n()
 const appSettings = useAppSettingsStore()
@@ -18,26 +19,10 @@ onMounted(async () => {
   if (!trackers.loaded) await trackers.loadConfigs()
 })
 
-async function setClockDisplay(val: '24h' | 'ampm') {
-  appSettings.settings.clockDisplay = val
-  await appSettings.save()
-}
-
-async function setDiaryView(val: 'timeline' | 'day') {
-  appSettings.settings.diaryView = val
-  await appSettings.save()
-}
-
-async function setAnimations(val: boolean) {
-  appSettings.settings.animations = val
-  appSettings.apply()
-  await appSettings.save()
-}
-
-async function setUseEmojis(val: boolean) {
-  appSettings.settings.useEmojis = val
-  await appSettings.save()
-}
+watch(() => appSettings.settings.clockDisplay, () => appSettings.save())
+watch(() => appSettings.settings.diaryView, () => appSettings.save())
+watch(() => appSettings.settings.useEmojis, () => appSettings.save())
+watch(() => appSettings.settings.animations, () => { appSettings.apply(); appSettings.save() })
 
 const hasData = computed(() => diary.entries.size > 0 || trackers.configs.length > 0)
 const storesReady = computed(() => diary.loaded && trackers.loaded)
@@ -98,71 +83,31 @@ async function handleClear() {
       </h2>
 
       <SettingRow :title="t('appSettings.clockDisplay')" :description="t('appSettings.clockDisplayDescription')">
-        <button
-          @click="setClockDisplay('24h')"
-          :class="appSettings.settings.clockDisplay === '24h'
-            ? 'bg-accent text-on-accent'
-            : 'bg-subtle text-ink-muted hover:bg-edge'"
-          class="text-sm px-3 py-1.5 rounded-input transition-colors font-medium"
-        >{{ t('appSettings.clockDisplay24h') }}</button>
-        <button
-          @click="setClockDisplay('ampm')"
-          :class="appSettings.settings.clockDisplay === 'ampm'
-            ? 'bg-accent text-on-accent'
-            : 'bg-subtle text-ink-muted hover:bg-edge'"
-          class="text-sm px-3 py-1.5 rounded-input transition-colors font-medium"
-        >{{ t('appSettings.clockDisplayAmpm') }}</button>
+        <BinaryToggle
+          v-model="appSettings.settings.clockDisplay"
+          :options="[{ value: '24h', label: t('appSettings.clockDisplay24h') }, { value: 'ampm', label: t('appSettings.clockDisplayAmpm') }]"
+        />
       </SettingRow>
 
       <SettingRow :title="t('appSettings.diaryView')" :description="t('appSettings.diaryViewDescription')">
-        <button
-          @click="setDiaryView('timeline')"
-          :class="appSettings.settings.diaryView === 'timeline'
-            ? 'bg-accent text-on-accent'
-            : 'bg-subtle text-ink-muted hover:bg-edge'"
-          class="text-sm px-3 py-1.5 rounded-input transition-colors font-medium"
-        >{{ t('appSettings.diaryViewTimeline') }}</button>
-        <button
-          @click="setDiaryView('day')"
-          :class="appSettings.settings.diaryView === 'day'
-            ? 'bg-accent text-on-accent'
-            : 'bg-subtle text-ink-muted hover:bg-edge'"
-          class="text-sm px-3 py-1.5 rounded-input transition-colors font-medium"
-        >{{ t('appSettings.diaryViewDay') }}</button>
+        <BinaryToggle
+          v-model="appSettings.settings.diaryView"
+          :options="[{ value: 'timeline', label: t('appSettings.diaryViewTimeline') }, { value: 'day', label: t('appSettings.diaryViewDay') }]"
+        />
       </SettingRow>
 
       <SettingRow :title="t('appSettings.animations')" :description="t('appSettings.animationsDescription')">
-        <button
-          @click="setAnimations(true)"
-          :class="appSettings.settings.animations
-            ? 'bg-accent text-on-accent'
-            : 'bg-subtle text-ink-muted hover:bg-edge'"
-          class="text-sm px-3 py-1.5 rounded-input transition-colors font-medium"
-        >{{ t('appSettings.on') }}</button>
-        <button
-          @click="setAnimations(false)"
-          :class="!appSettings.settings.animations
-            ? 'bg-accent text-on-accent'
-            : 'bg-subtle text-ink-muted hover:bg-edge'"
-          class="text-sm px-3 py-1.5 rounded-input transition-colors font-medium"
-        >{{ t('appSettings.off') }}</button>
+        <BinaryToggle
+          v-model="appSettings.settings.animations"
+          :options="[{ value: true, label: t('appSettings.on') }, { value: false, label: t('appSettings.off') }]"
+        />
       </SettingRow>
 
       <SettingRow :title="t('appSettings.useEmojis')" :description="t('appSettings.useEmojisDescription')">
-        <button
-          @click="setUseEmojis(true)"
-          :class="appSettings.settings.useEmojis
-            ? 'bg-accent text-on-accent'
-            : 'bg-subtle text-ink-muted hover:bg-edge'"
-          class="text-sm px-3 py-1.5 rounded-input transition-colors font-medium"
-        >{{ t('appSettings.on') }}</button>
-        <button
-          @click="setUseEmojis(false)"
-          :class="!appSettings.settings.useEmojis
-            ? 'bg-accent text-on-accent'
-            : 'bg-subtle text-ink-muted hover:bg-edge'"
-          class="text-sm px-3 py-1.5 rounded-input transition-colors font-medium"
-        >{{ t('appSettings.off') }}</button>
+        <BinaryToggle
+          v-model="appSettings.settings.useEmojis"
+          :options="[{ value: true, label: t('appSettings.on') }, { value: false, label: t('appSettings.off') }]"
+        />
       </SettingRow>
     </section>
 

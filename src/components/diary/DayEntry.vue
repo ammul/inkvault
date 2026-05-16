@@ -32,8 +32,7 @@ const editingId = ref<string | null>(null)
 const showAddMenu = ref(false)
 
 // Deletion confirmation state
-const pendingDeleteId = ref<string | null>(null)
-const pendingDeleteDataId = ref<string | null>(null)
+const pendingDelete = ref<(() => void) | null>(null)
 
 // Data point entry modal state
 const entryModalConfig = ref<TrackerConfig | null>(null)
@@ -224,16 +223,11 @@ function onTextareaBlur(e: FocusEvent) {
 }
 
 function requestDeleteEntry(id: string) {
-  pendingDeleteId.value = id
-}
-
-function confirmDeleteEntry() {
-  const id = pendingDeleteId.value
-  if (!id) return
-  timelineEntries.value = timelineEntries.value.filter(e => e.id !== id)
-  if (editingId.value === id) editingId.value = null
-  pendingDeleteId.value = null
-  autoSave()
+  pendingDelete.value = () => {
+    timelineEntries.value = timelineEntries.value.filter(e => e.id !== id)
+    if (editingId.value === id) editingId.value = null
+    autoSave()
+  }
 }
 
 // ─── Data point entries ───────────────────────────────────────────────────────
@@ -283,15 +277,10 @@ function editDataEntry(item: DataTimelineItem) {
 }
 
 function requestDeleteDataEntry(id: string) {
-  pendingDeleteDataId.value = id
-}
-
-function confirmDeleteDataEntry() {
-  const id = pendingDeleteDataId.value
-  if (!id) return
-  dataEntries.value = dataEntries.value.filter(e => e.id !== id)
-  pendingDeleteDataId.value = null
-  autoSave()
+  pendingDelete.value = () => {
+    dataEntries.value = dataEntries.value.filter(e => e.id !== id)
+    autoSave()
+  }
 }
 
 // ─── Unified edit/delete dispatch ────────────────────────────────────────────
@@ -310,7 +299,7 @@ function handleDeleteFromModal() {
   const id = entryModalEditId.value
   if (!id) return
   closeDataModal()
-  pendingDeleteDataId.value = id
+  requestDeleteDataEntry(id)
 }
 
 // ─── Enter Day modal ─────────────────────────────────────────────────────────
@@ -592,20 +581,12 @@ const hasSummary = computed(() => allTimelineItems.value.length > 0)
       :use-emojis="appSettings.settings.useEmojis"
     />
 
-    <!-- Confirm delete: text entry -->
+    <!-- Confirm delete -->
     <ConfirmModal
-      :open="pendingDeleteId !== null"
+      :open="pendingDelete !== null"
       :message="t('diary.deleteConfirm')"
-      @confirm="confirmDeleteEntry"
-      @cancel="pendingDeleteId = null"
-    />
-
-    <!-- Confirm delete: data entry -->
-    <ConfirmModal
-      :open="pendingDeleteDataId !== null"
-      :message="t('diary.deleteConfirm')"
-      @confirm="confirmDeleteDataEntry"
-      @cancel="pendingDeleteDataId = null"
+      @confirm="pendingDelete?.(); pendingDelete = null"
+      @cancel="pendingDelete = null"
     />
 
     <!-- Data point entry modal -->
