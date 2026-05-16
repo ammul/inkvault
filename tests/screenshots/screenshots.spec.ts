@@ -226,7 +226,8 @@ test('generate promotional screenshots', async ({ page }) => {
   await shot(page, '09-backup.png')
 
   // ── Lock screen ───────────────────────────────────────────────────────────
-  // On desktop the Lock button is in the top nav bar directly
+  await page.getByRole('button', { name: 'Toggle menu' }).click()
+  await page.waitForTimeout(250) // drawer slide-in animation (200ms)
   await page.getByRole('button', { name: 'Lock' }).click()
   await expect(page.getByPlaceholder('Enter passphrase')).toBeVisible()
   await shot(page, '10-lock-unlock.png')

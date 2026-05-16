@@ -5,10 +5,10 @@ export default defineConfig({
   reporter: 'list',
   use: {
     baseURL: 'http://localhost:4173',
-    viewport: { width: 390, height: 844 },
+    ...devices['Pixel 7'],
   },
   projects: [
-    { name: 'chromium', use: { ...devices['Desktop Chrome'] } },
+    { name: 'chromium' },
   ],
   webServer: {
     command: 'npm run preview',
