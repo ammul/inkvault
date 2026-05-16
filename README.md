@@ -11,21 +11,29 @@ A private diary with no backend, no accounts, and no telemetry. Every entry is e
 
 <table>
 <tr>
-<td align="center" width="50%">
+<td align="center" width="33%">
 <img src="docs/screenshots/06-diary-day.png" alt="Diary timeline view">
 <br><sub><b>Timeline diary</b> — timestamped notes and tracker readings in a single chronological view</sub>
 </td>
-<td align="center" width="50%">
+<td align="center" width="33%">
 <img src="docs/screenshots/03-trackers-list.png" alt="Trackers list">
 <br><sub><b>Configurable trackers</b> — sliders, yes/no, multiple choice, medication doses, and more</sub>
 </td>
+<td align="center" width="33%">
+<img src="docs/screenshots/04-trackers-editor.png" alt="Tracker editor">
+<br><sub><b>Tracker editor</b> — define label, type, colour, and icon with a live preview</sub>
+</td>
 </tr>
 <tr>
-<td align="center" width="50%">
+<td align="center" width="33%">
 <img src="docs/screenshots/07-stats.png" alt="Statistics view">
 <br><sub><b>Statistics</b> — weekly, monthly, or all-time history for every tracker</sub>
 </td>
-<td align="center" width="50%">
+<td align="center" width="33%">
+<img src="docs/screenshots/08-theme.png" alt="Theme settings">
+<br><sub><b>Theme settings</b> — mood, colour, font, and spacing; changes apply instantly</sub>
+</td>
+<td align="center" width="33%">
 <img src="docs/screenshots/01-lock-create.png" alt="Vault creation screen">
 <br><sub><b>Private by design</b> — AES-256-GCM encryption in the browser; your passphrase never leaves your device</sub>
 </td>
