@@ -27,12 +27,14 @@ const emit = defineEmits<{
         v-if="config.type === 'range'"
         :config="(config.config as RangeConfig)"
         :model-value="typeof modelValue === 'number' ? modelValue : null"
+        :label="config.label"
         @update:model-value="emit('update:modelValue', $event)"
       />
       <StringField
         v-else-if="config.type === 'string'"
         :config="(config.config as StringConfig)"
         :model-value="typeof modelValue === 'string' ? modelValue : null"
+        :label="config.label"
         @update:model-value="emit('update:modelValue', $event)"
       />
       <MultiStringField
@@ -51,6 +53,7 @@ const emit = defineEmits<{
         v-else-if="config.type === 'medication'"
         :config="(config.config as MedicationConfig)"
         :model-value="(modelValue !== null && typeof modelValue === 'object' && !Array.isArray(modelValue)) ? (modelValue as MedicationValue) : null"
+        :label="config.label"
         @update:model-value="emit('update:modelValue', $event)"
       />
     </div>

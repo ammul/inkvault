@@ -4,6 +4,7 @@ import type { StringConfig } from '@/types'
 defineProps<{
   config: StringConfig
   modelValue: string | null
+  label?: string
 }>()
 
 const emit = defineEmits<{ 'update:modelValue': [value: string] }>()
@@ -14,6 +15,7 @@ const emit = defineEmits<{ 'update:modelValue': [value: string] }>()
     type="text"
     :value="modelValue ?? ''"
     :placeholder="config.placeholder ?? ''"
+    :aria-label="label"
     @input="emit('update:modelValue', ($event.target as HTMLInputElement).value)"
     class="w-full border border-edge rounded-input px-2.5 py-1.5 text-sm text-ink bg-surface placeholder:text-ink-faint focus:outline-none focus:ring-2 focus:ring-accent/25 focus:border-accent transition-colors"
   />

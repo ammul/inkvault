@@ -110,18 +110,20 @@ const formattedDate = computed(() => props.date ? formatLongDate(props.date) : '
 
     <!-- Text entry section -->
     <div class="space-y-2">
-      <label class="text-xs font-semibold text-ink-muted uppercase tracking-wider">
+      <label for="enter-day-text" class="text-xs font-semibold text-ink-muted uppercase tracking-wider">
         {{ t('diary.textEntry') }}
       </label>
       <textarea
+        id="enter-day-text"
         v-model="text"
         rows="4"
         :placeholder="t('diary.newEntryPlaceholder')"
         class="w-full text-[14px] leading-[1.6] text-ink bg-subtle border border-edge rounded-input px-3 py-2 placeholder:text-ink-faint resize-none focus:outline-none focus:ring-2 focus:ring-accent/25"
       />
       <div class="flex items-center gap-2">
-        <label class="text-xs text-ink-muted shrink-0">{{ t('diary.timeLabel') }}</label>
+        <label for="enter-day-text-time" class="text-xs text-ink-muted shrink-0">{{ t('diary.timeLabel') }}</label>
         <input
+          id="enter-day-text-time"
           type="time"
           v-model="textTime"
           :placeholder="t('diary.timeNow')"

@@ -4,6 +4,7 @@ import type { RangeConfig } from '@/types'
 const props = defineProps<{
   config: RangeConfig
   modelValue: number | null
+  label?: string
 }>()
 
 const emit = defineEmits<{ 'update:modelValue': [value: number] }>()
@@ -20,6 +21,7 @@ const currentValue = () => props.modelValue ?? props.config.min
       :max="config.max"
       :step="config.step"
       :value="currentValue()"
+      :aria-label="label"
       @input="emit('update:modelValue', Number(($event.target as HTMLInputElement).value))"
       class="flex-1 accent-accent"
     />

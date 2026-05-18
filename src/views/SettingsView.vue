@@ -150,6 +150,7 @@ async function handleImport() {
           v-model="exportPassphrase"
           type="password"
           :placeholder="t('backup.export.passphrase')"
+          :aria-label="t('backup.export.passphrase')"
           autocomplete="new-password"
           class="w-full border border-edge rounded-input px-3 py-2 text-sm text-ink bg-surface placeholder:text-ink-faint focus:outline-none focus:ring-2 focus:ring-accent/25 focus:border-accent transition-colors"
         />
@@ -157,6 +158,7 @@ async function handleImport() {
           v-model="exportConfirm"
           type="password"
           :placeholder="t('backup.export.confirmPassphrase')"
+          :aria-label="t('backup.export.confirmPassphrase')"
           autocomplete="new-password"
           class="w-full border border-edge rounded-input px-3 py-2 text-sm text-ink bg-surface placeholder:text-ink-faint focus:outline-none focus:ring-2 focus:ring-accent/25 focus:border-accent transition-colors"
         />
@@ -199,6 +201,7 @@ async function handleImport() {
         <input
           type="file"
           accept=".json"
+          :aria-label="t('backup.import.title')"
           @change="handleFileSelect"
           class="w-full text-sm text-ink-muted file:mr-3 file:rounded-input file:border-0 file:bg-accent-tint file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-accent hover:file:bg-accent-tint cursor-pointer"
         />
@@ -206,6 +209,7 @@ async function handleImport() {
           v-model="importPassphrase"
           type="password"
           :placeholder="t('backup.import.passphrase')"
+          :aria-label="t('backup.import.passphrase')"
           autocomplete="current-password"
           class="w-full border border-edge rounded-input px-3 py-2 text-sm text-ink bg-surface placeholder:text-ink-faint focus:outline-none focus:ring-2 focus:ring-accent/25 focus:border-accent transition-colors"
         />

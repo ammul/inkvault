@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch, computed } from 'vue'
+import { ref, watch, computed, useId } from 'vue'
 import { useI18n } from 'vue-i18n'
 import type {
   TrackerConfig,
@@ -18,6 +18,7 @@ import { useAppSettingsStore } from '@/stores/appSettings'
 
 const { t } = useI18n()
 const appSettings = useAppSettingsStore()
+const eid = useId()
 
 const props = defineProps<{ initial?: TrackerConfig; locked?: boolean; compact?: boolean }>()
 const emit = defineEmits<{
@@ -188,15 +189,17 @@ const liveConfig = computed<TrackerConfig>(() => ({
       <div :class="compact ? 'p-4 space-y-3' : 'space-y-4'">
 
         <!-- Label (always full width) -->
-        <FormField :label="t('trackers.editor.label')">
+        <div>
+          <label :for="eid + '-label'" class="block text-[11px] font-medium text-ink-muted mb-1.5">{{ t('trackers.editor.label') }}</label>
           <input
+            :id="eid + '-label'"
             v-model="label"
             type="text"
             :placeholder="t('trackers.editor.labelPlaceholder')"
             required
             class="w-full border border-edge rounded-input px-3 py-2 text-sm text-ink bg-surface placeholder:text-ink-faint focus:outline-none focus:ring-2 focus:ring-accent/25 focus:border-accent transition-colors"
           />
-        </FormField>
+        </div>
 
         <!-- Icon + Colour (same row) -->
         <div class="flex gap-4 items-end flex-wrap">
@@ -241,7 +244,8 @@ const liveConfig = computed<TrackerConfig>(() => ({
         </div>
 
         <!-- Type picker -->
-        <FormField :label="t('trackers.editor.type')">
+        <div>
+          <label :for="eid + '-type'" class="block text-[11px] font-medium text-ink-muted mb-1.5">{{ t('trackers.editor.type') }}</label>
 
           <!-- Locked: read-only display -->
           <div
@@ -255,6 +259,7 @@ const liveConfig = computed<TrackerConfig>(() => ({
           <!-- Unlocked, no-emoji mode: dropdown -->
           <select
             v-else-if="!appSettings.settings.useEmojis"
+            :id="eid + '-type'"
             v-model="type"
             class="w-full border border-edge rounded-input px-3 py-2 text-sm text-ink bg-surface focus:outline-none focus:ring-2 focus:ring-accent/25 focus:border-accent transition-colors"
           >
@@ -286,30 +291,36 @@ const liveConfig = computed<TrackerConfig>(() => ({
               </span>
             </button>
           </div>
-        </FormField>
+        </div>
 
         <!-- Range fields -->
         <div v-if="type === 'range'" class="grid grid-cols-3 gap-2" :class="{ 'opacity-60 select-none': locked }">
-          <FormField :label="t('trackers.editor.range.min')">
+          <div>
+            <label :for="eid + '-range-min'" class="block text-[11px] font-medium text-ink-muted mb-1.5">{{ t('trackers.editor.range.min') }}</label>
             <input
+              :id="eid + '-range-min'"
               v-model.number="rangeMin"
               type="number"
               :disabled="locked"
               :class="locked ? 'cursor-not-allowed' : 'focus:outline-none focus:ring-2 focus:ring-accent/25 focus:border-accent transition-colors'"
               class="w-full border border-edge rounded-input px-3 py-2 text-sm text-ink bg-surface"
             />
-          </FormField>
-          <FormField :label="t('trackers.editor.range.max')">
+          </div>
+          <div>
+            <label :for="eid + '-range-max'" class="block text-[11px] font-medium text-ink-muted mb-1.5">{{ t('trackers.editor.range.max') }}</label>
             <input
+              :id="eid + '-range-max'"
               v-model.number="rangeMax"
               type="number"
               :disabled="locked"
               :class="locked ? 'cursor-not-allowed' : 'focus:outline-none focus:ring-2 focus:ring-accent/25 focus:border-accent transition-colors'"
               class="w-full border border-edge rounded-input px-3 py-2 text-sm text-ink bg-surface"
             />
-          </FormField>
-          <FormField :label="t('trackers.editor.range.step')">
+          </div>
+          <div>
+            <label :for="eid + '-range-step'" class="block text-[11px] font-medium text-ink-muted mb-1.5">{{ t('trackers.editor.range.step') }}</label>
             <input
+              :id="eid + '-range-step'"
               v-model.number="rangeStep"
               type="number"
               min="0.01"
@@ -318,76 +329,82 @@ const liveConfig = computed<TrackerConfig>(() => ({
               :class="locked ? 'cursor-not-allowed' : 'focus:outline-none focus:ring-2 focus:ring-accent/25 focus:border-accent transition-colors'"
               class="w-full border border-edge rounded-input px-3 py-2 text-sm text-ink bg-surface"
             />
-          </FormField>
+          </div>
           <p v-if="locked" class="col-span-3 text-[11px] text-ink-faint">{{ t('trackers.editor.lockedFieldHint') }}</p>
         </div>
 
         <!-- String field -->
         <div v-if="type === 'string'" :class="{ 'opacity-60 select-none': locked }">
-          <FormField :label="t('trackers.editor.string.placeholder')">
-            <input
-              v-model="placeholder"
-              type="text"
-              :disabled="locked"
-              :class="locked ? 'cursor-not-allowed' : 'focus:outline-none focus:ring-2 focus:ring-accent/25 focus:border-accent transition-colors'"
-              class="w-full border border-edge rounded-input px-3 py-2 text-sm text-ink bg-surface"
-            />
-            <p v-if="locked" class="text-[11px] text-ink-faint mt-1">{{ t('trackers.editor.lockedFieldHint') }}</p>
-          </FormField>
+          <label :for="eid + '-string-placeholder'" class="block text-[11px] font-medium text-ink-muted mb-1.5">{{ t('trackers.editor.string.placeholder') }}</label>
+          <input
+            :id="eid + '-string-placeholder'"
+            v-model="placeholder"
+            type="text"
+            :disabled="locked"
+            :class="locked ? 'cursor-not-allowed' : 'focus:outline-none focus:ring-2 focus:ring-accent/25 focus:border-accent transition-colors'"
+            class="w-full border border-edge rounded-input px-3 py-2 text-sm text-ink bg-surface"
+          />
+          <p v-if="locked" class="text-[11px] text-ink-faint mt-1">{{ t('trackers.editor.lockedFieldHint') }}</p>
         </div>
 
         <!-- Multi-string field -->
         <div v-if="type === 'multi-string'">
-          <FormField :label="t('trackers.editor.multiString.options')">
-            <!-- Locked: chips -->
-            <div v-if="locked" class="flex flex-wrap gap-1 opacity-60 select-none">
-              <span
-                v-for="opt in parsedOptions"
-                :key="opt"
-                class="text-[11px] px-2 py-0.5 rounded-full border bg-accent-tint border-accent/30 text-accent-dim font-medium"
-              >{{ opt }}</span>
-            </div>
-            <!-- Unlocked: text input -->
-            <input
-              v-else
-              v-model="optionsRaw"
-              type="text"
-              :placeholder="t('trackers.editor.multiString.optionsPlaceholder')"
-              class="w-full border border-edge rounded-input px-3 py-2 text-sm text-ink bg-surface placeholder:text-ink-faint focus:outline-none focus:ring-2 focus:ring-accent/25 focus:border-accent transition-colors"
-            />
-            <p class="text-[11px] text-ink-faint mt-1">
-              {{ locked ? t('trackers.editor.lockedFieldHint') : t('trackers.editor.multiString.optionsHint') }}
-            </p>
-          </FormField>
+          <label :for="eid + '-multi-options'" class="block text-[11px] font-medium text-ink-muted mb-1.5">{{ t('trackers.editor.multiString.options') }}</label>
+          <!-- Locked: chips -->
+          <div v-if="locked" class="flex flex-wrap gap-1 opacity-60 select-none">
+            <span
+              v-for="opt in parsedOptions"
+              :key="opt"
+              class="text-[11px] px-2 py-0.5 rounded-full border bg-accent-tint border-accent/30 text-accent-dim font-medium"
+            >{{ opt }}</span>
+          </div>
+          <!-- Unlocked: text input -->
+          <input
+            v-else
+            :id="eid + '-multi-options'"
+            v-model="optionsRaw"
+            type="text"
+            :placeholder="t('trackers.editor.multiString.optionsPlaceholder')"
+            class="w-full border border-edge rounded-input px-3 py-2 text-sm text-ink bg-surface placeholder:text-ink-faint focus:outline-none focus:ring-2 focus:ring-accent/25 focus:border-accent transition-colors"
+          />
+          <p class="text-[11px] text-ink-faint mt-1">
+            {{ locked ? t('trackers.editor.lockedFieldHint') : t('trackers.editor.multiString.optionsHint') }}
+          </p>
         </div>
 
         <!-- Boolean fields -->
         <div v-if="type === 'boolean'" class="grid grid-cols-2 gap-2" :class="{ 'opacity-60 select-none': locked }">
-          <FormField :label="t('trackers.editor.boolean.trueLabel')">
+          <div>
+            <label :for="eid + '-bool-true'" class="block text-[11px] font-medium text-ink-muted mb-1.5">{{ t('trackers.editor.boolean.trueLabel') }}</label>
             <input
+              :id="eid + '-bool-true'"
               v-model="trueLabel"
               type="text"
               :disabled="locked"
               :class="locked ? 'cursor-not-allowed' : 'focus:outline-none focus:ring-2 focus:ring-accent/25 focus:border-accent transition-colors'"
               class="w-full border border-edge rounded-input px-3 py-2 text-sm text-ink bg-surface"
             />
-          </FormField>
-          <FormField :label="t('trackers.editor.boolean.falseLabel')">
+          </div>
+          <div>
+            <label :for="eid + '-bool-false'" class="block text-[11px] font-medium text-ink-muted mb-1.5">{{ t('trackers.editor.boolean.falseLabel') }}</label>
             <input
+              :id="eid + '-bool-false'"
               v-model="falseLabel"
               type="text"
               :disabled="locked"
               :class="locked ? 'cursor-not-allowed' : 'focus:outline-none focus:ring-2 focus:ring-accent/25 focus:border-accent transition-colors'"
               class="w-full border border-edge rounded-input px-3 py-2 text-sm text-ink bg-surface"
             />
-          </FormField>
+          </div>
           <p v-if="locked" class="col-span-2 text-[11px] text-ink-faint">{{ t('trackers.editor.lockedFieldHint') }}</p>
         </div>
 
         <!-- Medication fields -->
         <div v-if="type === 'medication'" class="space-y-3" :class="{ 'opacity-60 select-none': locked }">
-          <FormField :label="t('trackers.editor.medication.name')">
+          <div>
+            <label :for="eid + '-med-name'" class="block text-[11px] font-medium text-ink-muted mb-1.5">{{ t('trackers.editor.medication.name') }}</label>
             <input
+              :id="eid + '-med-name'"
               v-model="medicationName"
               type="text"
               :placeholder="t('trackers.editor.medication.namePlaceholder')"
@@ -395,9 +412,11 @@ const liveConfig = computed<TrackerConfig>(() => ({
               :class="locked ? 'cursor-not-allowed' : 'focus:outline-none focus:ring-2 focus:ring-accent/25 focus:border-accent transition-colors'"
               class="w-full border border-edge rounded-input px-3 py-2 text-sm text-ink bg-surface placeholder:text-ink-faint"
             />
-          </FormField>
-          <FormField :label="t('trackers.editor.medication.dosagePresets')">
+          </div>
+          <div>
+            <label :for="eid + '-med-presets'" class="block text-[11px] font-medium text-ink-muted mb-1.5">{{ t('trackers.editor.medication.dosagePresets') }}</label>
             <input
+              :id="eid + '-med-presets'"
               v-model="dosagePresetsRaw"
               type="text"
               :placeholder="t('trackers.editor.medication.dosagePresetsPlaceholder')"
@@ -405,7 +424,7 @@ const liveConfig = computed<TrackerConfig>(() => ({
               :class="locked ? 'cursor-not-allowed' : 'focus:outline-none focus:ring-2 focus:ring-accent/25 focus:border-accent transition-colors'"
               class="w-full border border-edge rounded-input px-3 py-2 text-sm text-ink bg-surface placeholder:text-ink-faint"
             />
-          </FormField>
+          </div>
           <p v-if="locked" class="text-[11px] text-ink-faint">{{ t('trackers.editor.lockedFieldHint') }}</p>
         </div>
 

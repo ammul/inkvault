@@ -149,8 +149,9 @@ async function submit() {
           </div>
           <div class="space-y-3">
             <div>
-              <label class="block text-xs font-medium text-ink-muted mb-1.5">{{ t('auth.import.backupFile') }}</label>
+              <label for="unlock-backup-file" class="block text-xs font-medium text-ink-muted mb-1.5">{{ t('auth.import.backupFile') }}</label>
               <input
+                id="unlock-backup-file"
                 type="file"
                 accept=".json"
                 @change="handleFileSelect"
@@ -158,8 +159,9 @@ async function submit() {
               />
             </div>
             <div>
-              <label class="block text-xs font-medium text-ink-muted mb-1.5">{{ t('auth.import.backupPassphrase') }}</label>
+              <label for="unlock-backup-passphrase" class="block text-xs font-medium text-ink-muted mb-1.5">{{ t('auth.import.backupPassphrase') }}</label>
               <input
+                id="unlock-backup-passphrase"
                 v-model="importPassphrase"
                 type="password"
                 autocomplete="current-password"
@@ -198,8 +200,9 @@ async function submit() {
           </div>
           <form @submit.prevent="submit" class="space-y-3">
             <div>
-              <label class="block text-xs font-medium text-ink-muted mb-1.5">{{ t('auth.passphrase') }}</label>
+              <label for="unlock-passphrase" class="block text-xs font-medium text-ink-muted mb-1.5">{{ t('auth.passphrase') }}</label>
               <input
+                id="unlock-passphrase"
                 v-model="passphrase"
                 type="password"
                 :autocomplete="auth.initialized ? 'current-password' : 'new-password'"
@@ -230,8 +233,9 @@ async function submit() {
             </div>
 
             <div v-if="!auth.initialized">
-              <label class="block text-xs font-medium text-ink-muted mb-1.5">{{ t('auth.confirmPassphrase') }}</label>
+              <label for="unlock-confirm-passphrase" class="block text-xs font-medium text-ink-muted mb-1.5">{{ t('auth.confirmPassphrase') }}</label>
               <input
+                id="unlock-confirm-passphrase"
                 v-model="confirmPassphrase"
                 type="password"
                 autocomplete="new-password"

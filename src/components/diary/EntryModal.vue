@@ -43,8 +43,9 @@ watch(() => props.open, (val) => {
       @update:model-value="localValue = $event"
     />
     <div class="flex items-center gap-2">
-      <label class="text-xs text-ink-muted shrink-0">{{ t('diary.timeLabel') }}</label>
+      <label for="entry-modal-time" class="text-xs text-ink-muted shrink-0">{{ t('diary.timeLabel') }}</label>
       <input
+        id="entry-modal-time"
         type="time"
         v-model="entryTime"
         class="text-sm text-ink bg-subtle border border-edge rounded-input px-2 py-1 focus:outline-none focus:ring-2 focus:ring-accent/25"

@@ -67,6 +67,7 @@ const visibleConfigs = computed(() => {
       <div class="flex items-center gap-2">
         <select
           v-model="rangeLabel"
+          :aria-label="t('statistics.range.label')"
           class="border border-edge rounded-input px-3 py-2 text-sm text-ink bg-raised focus:outline-none focus:ring-2 focus:ring-accent/25 focus:border-accent transition-colors"
         >
           <option value="week">{{ t('statistics.range.week') }}</option>

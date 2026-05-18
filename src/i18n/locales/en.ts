@@ -214,6 +214,7 @@ export default {
     noData: 'No data in this range.',
     avg: 'avg',
     range: {
+      label: 'Time range',
       week: 'Last 7 days',
       month: 'Last 30 days',
       year: 'Last year',

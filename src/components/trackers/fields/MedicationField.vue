@@ -7,6 +7,7 @@ const UNITS = ['mg', 'g', 'µg', 'ml', 'IU', 'tablets', 'capsules', 'drops', 'pu
 const props = defineProps<{
   config: MedicationConfig
   modelValue: MedicationValue | null
+  label?: string
 }>()
 
 const emit = defineEmits<{ 'update:modelValue': [value: MedicationValue] }>()
@@ -76,11 +77,13 @@ function applyPreset(preset: string) {
       min="0"
       step="any"
       placeholder="0"
+      :aria-label="label ? label + ' amount' : 'Amount'"
       class="w-20 border border-edge rounded-input px-2.5 py-1.5 text-sm text-ink bg-surface focus:outline-none focus:ring-2 focus:ring-accent/25 focus:border-accent transition-colors"
       @change="handleAmountOrUnitChange"
     />
     <select
       v-model="unit"
+      :aria-label="label ? label + ' unit' : 'Unit'"
       class="border border-edge rounded-input px-2.5 py-1.5 text-sm text-ink bg-surface focus:outline-none focus:ring-2 focus:ring-accent/25 focus:border-accent transition-colors"
       @change="handleAmountOrUnitChange"
     >

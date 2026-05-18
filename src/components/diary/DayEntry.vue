@@ -510,6 +510,7 @@ const hasSummary = computed(() => allTimelineItems.value.length > 0)
             <textarea
               :ref="(el: unknown) => el && nextTick(() => (el as HTMLTextAreaElement).focus())"
               :value="entry.text"
+              :aria-label="t('diary.noteLabel')"
               @click.stop
               @input="updateEntryText(entry.id, ($event.target as HTMLTextAreaElement).value)"
               @blur="onTextareaBlur"

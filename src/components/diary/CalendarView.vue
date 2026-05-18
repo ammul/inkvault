@@ -5,7 +5,9 @@ import { useI18n } from 'vue-i18n'
 import { useDiaryStore } from '@/stores/diary'
 import { useDateFormat } from '@/composables/useDateFormat'
 
-const { t } = useI18n()
+const { t, tm } = useI18n()
+
+const weekdays = computed(() => tm('diary.weekdays') as string[])
 const router = useRouter()
 const diary = useDiaryStore()
 const { formatMonthYear } = useDateFormat()
@@ -96,7 +98,7 @@ function openDay(date: string | null) {
 
     <!-- Day-of-week headers -->
     <div class="grid grid-cols-7 gap-1 text-center text-xs font-medium text-ink-faint mb-2">
-      <div v-for="(d, i) in t('diary.weekdays')" :key="i">{{ d }}</div>
+      <div v-for="(d, i) in weekdays" :key="i">{{ d }}</div>
     </div>
 
     <!-- Day grid -->
