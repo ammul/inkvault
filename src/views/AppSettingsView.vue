@@ -23,6 +23,7 @@ watch(() => appSettings.settings.clockDisplay, () => appSettings.save())
 watch(() => appSettings.settings.diaryView, () => appSettings.save())
 watch(() => appSettings.settings.useEmojis, () => appSettings.save())
 watch(() => appSettings.settings.animations, () => { appSettings.apply(); appSettings.save() })
+watch(() => appSettings.settings.language, () => { appSettings.apply(); appSettings.save() })
 
 async function setDateFormat(val: 'locale' | 'dmy') {
   appSettings.settings.dateFormat = val
@@ -121,6 +122,17 @@ async function handleClear() {
           @update:model-value="setDateFormat"
           :options="[{ value: 'locale', label: t('appSettings.dateFormatLocale') }, { value: 'dmy', label: t('appSettings.dateFormatDmy') }]"
         />
+      </SettingRow>
+
+      <SettingRow :title="t('appSettings.language')" :description="t('appSettings.languageDescription')">
+        <select
+          v-model="appSettings.settings.language"
+          class="text-sm px-3 py-1.5 rounded-input bg-subtle text-ink border border-edge focus:outline-none focus:ring-2 focus:ring-accent/25 cursor-pointer font-medium"
+        >
+          <option value="auto">{{ t('appSettings.languageAuto') }}</option>
+          <option value="en">{{ t('appSettings.languageEn') }}</option>
+          <option value="de">{{ t('appSettings.languageDe') }}</option>
+        </select>
       </SettingRow>
     </section>
 

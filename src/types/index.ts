@@ -93,6 +93,7 @@ export interface AppSettings {
   diaryView: 'timeline' | 'day'
   clockDisplay: '24h' | 'ampm'
   dateFormat: 'locale' | 'dmy'
+  language: 'en' | 'de' | 'auto'
 }
 
 export const DEFAULT_APP_SETTINGS: AppSettings = {
@@ -101,6 +102,7 @@ export const DEFAULT_APP_SETTINGS: AppSettings = {
   diaryView: 'timeline',
   clockDisplay: '24h',
   dateFormat: 'locale',
+  language: 'auto',
 }
 
 export interface ConfigFilter {

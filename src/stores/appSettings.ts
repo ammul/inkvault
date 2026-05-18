@@ -4,6 +4,7 @@ import type { AppSettings } from '@/types'
 import { DEFAULT_APP_SETTINGS } from '@/types'
 import { useAuthStore } from './auth'
 import { KEYS, writeEncrypted, readEncrypted } from '@/utils/storage'
+import { i18n, detectBrowserLocale } from '@/i18n'
 
 export const useAppSettingsStore = defineStore('appSettings', () => {
   const settings = ref<AppSettings>({ ...DEFAULT_APP_SETTINGS })
@@ -30,12 +31,15 @@ export const useAppSettingsStore = defineStore('appSettings', () => {
 
   function apply(): void {
     document.documentElement.dataset.animations = settings.value.animations ? 'on' : 'off'
+    const locale = settings.value.language === 'auto' ? detectBrowserLocale() : settings.value.language
+    i18n.global.locale.value = locale as typeof i18n.global.locale.value
   }
 
   function reset(): void {
     settings.value = { ...DEFAULT_APP_SETTINGS }
     loaded.value = false
     document.documentElement.dataset.animations = 'on'
+    i18n.global.locale.value = detectBrowserLocale() as typeof i18n.global.locale.value
   }
 
   return { settings, loaded, load, save, apply, reset }
