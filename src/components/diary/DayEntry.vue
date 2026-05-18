@@ -389,7 +389,9 @@ const hasSummary = computed(() => allTimelineItems.value.length > 0)
         <div class="text-[11px] font-semibold uppercase tracking-[0.12em] text-ink-muted">{{ headerWeekday }}</div>
         <div class="text-[24px] font-semibold leading-[1.1] tracking-[-0.02em] text-ink">{{ headerDate }}</div>
         <div v-if="hasSummary" class="text-[11.5px] text-ink-muted mt-1">
-          <b class="text-ink">{{ allTimelineItems.length }}</b> {{ allTimelineItems.length === 1 ? 'entry' : 'entries' }}
+          <i18n-t keypath="diary.entryCount" :plural="allTimelineItems.length" tag="span">
+            <template #n><b class="text-ink">{{ allTimelineItems.length }}</b></template>
+          </i18n-t>
         </div>
         <!-- View toggle pill -->
         <div class="flex justify-center gap-0.5 mt-2">

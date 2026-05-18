@@ -105,6 +105,7 @@ export default {
     title: 'Diary',
     trackersSection: 'Trackers',
     entrySaved: 'Entry saved',
+    entryCount: '{n} entry | {n} entries',
     back: '← Back',
     weekdays: ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'],
     noteLabel: 'Note',

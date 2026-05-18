@@ -105,6 +105,7 @@ export default {
     title: 'Tagebuch',
     trackersSection: 'Tracker',
     entrySaved: 'Eintrag gespeichert',
+    entryCount: '{n} Eintrag | {n} Einträge',
     back: '← Zurück',
     weekdays: ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'],
     noteLabel: 'Notiz',

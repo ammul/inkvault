@@ -1,10 +1,12 @@
 import { computed } from 'vue'
 import { useAppSettingsStore } from '@/stores/appSettings'
+import { i18n } from '@/i18n'
 
 export function useDateFormat() {
   const appSettings = useAppSettingsStore()
   const dateFormat = computed(() => appSettings.settings.dateFormat)
   const clockDisplay = computed(() => appSettings.settings.clockDisplay)
+  const activeLocale = computed(() => i18n.global.locale.value)
 
   function parseDate(dateStr: string): [number, number, number] {
     const [y, m, d] = dateStr.split('-').map(Number)
@@ -22,7 +24,7 @@ export function useDateFormat() {
     const opts: Intl.DateTimeFormatOptions = y === new Date().getFullYear()
       ? { month: 'short', day: 'numeric' }
       : { month: 'short', day: 'numeric', year: 'numeric' }
-    return new Date(y, m - 1, d).toLocaleDateString(undefined,opts)
+    return new Date(y, m - 1, d).toLocaleDateString(activeLocale.value, opts)
   }
 
   /** "18.05.26" or "May 18" / "May 18, 2025" — long month, for headers */
@@ -32,23 +34,23 @@ export function useDateFormat() {
     const opts: Intl.DateTimeFormatOptions = y === new Date().getFullYear()
       ? { month: 'long', day: 'numeric' }
       : { month: 'long', day: 'numeric', year: 'numeric' }
-    return new Date(y, m - 1, d).toLocaleDateString(undefined,opts)
+    return new Date(y, m - 1, d).toLocaleDateString(activeLocale.value, opts)
   }
 
   /** "Monday" */
   function formatWeekday(dateStr: string): string {
     const [y, m, d] = parseDate(dateStr)
-    return new Date(y, m - 1, d).toLocaleDateString(undefined,{ weekday: 'long' })
+    return new Date(y, m - 1, d).toLocaleDateString(activeLocale.value, { weekday: 'long' })
   }
 
   /** "May 2026" — always locale, used for calendar month headers */
   function formatMonthYear(year: number, month: number): string {
-    return new Date(year, month).toLocaleDateString(undefined,{ month: 'long', year: 'numeric' })
+    return new Date(year, month).toLocaleDateString(activeLocale.value, { month: 'long', year: 'numeric' })
   }
 
   /** "14:30" or "2:30 PM" — full time with AM/PM suffix when in ampm mode */
   function formatTime(iso: string): string {
-    return new Date(iso).toLocaleTimeString(undefined,{
+    return new Date(iso).toLocaleTimeString(activeLocale.value, {
       hour: '2-digit',
       minute: '2-digit',
       hour12: clockDisplay.value === 'ampm',
@@ -57,7 +59,7 @@ export function useDateFormat() {
 
   /** "14:30" or "02:30" — strips AM/PM suffix, for when it is rendered separately */
   function formatTimeHm(iso: string): string {
-    return new Date(iso).toLocaleTimeString(undefined,{
+    return new Date(iso).toLocaleTimeString(activeLocale.value, {
       hour: '2-digit',
       minute: '2-digit',
       hour12: clockDisplay.value === 'ampm',
