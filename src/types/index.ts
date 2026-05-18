@@ -92,6 +92,7 @@ export interface AppSettings {
   useEmojis: boolean
   diaryView: 'timeline' | 'day'
   clockDisplay: '24h' | 'ampm'
+  dateFormat: 'locale' | 'dmy'
 }
 
 export const DEFAULT_APP_SETTINGS: AppSettings = {
@@ -99,6 +100,7 @@ export const DEFAULT_APP_SETTINGS: AppSettings = {
   useEmojis: true,
   diaryView: 'timeline',
   clockDisplay: '24h',
+  dateFormat: 'locale',
 }
 
 export interface ConfigFilter {

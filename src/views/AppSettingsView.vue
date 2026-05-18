@@ -24,6 +24,11 @@ watch(() => appSettings.settings.diaryView, () => appSettings.save())
 watch(() => appSettings.settings.useEmojis, () => appSettings.save())
 watch(() => appSettings.settings.animations, () => { appSettings.apply(); appSettings.save() })
 
+async function setDateFormat(val: 'locale' | 'dmy') {
+  appSettings.settings.dateFormat = val
+  await appSettings.save()
+}
+
 const hasData = computed(() => diary.entries.size > 0 || trackers.configs.length > 0)
 const storesReady = computed(() => diary.loaded && trackers.loaded)
 
@@ -107,6 +112,14 @@ async function handleClear() {
         <BinaryToggle
           v-model="appSettings.settings.useEmojis"
           :options="[{ value: true, label: t('appSettings.on') }, { value: false, label: t('appSettings.off') }]"
+        />
+      </SettingRow>
+
+      <SettingRow :title="t('appSettings.dateFormat')" :description="t('appSettings.dateFormatDescription')">
+        <BinaryToggle
+          :model-value="appSettings.settings.dateFormat"
+          @update:model-value="setDateFormat"
+          :options="[{ value: 'locale', label: t('appSettings.dateFormatLocale') }, { value: 'dmy', label: t('appSettings.dateFormatDmy') }]"
         />
       </SettingRow>
     </section>

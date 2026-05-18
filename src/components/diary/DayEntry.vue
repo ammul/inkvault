@@ -8,6 +8,7 @@ import { useTrackersStore } from '@/stores/trackers'
 import { useToastStore } from '@/stores/toast'
 import { useAppSettingsStore } from '@/stores/appSettings'
 import { currentHHMM, isoToHHMM, timeToISO } from '@/utils/time'
+import { useDateFormat } from '@/composables/useDateFormat'
 import ConfirmModal from '@/components/ui/ConfirmModal.vue'
 import EntryModal from '@/components/diary/EntryModal.vue'
 import EnterDayModal from '@/components/diary/EnterDayModal.vue'
@@ -16,13 +17,14 @@ import TextEntryControls from '@/components/diary/TextEntryControls.vue'
 import RadialAddMenu from '@/components/diary/RadialAddMenu.vue'
 import DiaryTimelineItem from '@/components/diary/DiaryTimelineItem.vue'
 
-const { t, locale } = useI18n()
+const { t } = useI18n()
 const route = useRoute()
 const router = useRouter()
 const diary = useDiaryStore()
 const trackers = useTrackersStore()
 const toast = useToastStore()
 const appSettings = useAppSettingsStore()
+const { formatLongDate, formatWeekday, formatTimeHm, formatAmPm } = useDateFormat()
 
 const date = computed(() => route.params.date as string)
 const timelineEntries = ref<DiaryTimelineEntry[]>([])
@@ -359,20 +361,8 @@ function navigateDay(dir: 'prev' | 'next') {
 
 // ─── Header date formatting ───────────────────────────────────────────────────
 
-const headerWeekday = computed(() => {
-  if (!date.value) return ''
-  const [y, m, d] = date.value.split('-').map(Number)
-  return new Date(y, m - 1, d).toLocaleDateString(locale.value, { weekday: 'long' })
-})
-
-const headerDate = computed(() => {
-  if (!date.value) return ''
-  const [y, m, d] = date.value.split('-').map(Number)
-  const opts: Intl.DateTimeFormatOptions = y === new Date().getFullYear()
-    ? { month: 'long', day: 'numeric' }
-    : { month: 'long', day: 'numeric', year: 'numeric' }
-  return new Date(y, m - 1, d).toLocaleDateString(locale.value, opts)
-})
+const headerWeekday = computed(() => date.value ? formatWeekday(date.value) : '')
+const headerDate = computed(() => date.value ? formatLongDate(date.value) : '')
 
 // ─── Summary chips ────────────────────────────────────────────────────────────
 

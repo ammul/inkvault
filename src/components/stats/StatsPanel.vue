@@ -3,6 +3,7 @@ import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import type { TrackerConfig, TimeRange, TrackerValue, ConfigFilter, MedicationValue } from '@/types'
 import { useDiaryStore } from '@/stores/diary'
+import { useDateFormat } from '@/composables/useDateFormat'
 import TrackerIcon from '@/components/ui/TrackerIcon.vue'
 import ChartModal from '@/components/stats/ChartModal.vue'
 
@@ -15,6 +16,7 @@ const props = defineProps<{
 }>()
 
 const diary = useDiaryStore()
+const { formatDate } = useDateFormat()
 
 const values = computed(() => {
   let list = [...diary.entries.values()]
@@ -102,7 +104,7 @@ function formatValue(v: TrackerValue): string {
         :key="item.date"
         class="flex justify-between text-sm py-0.5"
       >
-        <span class="text-ink-faint">{{ item.date }}</span>
+        <span class="text-ink-faint">{{ formatDate(item.date) }}</span>
         <span class="text-ink">{{ formatValue(item.value) }}</span>
       </div>
     </div>

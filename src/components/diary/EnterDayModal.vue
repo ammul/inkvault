@@ -4,6 +4,7 @@ import { useI18n } from 'vue-i18n'
 import type { TrackerConfig, TrackerValue, MedicationValue } from '@/types'
 import SlideModal from '@/components/ui/SlideModal.vue'
 import EntryModal from '@/components/diary/EntryModal.vue'
+import { useDateFormat } from '@/composables/useDateFormat'
 
 const props = defineProps<{
   open: boolean
@@ -19,7 +20,8 @@ const emit = defineEmits<{
   close: []
 }>()
 
-const { t, locale } = useI18n()
+const { t } = useI18n()
+const { formatLongDate } = useDateFormat()
 
 interface PendingRow {
   id: string
@@ -95,11 +97,7 @@ function valueSummary(value: TrackerValue): string {
   return '—'
 }
 
-const formattedDate = computed(() => {
-  if (!props.date) return ''
-  const [y, m, d] = props.date.split('-').map(Number)
-  return new Date(y, m - 1, d).toLocaleDateString(locale.value, { month: 'long', day: 'numeric' })
-})
+const formattedDate = computed(() => props.date ? formatLongDate(props.date) : '')
 </script>
 
 <template>

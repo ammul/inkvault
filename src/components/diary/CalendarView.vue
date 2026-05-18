@@ -3,21 +3,18 @@ import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useDiaryStore } from '@/stores/diary'
+import { useDateFormat } from '@/composables/useDateFormat'
 
-const { t, locale } = useI18n()
+const { t } = useI18n()
 const router = useRouter()
 const diary = useDiaryStore()
+const { formatMonthYear } = useDateFormat()
 
 const today = new Date()
 const currentYear = ref(today.getFullYear())
 const currentMonth = ref(today.getMonth())
 
-const monthLabel = computed(() =>
-  new Date(currentYear.value, currentMonth.value).toLocaleDateString(locale.value, {
-    month: 'long',
-    year: 'numeric',
-  }),
-)
+const monthLabel = computed(() => formatMonthYear(currentYear.value, currentMonth.value))
 
 function toIsoDate(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
