@@ -64,13 +64,24 @@ function booleanAdapter(config: TrackerConfig, values: ValueEntry[]): ChartSerie
 }
 
 function medicationAdapter(config: TrackerConfig, values: ValueEntry[]): ChartSeries | null {
-  const points = values
-    .filter((v) => v.value !== null && typeof v.value === 'object' && !Array.isArray(v.value))
-    .map((v) => {
+  const byDate = new Map<string, { total: number; unit: string }>()
+  for (const v of values) {
+    if (v.value !== null && typeof v.value === 'object' && !Array.isArray(v.value)) {
       const med = v.value as MedicationValue
-      return { date: v.date, y: med.amount, tooltip: `${med.amount} ${med.unit}` }
-    })
-  if (!points.length) return null
+      const existing = byDate.get(v.date)
+      if (existing) {
+        existing.total += med.amount
+      } else {
+        byDate.set(v.date, { total: med.amount, unit: med.unit })
+      }
+    }
+  }
+  if (!byDate.size) return null
+  const points = [...byDate.entries()].map(([date, { total, unit }]) => ({
+    date,
+    y: total,
+    tooltip: `${total} ${unit}`,
+  }))
   const ys = points.map((p) => p.y)
   return { points, yMin: Math.min(...ys), yMax: Math.max(...ys), color: config.color, label: config.label }
 }
