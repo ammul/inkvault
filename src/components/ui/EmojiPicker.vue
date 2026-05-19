@@ -44,7 +44,7 @@ onUnmounted(() => document.removeEventListener('mousedown', onMouseDown))
 
     <div
       v-if="open"
-      class="absolute z-50 mt-1 right-0 w-72 bg-raised border border-edge rounded-card shadow-elevated p-3 space-y-2 max-h-72 overflow-y-auto"
+      class="absolute z-50 mt-1 left-0 w-72 bg-raised border border-edge rounded-card shadow-elevated p-3 space-y-2 max-h-72 overflow-y-auto"
     >
       <div v-for="cat in EMOJIS" :key="cat.category">
         <p class="text-xs font-medium text-ink-muted mb-1">{{ cat.category }}</p>
