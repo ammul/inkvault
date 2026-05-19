@@ -354,6 +354,31 @@ export default {
     github: 'View on GitHub →',
   },
 
+  onboarding: {
+    skip: 'Skip setup',
+    back: 'Back',
+    next: 'Next',
+    finish: 'Get started',
+    mood: {
+      title: 'Choose your style',
+      description: 'Pick a visual mood for the app.',
+    },
+    clock: {
+      title: 'Time format',
+      description: 'How would you like times to be shown?',
+    },
+    date: {
+      title: 'Date format',
+      description: 'How would you like dates to be shown?',
+    },
+    emojis: {
+      title: 'Tracker icons',
+      description: 'Show emoji icons for trackers, or display initials instead.',
+      on: 'Emojis',
+      off: 'Initials',
+    },
+  },
+
   passphrase: {
     empty: '',
     tooShort: 'Too short — use at least {min} characters',

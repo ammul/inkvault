@@ -1,15 +1,18 @@
 <script setup lang="ts">
-import { onMounted, onUnmounted, watch } from 'vue'
+import { computed, onMounted, onUnmounted, watch } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import { useThemeStore } from '@/stores/theme'
 import { useAppSettingsStore } from '@/stores/appSettings'
 import UnlockScreen from '@/components/auth/UnlockScreen.vue'
+import OnboardingWizard from '@/components/auth/OnboardingWizard.vue'
 import AppShell from '@/components/layout/AppShell.vue'
 import Toast from '@/components/ui/Toast.vue'
 
 const auth = useAuthStore()
 const theme = useThemeStore()
 const appSettings = useAppSettingsStore()
+
+const showWizard = computed(() => auth.isNewVault && appSettings.loaded && theme.loaded)
 
 const IDLE_TIMEOUT_MS = 10 * 60 * 1000
 let idleTimer: ReturnType<typeof setTimeout> | null = null
@@ -74,8 +77,11 @@ onUnmounted(() => {
 
 <template>
   <UnlockScreen v-if="!auth.isUnlocked" />
-  <AppShell v-else>
-    <RouterView />
-  </AppShell>
+  <template v-else>
+    <AppShell>
+      <RouterView />
+    </AppShell>
+    <OnboardingWizard v-if="showWizard" />
+  </template>
   <Toast />
 </template>

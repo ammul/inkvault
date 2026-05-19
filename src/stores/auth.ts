@@ -11,6 +11,7 @@ import { useAppSettingsStore } from './appSettings'
 export const useAuthStore = defineStore('auth', () => {
   const key = ref<CryptoKey | null>(null)
   const initialized = ref(false)
+  const isNewVault = ref(false)
 
   const isUnlocked = computed(() => key.value !== null)
 
@@ -28,6 +29,7 @@ export const useAuthStore = defineStore('auth', () => {
     writePlain(KEYS.SCHEMA, String(CURRENT_SCHEMA_VERSION))
     key.value = derivedKey
     initialized.value = true
+    isNewVault.value = true
   }
 
   async function unlock(passphrase: string): Promise<void> {
@@ -53,6 +55,7 @@ export const useAuthStore = defineStore('auth', () => {
 
   function lock(): void {
     key.value = null
+    isNewVault.value = false
     useDiaryStore().reset()
     useTrackersStore().reset()
     useThemeStore().reset()
@@ -74,7 +77,8 @@ export const useAuthStore = defineStore('auth', () => {
     useAppSettingsStore().reset()
     key.value = null
     initialized.value = false
+    isNewVault.value = false
   }
 
-  return { key, initialized, isUnlocked, checkInitialized, initializeVault, unlock, lock, resetVault }
+  return { key, initialized, isNewVault, isUnlocked, checkInitialized, initializeVault, unlock, lock, resetVault }
 })

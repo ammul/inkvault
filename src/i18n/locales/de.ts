@@ -354,6 +354,31 @@ export default {
     github: 'Auf GitHub ansehen →',
   },
 
+  onboarding: {
+    skip: 'Überspringen',
+    back: 'Zurück',
+    next: 'Weiter',
+    finish: 'Loslegen',
+    mood: {
+      title: 'Stil wählen',
+      description: 'Wähle eine visuelle Stimmung für die App.',
+    },
+    clock: {
+      title: 'Uhrzeitformat',
+      description: 'Wie sollen Uhrzeiten angezeigt werden?',
+    },
+    date: {
+      title: 'Datumsformat',
+      description: 'Wie sollen Daten angezeigt werden?',
+    },
+    emojis: {
+      title: 'Tracker-Icons',
+      description: 'Emoji-Icons für Tracker anzeigen oder stattdessen Initialen nutzen.',
+      on: 'Emojis',
+      off: 'Initialen',
+    },
+  },
+
   passphrase: {
     empty: '',
     tooShort: 'Zu kurz — verwende mindestens {min} Zeichen',
